@@ -1,0 +1,171 @@
+version: 1.0
+name: saju_interpretation_rule_table
+philosophy:
+  core_principle: ilgan_centered
+  description: >
+    사주 해석은 일간을 중심으로 구조를 설명하며,
+    운명·길흉·성격 단정을 하지 않는다.
+
+global_rules:
+  interpretation_order:
+    - ilgan
+    - environment_month
+    - five_elements
+    - ten_gods
+    - relations_optional
+  forbidden_judgements:
+    - fate
+    - success
+    - failure
+    - personality_typing
+  tone:
+    style: explanatory_structural_neutral
+    tense: present
+    subject:
+      allowed:
+        - "이 사주"
+        - "이 구조"
+      forbidden:
+        - "당신은"
+  sentence_limit:
+    per_section: 2
+    max_sentences: 3
+
+data_uncertainty_policy:
+  month_pillar_missing:
+    action: reduce_interpretation
+    message: "월령 정보가 불완전하여 환경 해석은 참고 수준으로 제공합니다."
+  hour_pillar_missing:
+    action: disable_hour_based_rules
+  api_failure:
+    action: stop_interpretation
+    message: "필수 계산 정보가 부족하여 해석을 제공할 수 없습니다."
+
+sections:
+  ilgan:
+    enabled: true
+    purpose: interpretation_anchor
+    allowed_content:
+      - day_stem
+      - element_of_day_stem
+    forbidden_content:
+      - personality
+      - destiny
+      - ten_gods
+    output_guideline:
+      sentence_style: definition_based
+      example:
+        allowed: "이 사주는 丁火 일간을 기준으로 해석됩니다."
+        forbidden: "열정적인 성격을 지닌 사람입니다."
+
+  environment_month:
+    enabled: true
+    depends_on: month_pillar
+    allowed_content:
+      - seasonal_context
+      - environmental_flow
+    forbidden_content:
+      - career
+      - wealth
+      - social_status
+    note: "월령은 결과가 아닌 환경 맥락으로만 사용한다."
+
+  five_elements:
+    enabled: true
+    calculation_basis:
+      sources:
+        - heavenly_stems
+        - earthly_branches
+      total_count: 8
+    allowed_expression:
+      - 많다
+      - 적다
+      - 드러난다
+      - 상대적으로 두드러진다
+    forbidden_expression:
+      - 강하다
+      - 약하다
+      - 좋다
+      - 나쁘다
+    interpretation_scope:
+      - balance
+      - management
+      - adjustment
+    example:
+      allowed: "화 기운이 상대적으로 두드러집니다."
+      forbidden: "화가 강해서 성격이 급합니다."
+
+  ten_gods:
+    phase: 1
+    enabled: true
+    depends_on: ilgan
+    allowed_content:
+      - existence_check
+      - relative_distribution
+    forbidden_content:
+      - job_prediction
+      - relationship_prediction
+    output_guideline:
+      style: structural_presence
+      example:
+        allowed: "재성 요소가 구조상 드러납니다."
+        forbidden: "돈복이 강한 사주입니다."
+
+  relations_and_special_rules:
+    phase: 2
+    enabled: false
+    rules_included:
+      - 합
+      - 충
+      - 형
+      - 파
+      - 원진
+      - 신살
+    allowed_action:
+      - calculate_existence_only
+    forbidden_action:
+      - sentence_generation
+    allowed_output:
+      - "구조적 상호작용이 감지됩니다."
+    note: >
+      Phase 2 이전에는 해석 문장을 생성하지 않으며,
+      고급 페이지 또는 옵션에서만 노출 가능.
+
+phase_matrix:
+  phase_0_manse:
+    ilgan: true
+    environment_month: true
+    five_elements: true
+    ten_gods: false
+    relations: false
+
+  phase_1_ilgan_summary:
+    ilgan: true
+    environment_month: true
+    five_elements: true
+    ten_gods: false
+    relations: false
+
+  phase_2_structure:
+    ilgan: true
+    environment_month: true
+    five_elements: true
+    ten_gods: true
+    relations: false
+
+  phase_3_advanced:
+    ilgan: true
+    environment_month: true
+    five_elements: true
+    ten_gods: true
+    relations: true
+
+llm_guardrail:
+  must_follow:
+    - ilgan_centered_interpretation
+    - structural_explanation_only
+    - uncertainty_reduction
+  must_avoid:
+    - fortune_telling_tone
+    - absolute_statements
+    - personalized_destiny_claims
