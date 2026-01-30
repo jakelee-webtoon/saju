@@ -41,6 +41,7 @@ export {
   normalizeInput,
   buildManseResult,
   calculateManse,
+  calculateManseWithLibrary, // 신규: manseryeok 라이브러리 기반
 } from "./calculator";
 
 // 해석 규칙

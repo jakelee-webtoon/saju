@@ -3,9 +3,20 @@
  * 
  * [규칙]
  * - 순수 함수로 구현 (외부 상태 의존 없음)
- * - API 응답 데이터와 고정 매핑 테이블만 사용
+ * - manseryeok 라이브러리 사용 (https://github.com/yhj1024/manseryeok)
  * - 임의 추측/하드코딩 금지
  */
+
+import {
+  calculateFourPillars,
+  solarToLunar,
+  lunarToSolar,
+  getHeavenlyStemElement,
+  getEarthlyBranchElement,
+  type FourPillars,
+  type HeavenlyStem,
+  type EarthlyBranch,
+} from "manseryeok";
 
 import type {
   Element,
@@ -43,6 +54,24 @@ import {
   ELEMENT_TOTAL_WITH_HOUR,
   ELEMENT_TOTAL_WITHOUT_HOUR,
 } from "./constants";
+
+// ========================
+// 천간/지지 매핑 (manseryeok → 우리 타입)
+// ========================
+
+const STEM_TO_HANJA: Record<HeavenlyStem, Cheongan漢字> = {
+  "갑": "甲", "을": "乙", "병": "丙", "정": "丁", "무": "戊",
+  "기": "己", "경": "庚", "신": "辛", "임": "壬", "계": "癸",
+};
+
+const BRANCH_TO_HANJA: Record<EarthlyBranch, Jiji漢字> = {
+  "자": "子", "축": "丑", "인": "寅", "묘": "卯", "진": "辰", "사": "巳",
+  "오": "午", "미": "未", "신": "申", "유": "酉", "술": "戌", "해": "亥",
+};
+
+const ELEMENT_KR: Record<string, Element> = {
+  "목": "목", "화": "화", "토": "토", "금": "금", "수": "수",
+};
 
 // ========================
 // 파싱 함수
@@ -441,15 +470,12 @@ export function buildManseResult(input: NormalizedInput): ManseResult {
 }
 
 // ========================
-// 통합 계산 함수 (편의용)
+// 통합 계산 함수 (편의용 - 레거시)
 // ========================
 
 /**
  * 생년월일시 + API 응답 → 만세력 결과 (원스텝)
- * 
- * @param birth - 사용자 입력
- * @param lunarResponse - 음력 API 응답
- * @returns ManseResult
+ * @deprecated manseryeok 라이브러리 사용 권장 (calculateManseWithLibrary)
  */
 export function calculateManse(
   birth: BirthInput,
@@ -478,6 +504,204 @@ export function calculateManse(
       calculationMeta: {
         monthPillarBasis: { type: "unknown", trustLevel: "unavailable", note: "계산 오류로 확인 불가" },
         hourPillarStatus: { isAvailable: false, trustLevel: "unavailable", note: "계산 오류로 확인 불가" },
+        dataSource: { lunarConversion: "unknown", ganjiSource: "unknown" },
+      },
+      warnings: [err.message || "계산 오류"],
+    };
+  }
+}
+
+// ========================
+// manseryeok 라이브러리 기반 계산 함수 (신규)
+// ========================
+
+/**
+ * Pillar(manseryeok) → ParsedGanji 변환
+ */
+function pillarToGanji(
+  stem: HeavenlyStem,
+  branch: EarthlyBranch
+): ParsedGanji {
+  const stemElement = getHeavenlyStemElement(stem);
+  const branchElement = getEarthlyBranchElement(branch);
+  
+  return {
+    천간: STEM_TO_HANJA[stem],
+    천간읽기: stem as Cheongan,
+    지지: BRANCH_TO_HANJA[branch],
+    지지읽기: branch as Jiji,
+    오행천간: ELEMENT_KR[stemElement],
+    오행지지: ELEMENT_KR[branchElement],
+  };
+}
+
+/**
+ * manseryeok 라이브러리를 사용한 만세력 계산
+ * 
+ * @param birth - 생년월일시 입력 (양력 또는 음력)
+ * @returns ManseResult
+ */
+export function calculateManseWithLibrary(birth: BirthInput): ManseResult {
+  try {
+    const hasTime = birth.hour !== undefined;
+    
+    // 음력 변환 (양력 입력인 경우)
+    let lunarDate: { year: number; month: number; day: number; isLeapMonth: boolean };
+    let solarDate: { year: number; month: number; day: number };
+    
+    if (birth.isLunar) {
+      // 음력 입력 → 양력 변환
+      const solar = lunarToSolar(birth.year, birth.month, birth.day, birth.isLeapMonth ?? false);
+      solarDate = { year: solar.year, month: solar.month, day: solar.day };
+      lunarDate = { 
+        year: birth.year, 
+        month: birth.month, 
+        day: birth.day, 
+        isLeapMonth: birth.isLeapMonth ?? false 
+      };
+    } else {
+      // 양력 입력 → 음력 변환
+      const lunar = solarToLunar(birth.year, birth.month, birth.day);
+      solarDate = { year: birth.year, month: birth.month, day: birth.day };
+      lunarDate = { 
+        year: lunar.year, 
+        month: lunar.month, 
+        day: lunar.day, 
+        isLeapMonth: lunar.isLeapMonth 
+      };
+    }
+    
+    // 사주 계산 (manseryeok 라이브러리)
+    const fourPillars = calculateFourPillars({
+      year: solarDate.year,
+      month: solarDate.month,
+      day: solarDate.day,
+      hour: birth.hour ?? 12, // 시간 없으면 정오 기준 (시주 계산용)
+      minute: birth.minute ?? 0,
+      isLunar: false, // 양력 기준으로 계산
+    });
+    
+    // 4주 변환
+    const yearPillar = pillarToGanji(
+      fourPillars.year.heavenlyStem,
+      fourPillars.year.earthlyBranch
+    );
+    const monthPillar = pillarToGanji(
+      fourPillars.month.heavenlyStem,
+      fourPillars.month.earthlyBranch
+    );
+    const dayPillar = pillarToGanji(
+      fourPillars.day.heavenlyStem,
+      fourPillars.day.earthlyBranch
+    );
+    const hourPillar = hasTime ? pillarToGanji(
+      fourPillars.hour.heavenlyStem,
+      fourPillars.hour.earthlyBranch
+    ) : null;
+    
+    // 오행 분포 계산
+    const pillars: NormalizedPillars = {
+      year: yearPillar,
+      month: monthPillar,
+      day: dayPillar,
+      hour: hourPillar,
+    };
+    const elements = calcElements(pillars);
+    
+    // 검증
+    const expectedTotal = hasTime ? ELEMENT_TOTAL_WITH_HOUR : ELEMENT_TOTAL_WITHOUT_HOUR;
+    const isElementsValid = elements.total === expectedTotal;
+    
+    // 경고 메시지
+    const warnings: string[] = [];
+    if (!hasTime) {
+      warnings.push("출생 시간 미입력으로 시주를 계산할 수 없습니다.");
+    }
+    if (!isElementsValid) {
+      warnings.push(`오행 분포 합계 검증 실패: 계산값 ${elements.total}, 기대값 ${expectedTotal}`);
+    }
+    
+    // PillarOutput 생성
+    const toPillarOutput = (
+      label: string,
+      pillar: ParsedGanji | null,
+      isAvailable: boolean
+    ): PillarOutput => {
+      if (!pillar || !isAvailable) {
+        return {
+          label,
+          천간: "?", 천간읽기: "?", 지지: "?", 지지읽기: "?",
+          오행천간: "토" as Element, 오행지지: "토" as Element,
+          isAvailable: false,
+        };
+      }
+      return { label, ...pillar, isAvailable: true };
+    };
+    
+    // 상태 결정
+    let status: "success" | "partial" | "error" = "success";
+    if (!isElementsValid) status = "error";
+    else if (warnings.length > 0) status = "partial";
+    
+    // 결과 반환
+    return {
+      status,
+      birthSummary: {
+        solar: solarDate,
+        lunar: lunarDate,
+        time: hasTime ? { hour: birth.hour!, minute: birth.minute ?? 0 } : undefined,
+      },
+      pillars: {
+        year: toPillarOutput("년주", yearPillar, true),
+        month: toPillarOutput("월주", monthPillar, true),
+        day: toPillarOutput("일주", dayPillar, true),
+        hour: toPillarOutput("시주", hourPillar, hasTime),
+      },
+      ilgan: {
+        천간: dayPillar.천간,
+        천간읽기: dayPillar.천간읽기,
+        오행: dayPillar.오행천간,
+      },
+      elements,
+      calculationMeta: {
+        monthPillarBasis: {
+          type: "jeolgi",
+          trustLevel: "confirmed",
+          note: "manseryeok 라이브러리 기반 절기 계산",
+        },
+        hourPillarStatus: {
+          isAvailable: hasTime,
+          trustLevel: hasTime ? "confirmed" : "unavailable",
+          note: hasTime ? "출생 시간 기준 계산" : "출생 시간 미입력",
+        },
+        dataSource: {
+          lunarConversion: "korea_astronomy_api",
+          ganjiSource: "calculated",
+        },
+      },
+      warnings,
+    };
+    
+  } catch (error) {
+    const err = error as Error;
+    return {
+      status: "error",
+      errorMessage: err.message || "알 수 없는 오류가 발생했습니다",
+      birthSummary: {
+        solar: { year: birth.year, month: birth.month, day: birth.day },
+        lunar: { year: 0, month: 0, day: 0, isLeapMonth: false },
+      },
+      pillars: {
+        year: { label: "년주", 천간: "?", 천간읽기: "?", 지지: "?", 지지읽기: "?", 오행천간: "토", 오행지지: "토", isAvailable: false },
+        month: { label: "월주", 천간: "?", 천간읽기: "?", 지지: "?", 지지읽기: "?", 오행천간: "토", 오행지지: "토", isAvailable: false },
+        day: { label: "일주", 천간: "?", 천간읽기: "?", 지지: "?", 지지읽기: "?", 오행천간: "토", 오행지지: "토", isAvailable: false },
+        hour: { label: "시주", 천간: "?", 천간읽기: "?", 지지: "?", 지지읽기: "?", 오행천간: "토", 오행지지: "토", isAvailable: false },
+      },
+      ilgan: { 천간: "?", 천간읽기: "?", 오행: "토" },
+      elements: { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0, total: 0 },
+      calculationMeta: {
+        monthPillarBasis: { type: "unknown", trustLevel: "unavailable", note: "계산 오류" },
+        hourPillarStatus: { isAvailable: false, trustLevel: "unavailable", note: "계산 오류" },
         dataSource: { lunarConversion: "unknown", ganjiSource: "unknown" },
       },
       warnings: [err.message || "계산 오류"],

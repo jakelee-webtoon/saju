@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { calculateManse, type ManseResult, type BirthInput, type LunarApiResponse, type Element, type TrustLevel } from "./lib/saju";
+import { calculateManseWithLibrary, type ManseResult, type BirthInput, type Element, type TrustLevel } from "./lib/saju";
 
 // ========================
 // 오행 UI 스타일
@@ -14,19 +14,7 @@ const elementStyles: Record<Element, { bg: string; text: string; cellBg: string;
   수: { bg: "bg-blue-50", text: "text-blue-500", cellBg: "bg-blue-500", cellText: "text-white" },
 };
 
-// ========================
-// API 호출 함수
-// ========================
-async function fetchLunarData(year: number, month: number, day: number): Promise<LunarApiResponse> {
-  try {
-    const response = await fetch(`/api/lunar?year=${year}&month=${month}&day=${day}`);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("음력 API 호출 오류:", error);
-    return { success: false, error: "API 호출 실패" };
-  }
-}
+// API 호출 함수 제거됨 - manseryeok 라이브러리로 대체
 
 // ========================
 // 입력 폼 컴포넌트
@@ -986,16 +974,16 @@ function SajuResultWithCallback({
       setLoading(true);
       
       const birthInput: BirthInput = {
-        calendarType: formData.calendarType,
         year: parseInt(formData.year),
         month: parseInt(formData.month),
         day: parseInt(formData.day),
         hour: formData.hasTime && formData.hour ? parseInt(formData.hour) : undefined,
         minute: formData.hasTime && formData.minute ? parseInt(formData.minute) : undefined,
+        isLunar: formData.calendarType === "음력",
       };
       
-      const lunarResponse = await fetchLunarData(birthInput.year, birthInput.month, birthInput.day);
-      const result = calculateManse(birthInput, lunarResponse);
+      // manseryeok 라이브러리 사용 - API 호출 없이 로컬 계산
+      const result = calculateManseWithLibrary(birthInput);
       setManseResult(result);
       setLoading(false);
     };

@@ -42,13 +42,16 @@ export interface LunarApiResponse {
 
 /** 입력 생년월일시 (사용자 입력) */
 export interface BirthInput {
-  calendarType: "양력" | "음력";
   year: number;
   month: number;
   day: number;
-  hour?: number;      // 0-23, undefined면 시주 계산 불가
-  minute?: number;    // 0-59
+  hour?: number;        // 0-23, undefined면 시주 계산 불가
+  minute?: number;      // 0-59
+  isLunar?: boolean;    // true면 음력 입력, false/undefined면 양력
+  isLeapMonth?: boolean; // 음력 윤달 여부
   gender?: "남" | "여";
+  /** @deprecated calendarType 대신 isLunar 사용 */
+  calendarType?: "양력" | "음력";
 }
 
 // ========================
