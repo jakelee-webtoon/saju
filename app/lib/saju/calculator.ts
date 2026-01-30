@@ -512,6 +512,88 @@ export function calculateManse(
 }
 
 // ========================
+// 입춘 시각 테이블 (절기 보정용)
+// ========================
+
+/**
+ * 입춘 시각 테이블 (UTC+9 기준, 분 단위)
+ * 형식: { year: [month, day, hour, minute] }
+ * 입춘 시각 이전이면 전년도 년주를 사용해야 함
+ */
+const IPCHUN_TIMES: Record<number, [number, number, number, number]> = {
+  1950: [2, 4, 17, 21], 1951: [2, 4, 23, 14], 1952: [2, 5, 5, 4], 1953: [2, 4, 10, 46],
+  1954: [2, 4, 16, 31], 1955: [2, 4, 22, 18], 1956: [2, 5, 4, 13], 1957: [2, 4, 9, 55],
+  1958: [2, 4, 15, 50], 1959: [2, 4, 21, 43], 1960: [2, 5, 3, 23], 1961: [2, 4, 9, 23],
+  1962: [2, 4, 15, 18], 1963: [2, 4, 21, 8], 1964: [2, 5, 2, 57], 1965: [2, 4, 8, 46],
+  1966: [2, 4, 14, 38], 1967: [2, 4, 20, 31], 1968: [2, 5, 2, 8], 1969: [2, 4, 8, 0],
+  1970: [2, 4, 13, 46], 1971: [2, 4, 19, 26], 1972: [2, 5, 1, 20], 1973: [2, 4, 7, 4],
+  1974: [2, 4, 13, 0], 1975: [2, 4, 18, 59], 1976: [2, 5, 0, 40], 1977: [2, 4, 6, 34],
+  1978: [2, 4, 12, 27], 1979: [2, 4, 18, 13], 1980: [2, 5, 0, 10], 1981: [2, 4, 5, 56],
+  1982: [2, 4, 11, 46], 1983: [2, 4, 17, 40], 1984: [2, 4, 23, 19], 1985: [2, 4, 5, 12],
+  1986: [2, 4, 11, 8], 1987: [2, 4, 16, 52], 1988: [2, 4, 22, 43], 1989: [2, 4, 4, 27],
+  1990: [2, 4, 10, 15], 1991: [2, 4, 16, 8], 1992: [2, 4, 21, 48], 1993: [2, 4, 3, 38],
+  1994: [2, 4, 9, 31], 1995: [2, 4, 15, 14], 1996: [2, 4, 21, 8], 1997: [2, 4, 3, 2],
+  1998: [2, 4, 8, 58], 1999: [2, 4, 14, 57], 2000: [2, 4, 20, 40], 2001: [2, 4, 2, 29],
+  2002: [2, 4, 8, 24], 2003: [2, 4, 14, 5], 2004: [2, 4, 19, 56], 2005: [2, 4, 1, 43],
+  2006: [2, 4, 7, 27], 2007: [2, 4, 13, 18], 2008: [2, 4, 19, 0], 2009: [2, 4, 0, 50],
+  2010: [2, 4, 6, 47], 2011: [2, 4, 12, 33], 2012: [2, 4, 18, 22], 2013: [2, 4, 0, 13],
+  2014: [2, 4, 6, 3], 2015: [2, 4, 11, 58], 2016: [2, 4, 17, 46], 2017: [2, 3, 23, 34],
+  2018: [2, 4, 5, 28], 2019: [2, 4, 11, 14], 2020: [2, 4, 17, 3], 2021: [2, 3, 22, 59],
+  2022: [2, 4, 4, 51], 2023: [2, 4, 10, 43], 2024: [2, 4, 16, 27], 2025: [2, 3, 22, 10],
+  2026: [2, 4, 4, 2], 2027: [2, 4, 9, 46], 2028: [2, 4, 15, 31], 2029: [2, 3, 21, 20],
+  2030: [2, 4, 3, 8], 2031: [2, 4, 8, 57], 2032: [2, 4, 14, 49], 2033: [2, 3, 20, 41],
+  2034: [2, 4, 2, 40], 2035: [2, 4, 8, 31], 2036: [2, 4, 14, 19], 2037: [2, 3, 20, 11],
+  2038: [2, 4, 1, 54], 2039: [2, 4, 7, 51], 2040: [2, 4, 13, 30], 2041: [2, 3, 19, 23],
+  2042: [2, 4, 1, 4], 2043: [2, 4, 6, 58], 2044: [2, 4, 12, 41], 2045: [2, 3, 18, 35],
+  2046: [2, 4, 0, 31], 2047: [2, 4, 6, 17], 2048: [2, 4, 12, 4], 2049: [2, 3, 17, 51],
+  2050: [2, 3, 23, 42],
+};
+
+/**
+ * 입춘 이전인지 확인
+ * @returns true면 입춘 이전 (전년도 년주 사용해야 함)
+ */
+function isBeforeIpchun(year: number, month: number, day: number, hour: number, minute: number): boolean {
+  const ipchun = IPCHUN_TIMES[year];
+  if (!ipchun) return false; // 데이터 없으면 보정 안 함
+  
+  const [ipMonth, ipDay, ipHour, ipMinute] = ipchun;
+  
+  // 입춘 월 이전
+  if (month < ipMonth) return true;
+  if (month > ipMonth) return false;
+  
+  // 입춘 일 이전
+  if (day < ipDay) return true;
+  if (day > ipDay) return false;
+  
+  // 입춘 시각 이전
+  const birthMinutes = hour * 60 + minute;
+  const ipchunMinutes = ipHour * 60 + ipMinute;
+  
+  return birthMinutes < ipchunMinutes;
+}
+
+/**
+ * 년주 천간/지지 계산 (60갑자 순환)
+ * 1984년 = 甲子(갑자)년 기준
+ */
+function calculateYearPillar(year: number): { stem: HeavenlyStem; branch: EarthlyBranch } {
+  const stems: HeavenlyStem[] = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
+  const branches: EarthlyBranch[] = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
+  
+  // 1984년 = 갑자년 (index 0)
+  const offset = year - 1984;
+  const stemIndex = ((offset % 10) + 10) % 10;
+  const branchIndex = ((offset % 12) + 12) % 12;
+  
+  return {
+    stem: stems[stemIndex],
+    branch: branches[branchIndex],
+  };
+}
+
+// ========================
 // manseryeok 라이브러리 기반 계산 함수 (신규)
 // ========================
 
@@ -572,20 +654,41 @@ export function calculateManseWithLibrary(birth: BirthInput): ManseResult {
     }
     
     // 사주 계산 (manseryeok 라이브러리)
+    const birthHour = birth.hour ?? 12;
+    const birthMinute = birth.minute ?? 0;
+    
     const fourPillars = calculateFourPillars({
       year: solarDate.year,
       month: solarDate.month,
       day: solarDate.day,
-      hour: birth.hour ?? 12, // 시간 없으면 정오 기준 (시주 계산용)
-      minute: birth.minute ?? 0,
+      hour: birthHour,
+      minute: birthMinute,
       isLunar: false, // 양력 기준으로 계산
     });
     
-    // 4주 변환
-    const yearPillar = pillarToGanji(
-      fourPillars.year.heavenlyStem,
-      fourPillars.year.earthlyBranch
+    // ========== 입춘 보정 ==========
+    // 입춘 이전이면 전년도 년주를 사용
+    let yearPillar: ParsedGanji;
+    const needsYearCorrection = isBeforeIpchun(
+      solarDate.year, 
+      solarDate.month, 
+      solarDate.day, 
+      birthHour, 
+      birthMinute
     );
+    
+    if (needsYearCorrection) {
+      // 전년도 년주 계산
+      const prevYearPillar = calculateYearPillar(solarDate.year - 1);
+      yearPillar = pillarToGanji(prevYearPillar.stem, prevYearPillar.branch);
+    } else {
+      yearPillar = pillarToGanji(
+        fourPillars.year.heavenlyStem,
+        fourPillars.year.earthlyBranch
+      );
+    }
+    
+    // 월주/일주/시주
     const monthPillar = pillarToGanji(
       fourPillars.month.heavenlyStem,
       fourPillars.month.earthlyBranch
