@@ -475,6 +475,11 @@ export function calculateManse(
       },
       ilgan: { 천간: "?", 천간읽기: "?", 오행: "토" },
       elements: { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0, total: 0 },
+      calculationMeta: {
+        monthPillarBasis: { type: "unknown", trustLevel: "unavailable", note: "계산 오류로 확인 불가" },
+        hourPillarStatus: { isAvailable: false, trustLevel: "unavailable", note: "계산 오류로 확인 불가" },
+        dataSource: { lunarConversion: "unknown", ganjiSource: "unknown" },
+      },
       warnings: [err.message || "계산 오류"],
     };
   }
