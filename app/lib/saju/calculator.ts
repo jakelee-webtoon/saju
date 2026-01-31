@@ -593,6 +593,84 @@ function calculateYearPillar(year: number): { stem: HeavenlyStem; branch: Earthl
   };
 }
 
+/**
+ * 시간 → 지지 인덱스 변환 (토정비결 기준 경계값)
+ * 
+ * 토정비결 앱 기준: 정각(00분)은 이전 시에 포함
+ * - 9시 00분 = 진시 (사시 아님)
+ * - 9시 01분 = 사시
+ * 
+ * 시간대 기준:
+ * - 자시(子): 23:01 ~ 01:00
+ * - 축시(丑): 01:01 ~ 03:00
+ * - 인시(寅): 03:01 ~ 05:00
+ * - 묘시(卯): 05:01 ~ 07:00
+ * - 진시(辰): 07:01 ~ 09:00
+ * - 사시(巳): 09:01 ~ 11:00
+ * - 오시(午): 11:01 ~ 13:00
+ * - 미시(未): 13:01 ~ 15:00
+ * - 신시(申): 15:01 ~ 17:00
+ * - 유시(酉): 17:01 ~ 19:00
+ * - 술시(戌): 19:01 ~ 21:00
+ * - 해시(亥): 21:01 ~ 23:00
+ */
+function getHourBranchIndex(hour: number, minute: number): number {
+  // 분을 포함한 총 분으로 계산
+  const totalMinutes = hour * 60 + minute;
+  
+  // 정각(00분)은 이전 시에 포함되도록 경계 조정
+  // 자시: 23:01 ~ 01:00 (1381분 ~ 60분)
+  if (totalMinutes > 23 * 60 || totalMinutes <= 1 * 60) return 0;  // 자
+  if (totalMinutes <= 3 * 60) return 1;  // 축
+  if (totalMinutes <= 5 * 60) return 2;  // 인
+  if (totalMinutes <= 7 * 60) return 3;  // 묘
+  if (totalMinutes <= 9 * 60) return 4;  // 진 (9시 00분 = 540분 포함)
+  if (totalMinutes <= 11 * 60) return 5; // 사
+  if (totalMinutes <= 13 * 60) return 6; // 오
+  if (totalMinutes <= 15 * 60) return 7; // 미
+  if (totalMinutes <= 17 * 60) return 8; // 신
+  if (totalMinutes <= 19 * 60) return 9; // 유
+  if (totalMinutes <= 21 * 60) return 10; // 술
+  return 11; // 해
+}
+
+/**
+ * 시주 계산 (일간 기준 시간 천간 + 시간 지지)
+ * 
+ * 일간별 시간 천간 시작:
+ * - 갑/기일: 갑자 시작
+ * - 을/경일: 병자 시작
+ * - 병/신일: 무자 시작
+ * - 정/임일: 경자 시작
+ * - 무/계일: 임자 시작
+ */
+function calculateHourPillarDirect(
+  dayStem: HeavenlyStem,
+  hour: number,
+  minute: number
+): { stem: HeavenlyStem; branch: EarthlyBranch } {
+  const stems: HeavenlyStem[] = ["갑", "을", "병", "정", "무", "기", "경", "신", "임", "계"];
+  const branches: EarthlyBranch[] = ["자", "축", "인", "묘", "진", "사", "오", "미", "신", "유", "술", "해"];
+  
+  // 일간별 시간 천간 시작 인덱스
+  const dayStemStartMap: Record<HeavenlyStem, number> = {
+    "갑": 0, "기": 0,  // 갑자 시작
+    "을": 2, "경": 2,  // 병자 시작
+    "병": 4, "신": 4,  // 무자 시작
+    "정": 6, "임": 6,  // 경자 시작
+    "무": 8, "계": 8,  // 임자 시작
+  };
+  
+  const branchIndex = getHourBranchIndex(hour, minute);
+  const stemStartIndex = dayStemStartMap[dayStem];
+  const stemIndex = (stemStartIndex + branchIndex) % 10;
+  
+  return {
+    stem: stems[stemIndex],
+    branch: branches[branchIndex],
+  };
+}
+
 // ========================
 // manseryeok 라이브러리 기반 계산 함수 (신규)
 // ========================
@@ -688,7 +766,7 @@ export function calculateManseWithLibrary(birth: BirthInput): ManseResult {
       );
     }
     
-    // 월주/일주/시주
+    // 월주/일주
     const monthPillar = pillarToGanji(
       fourPillars.month.heavenlyStem,
       fourPillars.month.earthlyBranch
@@ -697,10 +775,18 @@ export function calculateManseWithLibrary(birth: BirthInput): ManseResult {
       fourPillars.day.heavenlyStem,
       fourPillars.day.earthlyBranch
     );
-    const hourPillar = hasTime ? pillarToGanji(
-      fourPillars.hour.heavenlyStem,
-      fourPillars.hour.earthlyBranch
-    ) : null;
+    
+    // ========== 시주 직접 계산 ==========
+    // manseryeok 라이브러리 시간 경계와 다르므로 직접 계산
+    let hourPillar: ParsedGanji | null = null;
+    if (hasTime) {
+      const hourPillarCalc = calculateHourPillarDirect(
+        fourPillars.day.heavenlyStem, // 일간
+        birthHour,
+        birthMinute
+      );
+      hourPillar = pillarToGanji(hourPillarCalc.stem, hourPillarCalc.branch);
+    }
     
     // 오행 분포 계산
     const pillars: NormalizedPillars = {
