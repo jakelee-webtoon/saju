@@ -45,17 +45,9 @@ export default function CompatibilityMiniCard({ onClick }: CompatibilityMiniCard
             💞 궁합 보기
           </h3>
           
-          {savedPartner ? (
-            // 저장된 상대가 있는 경우
-            <p className="text-sm text-purple-600 leading-relaxed font-medium">
-              {savedPartner.nickname}님과의 궁합을 확인해보세요
-            </p>
-          ) : (
-            // 저장된 상대가 없는 경우
-            <p className="text-sm text-gray-600 leading-relaxed">
-              상대 정보를 넣으면 오늘 모드 기준으로 궁합을 보여줘요
-            </p>
-          )}
+          <p className="text-sm text-gray-600 leading-relaxed">
+            상대방과의 궁합을 확인해보세요
+          </p>
         </div>
         
         <span className="text-purple-500 opacity-60">
