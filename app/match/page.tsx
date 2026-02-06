@@ -62,6 +62,8 @@ export default function MatchPage() {
   const [birthYear, setBirthYear] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
+  const [birthHour, setBirthHour] = useState("");
+  const [includeTime, setIncludeTime] = useState(false);
   
   // 내 사주 기반 MBTI (자동 계산 - 항상 데이터 있음)
   const [myMbti] = useState<MbtiType>(getSajuBasedMbti());
@@ -90,6 +92,10 @@ export default function MatchPage() {
           setBirthMonth(m);
           setBirthDay(d);
         }
+        if (parsed.birthHour !== undefined && parsed.birthHour !== "") {
+          setBirthHour(parsed.birthHour);
+          setIncludeTime(true);
+        }
       } catch {
         // 파싱 오류 무시
       }
@@ -102,11 +108,12 @@ export default function MatchPage() {
   const isBirthValid = inputType === "birth" && birthYear && birthMonth && birthDay;
   const canCalculate = isNicknameValid && (isMbtiValid || isBirthValid);
 
-  // 년/월/일 옵션
+  // 년/월/일/시 옵션
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 80 }, (_, i) => currentYear - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
   // 궁합 계산
   const handleCalculate = () => {
@@ -129,10 +136,12 @@ export default function MatchPage() {
       const theirYear = parseInt(birthYear);
       const theirMonth = parseInt(birthMonth);
       const theirDay = parseInt(birthDay);
+      const theirHour = includeTime && birthHour ? parseInt(birthHour) : undefined;
       
       const matchResult = calculateBirthMatch(
         DEFAULT_MY_BIRTH.year, DEFAULT_MY_BIRTH.month, DEFAULT_MY_BIRTH.day,
-        theirYear, theirMonth, theirDay
+        theirYear, theirMonth, theirDay,
+        undefined, theirHour
       );
       const matchTexts = generateBirthMatchTexts(matchResult);
       
@@ -145,6 +154,7 @@ export default function MatchPage() {
         nickname,
         type: "birth",
         birthDate: `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`,
+        birthHour: includeTime ? birthHour : "",
       }));
     }
   };
@@ -158,6 +168,8 @@ export default function MatchPage() {
     setBirthYear("");
     setBirthMonth("");
     setBirthDay("");
+    setBirthHour("");
+    setIncludeTime(false);
     setResult(null);
     setTexts(null);
     setBirthResult(null);
@@ -206,7 +218,7 @@ export default function MatchPage() {
           <BirthMatchResultCard
             nickname={nickname}
             myBirth={`${DEFAULT_MY_BIRTH.year}.${DEFAULT_MY_BIRTH.month}.${DEFAULT_MY_BIRTH.day}`}
-            theirBirth={`${birthYear}.${birthMonth}.${birthDay}`}
+            theirBirth={`${birthYear}.${birthMonth}.${birthDay}${includeTime && birthHour ? ` ${birthHour}시` : ""}`}
             result={birthResult}
             texts={birthTexts}
             onReset={handleReset}
@@ -374,9 +386,53 @@ export default function MatchPage() {
                       ))}
                     </select>
                   </div>
+                  
+                  {/* 시간 입력 (선택) */}
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        setIncludeTime(!includeTime);
+                        if (!includeTime) setBirthHour("");
+                      }}
+                      className="flex items-center gap-2 text-xs text-purple-500 hover:text-purple-700 transition-colors"
+                    >
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                        includeTime ? "bg-purple-500 border-purple-500" : "border-purple-300"
+                      }`}>
+                        {includeTime && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span>출생 시간도 입력할게요 (선택)</span>
+                    </button>
+                    
+                    {includeTime && (
+                      <div className="mt-2">
+                        <select
+                          value={birthHour}
+                          onChange={(e) => setBirthHour(e.target.value)}
+                          className="w-full rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                        >
+                          <option value="">시간 선택</option>
+                          {hours.map((h) => (
+                            <option key={h} value={h}>{h}시 ({h === 0 ? "자정" : h < 12 ? "오전" : h === 12 ? "정오" : "오후"})</option>
+                          ))}
+                        </select>
+                        <p className="mt-1 text-xs text-purple-400">
+                          시간을 알면 더 정확한 시주 분석이 가능해요
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
                   {isBirthValid && (
                     <p className="mt-3 text-sm text-purple-700 text-center">
-                      입력: <span className="font-bold">{birthYear}.{birthMonth}.{birthDay}</span>
+                      입력: <span className="font-bold">
+                        {birthYear}.{birthMonth}.{birthDay}
+                        {includeTime && birthHour && ` ${birthHour}시`}
+                      </span>
                     </p>
                   )}
                   <p className="mt-3 text-xs text-purple-400 text-center">
