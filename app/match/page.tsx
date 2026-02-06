@@ -197,7 +197,7 @@ export default function MatchPage() {
             birthMonth: theirMonth,
             birthDay: theirDay,
           },
-          compatibilityScore: matchResult.totalScore,
+          compatibilityScore: matchResult.score,
         });
       }
     }

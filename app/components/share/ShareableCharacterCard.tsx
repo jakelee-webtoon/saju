@@ -25,11 +25,10 @@ const ShareableCharacterCard = forwardRef<HTMLDivElement, ShareableCharacterCard
           </span>
         </div>
 
-        {/* 이모지 & 이름 */}
+        {/* 아이콘 & 이름 */}
         <div className="text-center mb-5">
-          <span className="text-6xl block mb-3">{character.emoji}</span>
+          <span className="text-6xl block mb-3">{character.icon}</span>
           <h2 className="text-2xl font-black text-white mb-1">{character.name}</h2>
-          <p className="text-purple-300 text-sm">{character.subtitle}</p>
         </div>
 
         {/* 선언문 */}
