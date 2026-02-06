@@ -9,8 +9,22 @@ import { type MbtiType, calculateScore } from "@/app/lib/match/mbti";
 import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type BirthMatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
+import { saveMatchHistory } from "@/app/lib/firebase/userService";
+import { getKakaoUser } from "@/app/lib/kakao";
+import { getNaverUser } from "@/app/lib/naver";
 import BottomNav, { type TabId } from "@/app/components/BottomNav";
 import SwipeBack from "@/app/components/SwipeBack";
+
+// 로그인된 사용자 ID 가져오기
+function getUserId(): string | null {
+  const kakaoUser = getKakaoUser();
+  if (kakaoUser) return kakaoUser.id;
+  
+  const naverUser = getNaverUser();
+  if (naverUser) return naverUser.id;
+  
+  return null;
+}
 
 type ViewState = "input" | "result";
 type InputType = "mbti" | "birth";
@@ -118,7 +132,9 @@ export default function MatchPage() {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   // 궁합 계산
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
+    const userId = getUserId();
+    
     if (inputType === "mbti" && theirMbti) {
       const matchResult = calculateScore(myMbti, theirMbti);
       const matchTexts = generateMatchTexts(matchResult, myMbti, theirMbti);
@@ -133,6 +149,17 @@ export default function MatchPage() {
         type: "mbti",
         mbti: theirMbti,
       }));
+      
+      // Firebase에 궁합 히스토리 저장
+      if (userId) {
+        await saveMatchHistory({
+          oderId: userId,
+          matchType: "mbti",
+          partnerNickname: nickname,
+          partnerInfo: { mbti: theirMbti },
+          compatibilityScore: matchResult.score,
+        });
+      }
     } else if (inputType === "birth" && birthYear && birthMonth && birthDay) {
       // 생년월일 기반 궁합 계산
       const theirYear = parseInt(birthYear);
@@ -158,6 +185,21 @@ export default function MatchPage() {
         birthDate: `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`,
         birthHour: includeTime ? birthHour : "",
       }));
+      
+      // Firebase에 궁합 히스토리 저장
+      if (userId) {
+        await saveMatchHistory({
+          oderId: userId,
+          matchType: "birth",
+          partnerNickname: nickname,
+          partnerInfo: {
+            birthYear: theirYear,
+            birthMonth: theirMonth,
+            birthDay: theirDay,
+          },
+          compatibilityScore: matchResult.totalScore,
+        });
+      }
     }
   };
 

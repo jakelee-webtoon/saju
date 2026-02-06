@@ -12,12 +12,24 @@ import {
 import { getKakaoUser } from "@/app/lib/kakao";
 import { getNaverUser } from "@/app/lib/naver";
 import { initPortOne, requestPayment, verifyPayment } from "@/app/lib/portone";
+import { savePaymentRecord, updateArrowStats, incrementFeatureUsage } from "@/app/lib/firebase/userService";
 import BottomNav, { TabId } from "@/app/components/BottomNav";
 import SwipeBack from "@/app/components/SwipeBack";
 
 // 로그인 상태 확인 (카카오 or 네이버)
 function checkLoggedIn() {
   return !!getKakaoUser() || !!getNaverUser();
+}
+
+// 로그인된 사용자 ID 가져오기
+function getUserId(): string | null {
+  const kakaoUser = getKakaoUser();
+  if (kakaoUser) return kakaoUser.id;
+  
+  const naverUser = getNaverUser();
+  if (naverUser) return naverUser.id;
+  
+  return null;
 }
 
 // 로그인된 사용자 이름 가져오기
@@ -104,6 +116,28 @@ export default function ShopPage() {
           const newBalance = await addArrowSync(totalArrows);
           setBalance(newBalance);
           localStorage.removeItem("pendingPayment");
+          
+          // 결제 내역 저장
+          const userId = getUserId();
+          if (userId) {
+            await savePaymentRecord({
+              oderId: userId,
+              packageId: pkg.id,
+              packageName: pkg.name,
+              amount: pkg.price,
+              arrows: totalArrows,
+              paymentMethod: "kakaopay",
+              impUid: response.imp_uid,
+              merchantUid: response.merchant_uid,
+              status: "completed",
+            });
+            
+            // 화살 구매 통계 업데이트
+            await updateArrowStats(userId, "purchased", totalArrows);
+            
+            // 상점 사용 통계 업데이트
+            await incrementFeatureUsage(userId, "shop");
+          }
           
           setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
           setTimeout(() => setToast(null), 2500);

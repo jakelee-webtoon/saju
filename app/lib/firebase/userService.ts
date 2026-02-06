@@ -6,9 +6,80 @@ import {
   updateDoc, 
   serverTimestamp,
   Timestamp,
-  arrayUnion
+  arrayUnion,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  where
 } from "firebase/firestore";
 import { db } from "./config";
+
+// 결제 내역 타입
+export interface PaymentRecord {
+  id?: string;
+  oderId: string;
+  packageId: string;
+  packageName: string;
+  amount: number;
+  arrows: number;
+  paymentMethod: string;
+  impUid: string;
+  merchantUid: string;
+  status: "completed" | "failed" | "refunded";
+  createdAt: Timestamp | null;
+}
+
+// 궁합 히스토리 타입
+export interface MatchHistoryRecord {
+  id?: string;
+  oderId: string;
+  matchType: "mbti" | "birth";
+  partnerNickname: string;
+  partnerInfo: {
+    mbti?: string;
+    birthYear?: number;
+    birthMonth?: number;
+    birthDay?: number;
+  };
+  compatibilityScore?: number;
+  createdAt: Timestamp | null;
+}
+
+// 오늘 운세 캐시 타입
+export interface DailyFortuneCache {
+  oderId: string;
+  date: string; // YYYY-MM-DD
+  fortuneData: {
+    loveScore: number;
+    actionTip: string;
+    luckyTime: string;
+    warningTime: string;
+    todayKeyword: string;
+    detailedFortune: string;
+  };
+  createdAt: Timestamp | null;
+}
+
+// 사용 통계 타입
+export interface UsageStats {
+  oderId: string;
+  totalLogins: number;
+  totalMatchChecks: number;
+  totalDecisionMade: number;
+  totalArrowsUsed: number;
+  totalArrowsPurchased: number;
+  lastActiveAt: Timestamp | null;
+  featureUsage: {
+    todayFortune: number;
+    mbtiMatch: number;
+    birthMatch: number;
+    decisionGuide: number;
+    shop: number;
+  };
+}
 
 // 사용자 데이터 타입
 export interface UserData {
@@ -305,6 +376,295 @@ export async function markOnboardingCompleteInDB(oderId: string): Promise<boolea
     return true;
   } catch (error) {
     console.error("Error marking onboarding complete:", error);
+    return false;
+  }
+}
+
+// ============================================
+// 결제 내역 관련 함수
+// ============================================
+
+// 결제 내역 저장
+export async function savePaymentRecord(
+  record: Omit<PaymentRecord, "id" | "createdAt">
+): Promise<string | null> {
+  try {
+    const paymentsRef = collection(db, "payments");
+    const docRef = await addDoc(paymentsRef, {
+      ...record,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error saving payment record:", error);
+    return null;
+  }
+}
+
+// 사용자 결제 내역 조회
+export async function getPaymentHistory(
+  oderId: string,
+  limitCount: number = 10
+): Promise<PaymentRecord[]> {
+  try {
+    const paymentsRef = collection(db, "payments");
+    const q = query(
+      paymentsRef,
+      where("oderId", "==", oderId),
+      orderBy("createdAt", "desc"),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PaymentRecord));
+  } catch (error) {
+    console.error("Error getting payment history:", error);
+    return [];
+  }
+}
+
+// ============================================
+// 궁합 히스토리 관련 함수
+// ============================================
+
+// 궁합 기록 저장
+export async function saveMatchHistory(
+  record: Omit<MatchHistoryRecord, "id" | "createdAt">
+): Promise<string | null> {
+  try {
+    const matchesRef = collection(db, "matchHistory");
+    const docRef = await addDoc(matchesRef, {
+      ...record,
+      createdAt: serverTimestamp(),
+    });
+    
+    // 사용 통계 업데이트
+    await incrementFeatureUsage(record.oderId, record.matchType === "mbti" ? "mbtiMatch" : "birthMatch");
+    
+    return docRef.id;
+  } catch (error) {
+    console.error("Error saving match history:", error);
+    return null;
+  }
+}
+
+// 사용자 궁합 히스토리 조회
+export async function getMatchHistory(
+  oderId: string,
+  limitCount: number = 10
+): Promise<MatchHistoryRecord[]> {
+  try {
+    const matchesRef = collection(db, "matchHistory");
+    const q = query(
+      matchesRef,
+      where("oderId", "==", oderId),
+      orderBy("createdAt", "desc"),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as MatchHistoryRecord));
+  } catch (error) {
+    console.error("Error getting match history:", error);
+    return [];
+  }
+}
+
+// ============================================
+// 오늘 운세 캐시 관련 함수
+// ============================================
+
+// 오늘 운세 캐시 저장
+export async function saveDailyFortuneCache(
+  oderId: string,
+  fortuneData: DailyFortuneCache["fortuneData"]
+): Promise<boolean> {
+  try {
+    const today = getTodayDateString();
+    const cacheRef = doc(db, "dailyFortuneCache", `${oderId}_${today}`);
+    
+    await setDoc(cacheRef, {
+      oderId,
+      date: today,
+      fortuneData,
+      createdAt: serverTimestamp(),
+    });
+    
+    // 사용 통계 업데이트
+    await incrementFeatureUsage(oderId, "todayFortune");
+    
+    return true;
+  } catch (error) {
+    console.error("Error saving daily fortune cache:", error);
+    return false;
+  }
+}
+
+// 오늘 운세 캐시 조회
+export async function getDailyFortuneCache(
+  oderId: string
+): Promise<DailyFortuneCache["fortuneData"] | null> {
+  try {
+    const today = getTodayDateString();
+    const cacheRef = doc(db, "dailyFortuneCache", `${oderId}_${today}`);
+    const cacheSnap = await getDoc(cacheRef);
+    
+    if (cacheSnap.exists()) {
+      const data = cacheSnap.data() as DailyFortuneCache;
+      return data.fortuneData;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting daily fortune cache:", error);
+    return null;
+  }
+}
+
+// ============================================
+// 사용 통계 관련 함수
+// ============================================
+
+// 사용 통계 초기화/가져오기
+export async function getOrCreateUsageStats(oderId: string): Promise<UsageStats | null> {
+  try {
+    const statsRef = doc(db, "usageStats", oderId);
+    const statsSnap = await getDoc(statsRef);
+    
+    if (statsSnap.exists()) {
+      return statsSnap.data() as UsageStats;
+    }
+    
+    // 새로 생성
+    const defaultStats: Omit<UsageStats, "lastActiveAt"> & { lastActiveAt: ReturnType<typeof serverTimestamp> } = {
+      oderId,
+      totalLogins: 0,
+      totalMatchChecks: 0,
+      totalDecisionMade: 0,
+      totalArrowsUsed: 0,
+      totalArrowsPurchased: 0,
+      lastActiveAt: serverTimestamp(),
+      featureUsage: {
+        todayFortune: 0,
+        mbtiMatch: 0,
+        birthMatch: 0,
+        decisionGuide: 0,
+        shop: 0,
+      },
+    };
+    
+    await setDoc(statsRef, defaultStats);
+    return await getDoc(statsRef).then(snap => snap.data() as UsageStats);
+  } catch (error) {
+    console.error("Error getting usage stats:", error);
+    return null;
+  }
+}
+
+// 기능 사용 횟수 증가
+export async function incrementFeatureUsage(
+  oderId: string,
+  feature: keyof UsageStats["featureUsage"]
+): Promise<boolean> {
+  try {
+    const statsRef = doc(db, "usageStats", oderId);
+    const statsSnap = await getDoc(statsRef);
+    
+    if (!statsSnap.exists()) {
+      await getOrCreateUsageStats(oderId);
+    }
+    
+    await updateDoc(statsRef, {
+      [`featureUsage.${feature}`]: (statsSnap.data()?.featureUsage?.[feature] || 0) + 1,
+      lastActiveAt: serverTimestamp(),
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error incrementing feature usage:", error);
+    return false;
+  }
+}
+
+// 로그인 횟수 증가
+export async function incrementLoginCount(oderId: string): Promise<boolean> {
+  try {
+    const statsRef = doc(db, "usageStats", oderId);
+    const statsSnap = await getDoc(statsRef);
+    
+    if (!statsSnap.exists()) {
+      await getOrCreateUsageStats(oderId);
+    }
+    
+    const currentCount = statsSnap.data()?.totalLogins || 0;
+    await updateDoc(statsRef, {
+      totalLogins: currentCount + 1,
+      lastActiveAt: serverTimestamp(),
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error incrementing login count:", error);
+    return false;
+  }
+}
+
+// 화살 사용/구매 통계 업데이트
+export async function updateArrowStats(
+  oderId: string,
+  type: "used" | "purchased",
+  amount: number
+): Promise<boolean> {
+  try {
+    const statsRef = doc(db, "usageStats", oderId);
+    const statsSnap = await getDoc(statsRef);
+    
+    if (!statsSnap.exists()) {
+      await getOrCreateUsageStats(oderId);
+    }
+    
+    const field = type === "used" ? "totalArrowsUsed" : "totalArrowsPurchased";
+    const currentAmount = statsSnap.data()?.[field] || 0;
+    
+    await updateDoc(statsRef, {
+      [field]: currentAmount + amount,
+      lastActiveAt: serverTimestamp(),
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating arrow stats:", error);
+    return false;
+  }
+}
+
+// 결정 횟수 증가
+export async function incrementDecisionCount(oderId: string): Promise<boolean> {
+  try {
+    const statsRef = doc(db, "usageStats", oderId);
+    const statsSnap = await getDoc(statsRef);
+    
+    if (!statsSnap.exists()) {
+      await getOrCreateUsageStats(oderId);
+    }
+    
+    const currentCount = statsSnap.data()?.totalDecisionMade || 0;
+    await updateDoc(statsRef, {
+      totalDecisionMade: currentCount + 1,
+      lastActiveAt: serverTimestamp(),
+    });
+    
+    // 기능 사용 통계도 업데이트
+    await incrementFeatureUsage(oderId, "decisionGuide");
+    
+    return true;
+  } catch (error) {
+    console.error("Error incrementing decision count:", error);
     return false;
   }
 }

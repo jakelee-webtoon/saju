@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveKakaoUser, type KakaoUser } from "@/app/lib/kakao";
 import { saveNaverUser, verifyState, type NaverUser } from "@/app/lib/naver";
-import { handleUserLogin } from "@/app/lib/firebase/userService";
+import { handleUserLogin, incrementLoginCount } from "@/app/lib/firebase/userService";
 
 type SocialUser = KakaoUser | NaverUser;
 
@@ -53,6 +53,8 @@ function CallbackContent() {
           
           if (firebaseUser) {
             console.log("Firebase user synced:", firebaseUser.oderId);
+            // 로그인 횟수 증가
+            await incrementLoginCount(firebaseUser.oderId);
           }
           
           // 저장된 리다이렉트 URL로 이동 (없으면 홈)
