@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface OnboardingFlowProps {
   onComplete: () => void;
@@ -205,6 +205,12 @@ function AppPreview() {
 export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  
+  // 스와이프 관련 ref
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const isSwiping = useRef(false);
 
   const handleNext = () => {
     if (isAnimating) return;
@@ -220,8 +226,51 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     }
   };
 
+  const handlePrev = () => {
+    if (isAnimating || currentSlide === 0) return;
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentSlide(currentSlide - 1);
+      setIsAnimating(false);
+    }, 300);
+  };
+
   const handleSkip = () => {
     onComplete();
+  };
+
+  // 터치 이벤트 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = e.touches[0].clientX;
+    isSwiping.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping.current) return;
+    touchEndX.current = e.touches[0].clientX;
+    const diff = touchEndX.current - touchStartX.current;
+    // 스와이프 진행 중 시각적 피드백 (최대 100px)
+    setSwipeOffset(Math.max(-100, Math.min(100, diff * 0.5)));
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwiping.current) return;
+    isSwiping.current = false;
+    
+    const diff = touchEndX.current - touchStartX.current;
+    const threshold = 50; // 스와이프 감지 임계값
+    
+    setSwipeOffset(0); // 오프셋 리셋
+    
+    if (diff < -threshold) {
+      // 왼쪽 스와이프 → 다음
+      handleNext();
+    } else if (diff > threshold) {
+      // 오른쪽 스와이프 → 이전
+      handlePrev();
+    }
   };
 
   const slide = SLIDES[currentSlide];
@@ -238,8 +287,14 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         </button>
       </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 overflow-hidden">
+      {/* 메인 콘텐츠 - 터치 이벤트 추가 */}
+      <div 
+        className="flex-1 flex flex-col items-center justify-center px-6 overflow-hidden touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ transform: `translateX(${swipeOffset}px)`, transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none' }}
+      >
         {slide.type === "preview" ? (
           /* 앱 미리보기 슬라이드 */
           <div className={`transition-all duration-500 ${isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"}`}>

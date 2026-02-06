@@ -20,7 +20,16 @@ const tabs: { id: TabId; label: string; icon: string; activeIcon: string }[] = [
 
 export default function BottomNav({ activeTab, onTabChange, chatBadge = false, isShopActive = false }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe">
+    <nav 
+      className="fixed left-0 right-0 z-50 bg-white border-t border-gray-200"
+      style={{
+        bottom: 0,
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        // 모바일 브라우저 주소창 변화에도 고정
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+      }}
+    >
       <div className="mx-auto max-w-md">
         <div className="flex items-center h-16">
           {tabs.map((tab) => {
@@ -77,9 +86,6 @@ export default function BottomNav({ activeTab, onTabChange, chatBadge = false, i
           </Link>
         </div>
       </div>
-      
-      {/* iPhone Safe Area */}
-      <div className="h-safe-area-bottom bg-white" />
     </nav>
   );
 }
