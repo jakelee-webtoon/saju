@@ -267,236 +267,237 @@ export default function MatchPage() {
             <h1 className="text-2xl font-bold text-purple-900 mb-2">
               💞 궁합 보기
             </h1>
-          <p className="text-sm text-purple-600">
-            내 사주 기반으로 상대방과의 궁합을 확인해보세요
-          </p>
-        </header>
+            <p className="text-sm text-purple-600">
+              내 사주 기반으로 상대방과의 궁합을 확인해보세요
+            </p>
+          </header>
 
-        {/* 진행 표시 */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
-          <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
-        </div>
+          {/* 진행 표시 */}
+          <div className="flex items-center gap-2 mb-6">
+            <div className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
+            <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
+          </div>
 
-        {/* Step 1: 별명 입력 */}
-        {step === 1 && (
-          <section className="space-y-4">
-            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
-              <h2 className="text-sm font-bold text-purple-900 mb-3">
-                상대 별명
-              </h2>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="별명을 입력하세요"
-                maxLength={10}
-                className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-              />
-              <p className="mt-2 text-xs text-purple-400">
-                {nickname.length}/10자
-              </p>
-            </div>
+          {/* Step 1: 별명 입력 */}
+          {step === 1 && (
+            <section className="space-y-4">
+              <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
+                <h2 className="text-sm font-bold text-purple-900 mb-3">
+                  상대 별명
+                </h2>
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  placeholder="별명을 입력하세요"
+                  maxLength={10}
+                  className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                />
+                <p className="mt-2 text-xs text-purple-400">
+                  {nickname.length}/10자
+                </p>
+              </div>
 
-            <button
-              onClick={() => setStep(2)}
-              disabled={!isNicknameValid}
-              className={`w-full py-4 rounded-xl font-bold transition-all ${
-                isNicknameValid
-                  ? "bg-purple-600 text-white hover:bg-purple-700"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              다음 →
-            </button>
-          </section>
-        )}
-
-        {/* Step 2: 궁합 방식 선택 */}
-        {step === 2 && (
-          <section className="space-y-4">
-            {/* 입력된 정보 표시 */}
-            <div className="rounded-xl bg-purple-100 p-4 flex items-center justify-between">
-              <p className="text-sm text-purple-700">
-                <span className="font-bold">{nickname}</span>님과의 궁합
-              </p>
               <button
-                onClick={() => setStep(1)}
-                className="text-xs text-purple-500 hover:text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-200 transition-colors"
+                onClick={() => setStep(2)}
+                disabled={!isNicknameValid}
+                className={`w-full py-4 rounded-xl font-bold transition-all ${
+                  isNicknameValid
+                    ? "bg-purple-600 text-white hover:bg-purple-700"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
               >
-                수정
+                다음 →
               </button>
-            </div>
+            </section>
+          )}
 
-            {/* 탭 선택 */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
-              <h2 className="text-sm font-bold text-purple-900 mb-4">
-                궁합 방식 선택
-              </h2>
-              
-              <div className="flex gap-2 mb-5">
+          {/* Step 2: 궁합 방식 선택 */}
+          {step === 2 && (
+            <section className="space-y-4">
+              {/* 입력된 정보 표시 */}
+              <div className="rounded-xl bg-purple-100 p-4 flex items-center justify-between">
+                <p className="text-sm text-purple-700">
+                  <span className="font-bold">{nickname}</span>님과의 궁합
+                </p>
                 <button
-                  onClick={() => setInputType("mbti")}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
-                    inputType === "mbti"
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                  onClick={() => setStep(1)}
+                  className="text-xs text-purple-500 hover:text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-200 transition-colors"
                 >
-                  상대방 <span className="font-bold">MBTI</span>로 보기
-                </button>
-                <button
-                  onClick={() => setInputType("birth")}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
-                    inputType === "birth"
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  상대방 <span className="font-bold">생년월일</span>로 보기
+                  수정
                 </button>
               </div>
 
-              {/* MBTI 선택 */}
-              {inputType === "mbti" && (
-                <div>
-                  <p className="text-xs text-purple-500 mb-3">
-                    {theirMbti ? `선택됨: ${theirMbti}` : `${nickname}님의 MBTI를 선택하세요`}
-                  </p>
-                  <MbtiPicker
-                    value={theirMbti}
-                    onChange={(mbti) => setTheirMbti(mbti)}
-                  />
+              {/* 탭 선택 */}
+              <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
+                <h2 className="text-sm font-bold text-purple-900 mb-4">
+                  궁합 방식 선택
+                </h2>
+                
+                <div className="flex gap-2 mb-5">
+                  <button
+                    onClick={() => setInputType("mbti")}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                      inputType === "mbti"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    상대방 <span className="font-bold">MBTI</span>로 보기
+                  </button>
+                  <button
+                    onClick={() => setInputType("birth")}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                      inputType === "birth"
+                        ? "bg-purple-600 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    상대방 <span className="font-bold">생년월일</span>로 보기
+                  </button>
                 </div>
-              )}
 
-              {/* 생년월일 입력 */}
-              {inputType === "birth" && (
-                <div>
-                  <p className="text-xs text-purple-500 mb-3">
-                    {nickname}님의 생년월일을 입력하세요
-                  </p>
-                  <div className="flex gap-2">
-                    <select
-                      value={birthYear}
-                      onChange={(e) => setBirthYear(e.target.value)}
-                      className="flex-1 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    >
-                      <option value="">년</option>
-                      {years.map((y) => (
-                        <option key={y} value={y}>{y}년</option>
-                      ))}
-                    </select>
-                    <select
-                      value={birthMonth}
-                      onChange={(e) => setBirthMonth(e.target.value)}
-                      className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    >
-                      <option value="">월</option>
-                      {months.map((m) => (
-                        <option key={m} value={m}>{m}월</option>
-                      ))}
-                    </select>
-                    <select
-                      value={birthDay}
-                      onChange={(e) => setBirthDay(e.target.value)}
-                      className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    >
-                      <option value="">일</option>
-                      {days.map((d) => (
-                        <option key={d} value={d}>{d}일</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  {/* 시간 입력 (선택) */}
-                  <div className="mt-3">
-                    <button
-                      onClick={() => {
-                        setIncludeTime(!includeTime);
-                        if (!includeTime) setBirthHour("");
-                      }}
-                      className="flex items-center gap-2 text-xs text-purple-500 hover:text-purple-700 transition-colors"
-                    >
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                        includeTime ? "bg-purple-500 border-purple-500" : "border-purple-300"
-                      }`}>
-                        {includeTime && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <span>출생 시간도 입력할게요 (선택)</span>
-                    </button>
-                    
-                    {includeTime && (
-                      <div className="mt-2">
-                        <select
-                          value={birthHour}
-                          onChange={(e) => setBirthHour(e.target.value)}
-                          className="w-full rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                        >
-                          <option value="">시간 선택</option>
-                          {hours.map((h) => (
-                            <option key={h} value={h}>{h}시 ({h === 0 ? "자정" : h < 12 ? "오전" : h === 12 ? "정오" : "오후"})</option>
-                          ))}
-                        </select>
-                        <p className="mt-1 text-xs text-purple-400">
-                          시간을 알면 더 정확한 시주 분석이 가능해요
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {isBirthValid && (
-                    <p className="mt-3 text-sm text-purple-700 text-center">
-                      입력: <span className="font-bold">
-                        {birthYear}.{birthMonth}.{birthDay}
-                        {includeTime && birthHour && ` ${birthHour}시`}
-                      </span>
+                {/* MBTI 선택 */}
+                {inputType === "mbti" && (
+                  <div>
+                    <p className="text-xs text-purple-500 mb-3">
+                      {theirMbti ? `선택됨: ${theirMbti}` : `${nickname}님의 MBTI를 선택하세요`}
                     </p>
-                  )}
-                  <p className="mt-3 text-xs text-purple-400 text-center">
-                    💡 띠 궁합 + 오행 관계로 분석해드려요
-                  </p>
-                </div>
-              )}
-            </div>
+                    <MbtiPicker
+                      value={theirMbti}
+                      onChange={(mbti) => setTheirMbti(mbti)}
+                    />
+                  </div>
+                )}
 
-            {/* 궁합 보기 버튼 */}
-            <button
-              onClick={handleCalculate}
-              disabled={!canCalculate}
-              className={`w-full py-4 rounded-xl font-bold transition-all ${
-                canCalculate
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-lg"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              💕 궁합 보기
-            </button>
+                {/* 생년월일 입력 */}
+                {inputType === "birth" && (
+                  <div>
+                    <p className="text-xs text-purple-500 mb-3">
+                      {nickname}님의 생년월일을 입력하세요
+                    </p>
+                    <div className="flex gap-2">
+                      <select
+                        value={birthYear}
+                        onChange={(e) => setBirthYear(e.target.value)}
+                        className="flex-1 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      >
+                        <option value="">년</option>
+                        {years.map((y) => (
+                          <option key={y} value={y}>{y}년</option>
+                        ))}
+                      </select>
+                      <select
+                        value={birthMonth}
+                        onChange={(e) => setBirthMonth(e.target.value)}
+                        className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      >
+                        <option value="">월</option>
+                        {months.map((m) => (
+                          <option key={m} value={m}>{m}월</option>
+                        ))}
+                      </select>
+                      <select
+                        value={birthDay}
+                        onChange={(e) => setBirthDay(e.target.value)}
+                        className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      >
+                        <option value="">일</option>
+                        {days.map((d) => (
+                          <option key={d} value={d}>{d}일</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    {/* 시간 입력 (선택) */}
+                    <div className="mt-3">
+                      <button
+                        onClick={() => {
+                          setIncludeTime(!includeTime);
+                          if (!includeTime) setBirthHour("");
+                        }}
+                        className="flex items-center gap-2 text-xs text-purple-500 hover:text-purple-700 transition-colors"
+                      >
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                          includeTime ? "bg-purple-500 border-purple-500" : "border-purple-300"
+                        }`}>
+                          {includeTime && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span>출생 시간도 입력할게요 (선택)</span>
+                      </button>
+                      
+                      {includeTime && (
+                        <div className="mt-2">
+                          <select
+                            value={birthHour}
+                            onChange={(e) => setBirthHour(e.target.value)}
+                            className="w-full rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          >
+                            <option value="">시간 선택</option>
+                            {hours.map((h) => (
+                              <option key={h} value={h}>{h}시 ({h === 0 ? "자정" : h < 12 ? "오전" : h === 12 ? "정오" : "오후"})</option>
+                            ))}
+                          </select>
+                          <p className="mt-1 text-xs text-purple-400">
+                            시간을 알면 더 정확한 시주 분석이 가능해요
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-            {/* 뒤로 버튼 */}
-            <button
-              onClick={() => setStep(1)}
-              className="w-full py-3 rounded-xl text-purple-600 font-medium hover:bg-purple-50 transition-colors"
-            >
-              ← 이전으로
-            </button>
-          </section>
-        )}
+                    {isBirthValid && (
+                      <p className="mt-3 text-sm text-purple-700 text-center">
+                        입력: <span className="font-bold">
+                          {birthYear}.{birthMonth}.{birthDay}
+                          {includeTime && birthHour && ` ${birthHour}시`}
+                        </span>
+                      </p>
+                    )}
+                    <p className="mt-3 text-xs text-purple-400 text-center">
+                      💡 띠 궁합 + 오행 관계로 분석해드려요
+                    </p>
+                  </div>
+                )}
+              </div>
 
-        {/* 안내 문구 */}
-        <p className="mt-8 text-center text-xs text-purple-400">
-          궁합은 재미로 보는 참고 자료예요 😊
-        </p>
+              {/* 궁합 보기 버튼 */}
+              <button
+                onClick={handleCalculate}
+                disabled={!canCalculate}
+                className={`w-full py-4 rounded-xl font-bold transition-all ${
+                  canCalculate
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-lg"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                💕 궁합 보기
+              </button>
+
+              {/* 뒤로 버튼 */}
+              <button
+                onClick={() => setStep(1)}
+                className="w-full py-3 rounded-xl text-purple-600 font-medium hover:bg-purple-50 transition-colors"
+              >
+                ← 이전으로
+              </button>
+            </section>
+          )}
+
+          {/* 안내 문구 */}
+          <p className="mt-8 text-center text-xs text-purple-400">
+            궁합은 재미로 보는 참고 자료예요 😊
+          </p>
+        </div>
+        
+        <BottomNav 
+          activeTab="home" 
+          onTabChange={handleTabChange}
+        />
       </div>
-      
-      <BottomNav 
-        activeTab="home" 
-        onTabChange={handleTabChange}
-      />
     </SwipeBack>
   );
 }
