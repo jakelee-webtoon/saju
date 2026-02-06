@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { type MatchTexts } from "@/app/lib/match/texts";
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { getKakaoUser, isLoggedIn, shareToKakao } from "@/app/lib/kakao";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface MatchResultCardProps {
@@ -88,10 +88,18 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
     }
   };
 
-  // 카카오톡 공유
-  const handleKakaoShare = () => {
-    navigator.clipboard.writeText(shareText);
-    alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+  // 카카오톡 네이티브 공유
+  const handleKakaoShare = async () => {
+    const success = await shareToKakao({
+      title: `${gradeInfo.emoji} ${nickname}님과의 MBTI 궁합`,
+      description: `${score}점 (${result.grade}) - ${texts.declaration}`,
+      buttonTitle: "나도 궁합 보기",
+    });
+    
+    if (!success) {
+      navigator.clipboard.writeText(shareText);
+      alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+    }
     setShowShareModal(false);
   };
 

@@ -25,7 +25,7 @@ import {
   markCharacterRevealSeen,
 } from "./lib/onboarding";
 // Firebase
-import { getKakaoUser, isLoggedIn } from "./lib/kakao";
+import { getKakaoUser, isLoggedIn, shareToKakao } from "./lib/kakao";
 import { getUserData, updateBirthInfo, type UserData } from "./lib/firebase";
 
 // ========================
@@ -508,10 +508,19 @@ ${character.weaknesses.map((w: string) => `• ${w}`).join('\n')}`;
     }
   };
 
-  // 카카오톡 공유
-  const handleKakaoShare = () => {
-    navigator.clipboard.writeText(shareText);
-    alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+  // 카카오톡 네이티브 공유
+  const handleKakaoShare = async () => {
+    const success = await shareToKakao({
+      title: `${character.emoji} ${character.name}`,
+      description: character.declaration,
+      buttonTitle: "나도 캐릭터 보기",
+    });
+    
+    if (!success) {
+      // SDK 실패 시 클립보드 복사로 대체
+      navigator.clipboard.writeText(shareText);
+      alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+    }
     setShowShareModal(false);
   };
 

@@ -10,7 +10,7 @@ import {
   type DecisionGuide,
 } from "@/app/lib/cupid/decisionGuide";
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { getKakaoUser, isLoggedIn, shareToKakao } from "@/app/lib/kakao";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface TodayLovePageProps {
@@ -90,10 +90,19 @@ ${todayMode.detail.main_sentence}
     }
   };
 
-  // 카카오톡 공유
-  const handleKakaoShare = () => {
-    navigator.clipboard.writeText(shareText);
-    alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+  // 카카오톡 네이티브 공유
+  const handleKakaoShare = async () => {
+    const success = await shareToKakao({
+      title: `${todayMode.modeEmoji} ${todayMode.modeName} - 오늘의 연애 운세`,
+      description: todayMode.detail.main_sentence,
+      buttonTitle: "나도 운세 보기",
+    });
+    
+    if (!success) {
+      // SDK 실패 시 클립보드 복사로 대체
+      navigator.clipboard.writeText(shareText);
+      alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+    }
     setShowShareModal(false);
   };
 

@@ -17,8 +17,53 @@ declare global {
           fail?: (error: Error) => void;
         }) => void;
       };
+      Share: {
+        sendDefault: (options: KakaoShareOptions) => void;
+        sendCustom: (options: { templateId: number; templateArgs?: Record<string, string> }) => void;
+      };
     };
   }
+}
+
+// 카카오 공유 옵션 타입
+export interface KakaoShareOptions {
+  objectType: "feed" | "list" | "location" | "commerce" | "text";
+  content?: {
+    title: string;
+    description?: string;
+    imageUrl?: string;
+    link: {
+      mobileWebUrl?: string;
+      webUrl?: string;
+    };
+  };
+  itemContent?: {
+    profileText?: string;
+    profileImageUrl?: string;
+    titleImageText?: string;
+    titleImageUrl?: string;
+    titleImageCategory?: string;
+    items?: Array<{ item: string; itemOp: string }>;
+    sum?: string;
+    sumOp?: string;
+  };
+  social?: {
+    likeCount?: number;
+    commentCount?: number;
+    sharedCount?: number;
+  };
+  buttons?: Array<{
+    title: string;
+    link: {
+      mobileWebUrl?: string;
+      webUrl?: string;
+    };
+  }>;
+  text?: string;
+  link?: {
+    mobileWebUrl?: string;
+    webUrl?: string;
+  };
 }
 
 export interface KakaoUserResponse {
@@ -154,5 +199,90 @@ export function logout(): void {
     } catch (e) {
       // 무시
     }
+  }
+}
+
+/**
+ * 카카오톡 공유하기 (Feed 타입)
+ */
+export interface KakaoShareParams {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  buttonTitle?: string;
+  webUrl?: string;
+}
+
+export async function shareToKakao(params: KakaoShareParams): Promise<boolean> {
+  try {
+    // SDK 초기화 확인
+    if (typeof window === "undefined") {
+      console.error("Cannot share on server side");
+      return false;
+    }
+
+    // SDK가 초기화되지 않았으면 초기화
+    if (!window.Kakao?.isInitialized()) {
+      await initKakao();
+    }
+
+    const webUrl = params.webUrl || window.location.href;
+    
+    // Feed 타입 공유
+    window.Kakao.Share.sendDefault({
+      objectType: "feed",
+      content: {
+        title: params.title,
+        description: params.description,
+        imageUrl: params.imageUrl || "https://saju-kuum.vercel.app/og-image.png",
+        link: {
+          mobileWebUrl: webUrl,
+          webUrl: webUrl,
+        },
+      },
+      buttons: [
+        {
+          title: params.buttonTitle || "나도 해보기",
+          link: {
+            mobileWebUrl: webUrl,
+            webUrl: webUrl,
+          },
+        },
+      ],
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Kakao share failed:", error);
+    return false;
+  }
+}
+
+/**
+ * 텍스트 타입 카카오톡 공유 (간단한 텍스트)
+ */
+export async function shareTextToKakao(text: string, webUrl?: string): Promise<boolean> {
+  try {
+    if (typeof window === "undefined") return false;
+
+    if (!window.Kakao?.isInitialized()) {
+      await initKakao();
+    }
+
+    const url = webUrl || window.location.href;
+
+    window.Kakao.Share.sendDefault({
+      objectType: "text",
+      text: text,
+      link: {
+        mobileWebUrl: url,
+        webUrl: url,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Kakao text share failed:", error);
+    return false;
   }
 }
