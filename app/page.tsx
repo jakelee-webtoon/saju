@@ -1325,14 +1325,17 @@ export default function ManseryeokPage() {
   // 탭 변경 핸들러
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
+    // 모든 탭 전환 시 view 상태도 함께 변경
+    if (tab === "home") {
+      setView("home");
+    } else if (tab === "love") {
+      setView("love");
+    } else {
+      // chat, me 탭은 view를 home으로 리셋 (love 상태 해제)
+      setView("home");
+    }
     if (tab === "chat") {
       setShowChatBadge(false); // 카톡 탭 방문 시 배지 제거
-    }
-    if (tab === "home") {
-      setView("home"); // 홈 탭 클릭 시 홈 뷰로 리셋
-    }
-    if (tab === "love") {
-      setView("love"); // 연애 탭 클릭 시 연애 운세 페이지로
     }
   };
 
