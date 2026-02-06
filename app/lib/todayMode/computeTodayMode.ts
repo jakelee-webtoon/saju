@@ -1,49 +1,62 @@
 /**
  * 오늘 모드 계산 로직
- * - 캐릭터 성향 + 날짜 기반으로 오늘의 상태를 계산
+ * - 캐릭터 성향 + 날짜 + 사주 기반으로 오늘의 연애 흐름을 계산
  * - LLM 사용 없이 규칙 기반으로 동작
+ * - 80개 이상의 연애 모드 중 하나를 선택
  */
 
-import labelsData from "@/app/content/todayMode/labels.json";
-import templatesData from "@/app/content/todayMode/templates.json";
-import rulesData from "@/app/content/todayMode/rules.json";
+import loveModesData from "@/app/content/todayMode/loveModes.json";
 
 // 타입 정의
-export type ModeId = "rush" | "observe" | "overheat" | "cooldown" | "sensitive" | "direct" | "doubt" | "hopeful";
+export interface LoveModeColor {
+  bg: string;
+  accent: string;
+  text: string;
+}
+
+export interface LoveModeDetail {
+  mode_label: string;
+  main_sentence: string;
+  reason: string;
+  triggers: string[];
+  one_line_guide: string;
+}
+
+export interface LoveMode {
+  id: string;
+  love_mode: string;
+  emoji: string;
+  color: LoveModeColor;
+  home_summary: string;
+  detail: LoveModeDetail;
+}
 
 export interface TodayModeResult {
-  modeId: ModeId;
+  // 기본 정보
+  modeId: string;
   modeName: string;
-  modeLabel: string; // "🔥 급발진" 형태
-  titleLine: string; // "⚡ 오늘 모드: 급발진 확률 ↑"
-  // 홈 화면용 (3인칭 관찰자 톤)
-  statusOneLiner: string; // 오늘의 한 줄 상태
-  loveModeLine: string; // 오늘의 연애 모드
-  // 기존 필드 (상세용)
-  statusLine: string; // 상태 요약 한 줄
-  tipLine: string; // 팁 한 줄
-  // 상세 모달용
+  modeEmoji: string;
+  modeLabel: string; // "🧊 쿨다운" 형태
+  
+  // 색상
+  color: LoveModeColor;
+  
+  // 홈 화면용
+  homeTitle: string; // "💗 오늘의 나의 연애 모드"
+  homeSummary: string; // 요약 문장 1줄
+  
+  // 상세 화면용
+  detail: LoveModeDetail;
+  
+  // Legacy 필드 (기존 호환용)
+  titleLine: string;
+  statusLine: string;
+  tipLine: string;
+  statusOneLiner: string;
+  loveModeLine: string;
   reasonLine: string;
   vulnerableLines: string[];
   guideLine: string;
-}
-
-interface ModeLabel {
-  id: string;
-  name: string;
-  emoji: string;
-  shortTitle: string;
-  description: string;
-}
-
-interface ModeTemplate {
-  statusOneLinerTemplates: string[];
-  loveModeLineTemplates: string[];
-  statusLines: string[];
-  tipLines: string[];
-  reasonLines: string[];
-  vulnerableLines: string[];
-  guideLines: string[];
 }
 
 /**
@@ -65,55 +78,64 @@ function seededRandom(seed: number): number {
 }
 
 /**
- * 가중치 배열에서 시드 기반으로 선택
+ * 캐릭터 ID에서 오행 추출
  */
-function weightedSelect<T>(items: T[], weights: number[], seed: number): T {
-  const totalWeight = weights.reduce((a, b) => a + b, 0);
-  if (totalWeight === 0) {
-    // 모든 가중치가 0이면 균등 분포
-    const index = Math.floor(seededRandom(seed) * items.length);
-    return items[index];
+function getElementFromCharacterId(characterId: string): string {
+  const elementMap: Record<string, string> = {
+    fire: "화", water: "수", wood: "목", earth: "토", metal: "금",
+    화: "화", 수: "수", 목: "목", 토: "토", 금: "금"
+  };
+  
+  const parts = characterId.toLowerCase().split("_");
+  for (const part of parts) {
+    if (elementMap[part]) return elementMap[part];
   }
-  
-  let random = seededRandom(seed) * totalWeight;
-  
-  for (let i = 0; i < items.length; i++) {
-    random -= weights[i];
-    if (random <= 0) {
-      return items[i];
-    }
-  }
-  
-  return items[items.length - 1];
+  return "화"; // 기본값
 }
 
 /**
- * 배열에서 시드 기반으로 하나 선택
+ * 오행별 연애 모드 가중치
+ * 각 오행의 특성에 따라 특정 모드가 나올 확률을 조정
  */
-function selectFromArray<T>(arr: T[], seed: number): T {
-  const index = Math.floor(seededRandom(seed) * arr.length);
-  return arr[index];
-}
-
-/**
- * 배열에서 시드 기반으로 여러 개 선택 (중복 없이)
- */
-function selectMultipleFromArray<T>(arr: T[], count: number, seed: number): T[] {
-  const result: T[] = [];
-  const available = [...arr];
-  
-  for (let i = 0; i < count && available.length > 0; i++) {
-    const index = Math.floor(seededRandom(seed + i * 1000) * available.length);
-    result.push(available[index]);
-    available.splice(index, 1);
+const elementModeWeights: Record<string, Record<string, number>> = {
+  화: {
+    rush: 3, intense: 3, direct: 3, impulsive: 2, passionate: 2,
+    cooldown: 0.5, patient: 0.5, slow: 0.5, detached: 0.5
+  },
+  수: {
+    cooldown: 3, observe: 3, mysterious: 2, overthink: 2, sensitive: 2,
+    rush: 0.5, direct: 0.5, impulsive: 0.5
+  },
+  목: {
+    hopeful: 3, adventurous: 2, curious: 2, supportive: 2, optimistic: 2,
+    cooldown: 0.5, pessimistic: 0.5, detached: 0.5
+  },
+  토: {
+    stable: 3, patient: 3, realistic: 2, careful: 2, balanced: 2,
+    rush: 0.5, impulsive: 0.5, adventurous: 0.5
+  },
+  금: {
+    realistic: 3, selective: 3, decisive: 2, boundary: 2, honest: 2,
+    dreamy: 0.5, romantic: 0.5, clinging: 0.5
   }
-  
-  return result;
-}
+};
 
 /**
- * 오늘 모드 계산
- * @param characterId 캐릭터 ID (예: "fire_wood", "water_metal")
+ * 요일별 모드 가중치 조정
+ */
+const dayOfWeekWeights: Record<number, Record<string, number>> = {
+  0: { lonely: 1.5, healing: 1.5, lazy_love: 1.5 }, // 일요일
+  1: { realistic: 1.5, focused: 1.5, careful: 1.5 }, // 월요일
+  2: { communicative: 1.5, direct: 1.2 }, // 화요일
+  3: { balanced: 1.5, compromising: 1.2 }, // 수요일
+  4: { hopeful: 1.5, adventurous: 1.2, flirty: 1.2 }, // 목요일
+  5: { playful: 1.5, romantic: 1.5, cheerful: 1.5 }, // 금요일
+  6: { flutter: 1.5, affectionate: 1.5, freedom: 1.5 } // 토요일
+};
+
+/**
+ * 오늘의 연애 모드 계산
+ * @param characterId 캐릭터 ID
  * @param date 기준 날짜 (기본값: 오늘)
  */
 export function computeTodayMode(
@@ -122,68 +144,88 @@ export function computeTodayMode(
 ): TodayModeResult {
   const dateSeed = getDateSeed(date);
   const dayOfWeek = date.getDay();
+  const element = getElementFromCharacterId(characterId);
   
-  // 1. 캐릭터별 기본 가중치 가져오기
-  const characterWeights = (rulesData.characterModeWeights as Record<string, Record<ModeId, number>>)[characterId] 
-    || rulesData.characterModeWeights["balance"];
+  // 모든 모드 목록
+  const allModes = loveModesData.modes as LoveMode[];
   
-  // 2. 요일 보정 적용
-  const dayModifiers = (rulesData.dayOfWeekModifiers as Record<string, Record<string, number>>)[dayOfWeek.toString()] || {};
-  
-  // 3. 최종 가중치 계산
-  const modeIds: ModeId[] = ["rush", "observe", "overheat", "cooldown", "sensitive", "direct", "doubt", "hopeful"];
-  const finalWeights = modeIds.map(modeId => {
-    const base = characterWeights[modeId] || 1;
-    const modifier = dayModifiers[modeId] || 0;
-    return Math.max(0, base + modifier);
+  // 1. 각 모드의 가중치 계산
+  const modeWeights = allModes.map(mode => {
+    let weight = 1;
+    
+    // 오행 가중치 적용
+    const elementWeights = elementModeWeights[element] || {};
+    if (elementWeights[mode.id]) {
+      weight *= elementWeights[mode.id];
+    }
+    
+    // 요일 가중치 적용
+    const dayWeights = dayOfWeekWeights[dayOfWeek] || {};
+    if (dayWeights[mode.id]) {
+      weight *= dayWeights[mode.id];
+    }
+    
+    // 날짜 기반 변동 (같은 날 같은 결과를 위한 pseudo-random)
+    const dateVariation = seededRandom(dateSeed + mode.id.charCodeAt(0)) * 0.5 + 0.75;
+    weight *= dateVariation;
+    
+    return { mode, weight };
   });
   
-  // 4. 시드 기반으로 모드 선택
+  // 2. 가중치 기반 모드 선택
+  const totalWeight = modeWeights.reduce((sum, m) => sum + m.weight, 0);
   const combinedSeed = dateSeed + characterId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const selectedModeId = weightedSelect(modeIds, finalWeights, combinedSeed);
+  let random = seededRandom(combinedSeed) * totalWeight;
   
-  // 5. 라벨 정보 가져오기
-  const labelInfo = labelsData.labels.find(l => l.id === selectedModeId) as ModeLabel;
+  let selectedMode: LoveMode = allModes[0];
+  for (const { mode, weight } of modeWeights) {
+    random -= weight;
+    if (random <= 0) {
+      selectedMode = mode;
+      break;
+    }
+  }
   
-  // 6. 템플릿에서 문장 선택
-  const templates = (templatesData.templates as Record<ModeId, ModeTemplate>)[selectedModeId];
-  
-  // 홈 화면용 (3인칭 톤)
-  const statusOneLiner = selectFromArray(templates.statusOneLinerTemplates, combinedSeed + 10);
-  const loveModeLine = selectFromArray(templates.loveModeLineTemplates, combinedSeed + 11);
-  
-  // 기존 필드
-  const statusLine = selectFromArray(templates.statusLines, combinedSeed + 1);
-  const tipLine = selectFromArray(templates.tipLines, combinedSeed + 2);
-  const reasonLine = selectFromArray(templates.reasonLines, combinedSeed + 3);
-  const vulnerableLines = selectMultipleFromArray(templates.vulnerableLines, 3, combinedSeed + 4);
-  const guideLine = selectFromArray(templates.guideLines, combinedSeed + 5);
-  
+  // 3. 결과 구성
   return {
-    modeId: selectedModeId,
-    modeName: labelInfo.name,
-    modeLabel: `${labelInfo.emoji} ${labelInfo.name}`,
-    titleLine: `⚡ 오늘 모드: ${labelInfo.shortTitle}`,
-    statusOneLiner,
-    loveModeLine,
-    statusLine,
-    tipLine,
-    reasonLine,
-    vulnerableLines,
-    guideLine,
+    // 기본 정보
+    modeId: selectedMode.id,
+    modeName: selectedMode.love_mode,
+    modeEmoji: selectedMode.emoji,
+    modeLabel: `${selectedMode.emoji} ${selectedMode.love_mode}`,
+    
+    // 색상
+    color: selectedMode.color,
+    
+    // 홈 화면용
+    homeTitle: "💗 오늘의 나의 연애 모드",
+    homeSummary: selectedMode.home_summary,
+    
+    // 상세 화면용
+    detail: selectedMode.detail,
+    
+    // Legacy 필드 (기존 코드 호환)
+    titleLine: `⚡ 오늘 모드: ${selectedMode.love_mode}`,
+    statusLine: selectedMode.detail.main_sentence,
+    tipLine: selectedMode.detail.one_line_guide,
+    statusOneLiner: selectedMode.home_summary,
+    loveModeLine: selectedMode.home_summary,
+    reasonLine: selectedMode.detail.reason,
+    vulnerableLines: selectedMode.detail.triggers,
+    guideLine: selectedMode.detail.one_line_guide,
   };
 }
 
 /**
- * 모든 모드 라벨 목록 반환
+ * 모든 연애 모드 목록 반환
  */
-export function getAllModeLabels(): ModeLabel[] {
-  return labelsData.labels as ModeLabel[];
+export function getAllLoveModes(): LoveMode[] {
+  return loveModesData.modes as LoveMode[];
 }
 
 /**
- * 특정 모드의 상세 정보 반환
+ * 특정 모드 ID로 모드 정보 조회
  */
-export function getModeDetails(modeId: ModeId): ModeLabel | undefined {
-  return labelsData.labels.find(l => l.id === modeId) as ModeLabel | undefined;
+export function getLoveModeById(modeId: string): LoveMode | undefined {
+  return (loveModesData.modes as LoveMode[]).find(m => m.id === modeId);
 }

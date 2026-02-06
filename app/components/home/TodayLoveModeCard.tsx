@@ -1,8 +1,10 @@
 "use client";
 
+import { type TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
+
 interface TodayLoveModeCardProps {
-  loveModeLine: string;
-  onClick?: () => void;
+  todayMode: TodayModeResult;
+  onClick: () => void;
 }
 
 /**
@@ -10,29 +12,36 @@ interface TodayLoveModeCardProps {
  * - 연애 상황에만 초점
  * - 애매 + 공감 + 해석 여지
  * - 확정/미래예측 없이 가능성/흐름만 표현
- * - 클릭 시 상세 페이지로 이동
+ * - 각 모드별 색상 적용
  */
-export default function TodayLoveModeCard({ loveModeLine, onClick }: TodayLoveModeCardProps) {
+export default function TodayLoveModeCard({ todayMode, onClick }: TodayLoveModeCardProps) {
+  // 배경 그라데이션 클래스
+  const bgGradient = `bg-gradient-to-r ${todayMode.color.bg}`;
+  
   return (
     <section
+      className={`rounded-2xl ${bgGradient} p-5 border border-white/50 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm`}
       onClick={onClick}
-      className={`rounded-2xl bg-gradient-to-r from-rose-50 to-pink-50 p-5 border border-rose-100 transition-all ${
-        onClick ? "cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99]" : ""
-      }`}
     >
-      <div className="flex items-start gap-3">
-        <span className="text-xl shrink-0">💕</span>
+      <div className="flex items-center justify-between gap-3">
         <div className="flex-1">
-          <h3 className="text-xs font-semibold text-rose-400 mb-2 uppercase tracking-wider">
-            오늘의 연애 흐름
+          <h3 className={`text-base font-bold ${todayMode.color.text} mb-2`}>
+            {todayMode.homeTitle}
           </h3>
-          <p className="text-sm text-rose-800 leading-relaxed font-medium">
-            {loveModeLine}
+          
+          {/* 모드 배지 */}
+          <div className="mb-2">
+            <span className={`inline-flex items-center gap-1.5 rounded-full ${todayMode.color.accent} px-3 py-1 text-xs font-bold text-white`}>
+              {todayMode.modeEmoji} {todayMode.modeName}
+            </span>
+          </div>
+          
+          {/* 요약 문장 */}
+          <p className="text-sm text-gray-700 leading-relaxed font-medium">
+            {todayMode.homeSummary}
           </p>
         </div>
-        {onClick && (
-          <span className="text-rose-300 text-lg shrink-0">→</span>
-        )}
+        <span className={`${todayMode.color.text} text-lg opacity-60`}>→</span>
       </div>
     </section>
   );

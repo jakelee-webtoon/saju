@@ -1,6 +1,7 @@
 "use client";
 
-import { TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
+import { type TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
+import { useEffect, useState } from "react";
 
 interface TodayLovePageProps {
   todayMode: TodayModeResult;
@@ -8,138 +9,122 @@ interface TodayLovePageProps {
   onBack: () => void;
 }
 
-/**
- * 오늘의 연애 운세 상세 페이지
- * - 이미지 디자인 기반
- * - 모드 정보, 왜 이런 모드인지, 흔들릴 때, 가이드 제공
- */
-export default function TodayLovePage({ todayMode, characterName, onBack }: TodayLovePageProps) {
-  const today = new Date();
-  const dateString = today.toLocaleDateString("ko-KR", {
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  });
+export default function TodayLovePage({
+  todayMode,
+  characterName,
+  onBack,
+}: TodayLovePageProps) {
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleShare = async () => {
-    const shareText = `[오늘의 연애 운세]\n${dateString}\n\n${todayMode.modeLabel}\n${todayMode.statusLine}\n\n💡 ${todayMode.tipLine}\n\n🧠 ${todayMode.guideLine}`;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "오늘의 연애 운세",
-          text: shareText,
-        });
-      } catch {
-        // 사용자가 공유 취소한 경우
-      }
-    } else {
-      navigator.clipboard.writeText(shareText);
-      alert("클립보드에 복사됐어요! 💕");
-    }
-  };
+  if (!isMounted) return null;
+
+  // 배경 그라데이션 클래스
+  const bgGradient = `bg-gradient-to-br ${todayMode.color.bg}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#FFF9E6] to-[#FFF5D6]">
-      <div className="mx-auto max-w-md px-5 py-6">
-        {/* 헤더 - 뒤로가기 */}
+    <div className={`min-h-screen ${bgGradient} pb-20`}>
+      <div className="mx-auto max-w-md px-5 py-8">
+        {/* 헤더 */}
         <header className="mb-6">
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-sm text-amber-600 hover:text-amber-800 transition-colors font-medium"
+            className={`mb-4 flex items-center gap-1 text-sm ${todayMode.color.text} hover:opacity-70 transition-colors`}
           >
             <span>←</span>
             <span>돌아가기</span>
           </button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
+          </h1>
+          <p className={`text-lg font-semibold ${todayMode.color.text}`}>
+            오늘의 연애 운세
+          </p>
         </header>
 
-        {/* 메인 카드 */}
-        <section className="mb-5 rounded-3xl bg-white p-6 shadow-sm border border-amber-100 relative overflow-hidden">
-          {/* 하트 데코 */}
-          <div className="absolute top-4 right-4 opacity-20">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="#FFB6C1">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </div>
-
-          {/* 날짜 */}
-          <p className="text-sm text-amber-500 font-medium mb-2">{dateString}</p>
-
-          {/* 타이틀 */}
-          <h1 className="text-2xl font-bold text-[#1a1a2e] mb-1">오늘의 연애 운세</h1>
-          <p className="text-sm text-[#6b7280] mb-5">{characterName} 기준</p>
-
-          {/* 모드 배지 */}
-          <div className="flex justify-center mb-4">
-            <span className="inline-block px-6 py-2.5 rounded-full bg-amber-400 text-white font-bold text-base shadow-sm">
-              {todayMode.modeLabel}
-            </span>
-          </div>
-
-          {/* 상태 요약 */}
-          <p className="text-center text-[#374151] font-medium text-base mb-4">
-            {todayMode.statusLine}
-          </p>
-
-          {/* 팁 */}
-          <div className="rounded-2xl bg-amber-50 px-4 py-3 border border-amber-100">
-            <p className="text-center text-amber-700 text-sm">
-              💡 {todayMode.tipLine}
-            </p>
-          </div>
-        </section>
-
-        {/* 왜 이런 모드냐면 */}
-        <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm border border-amber-100">
-          <h2 className="flex items-center gap-2 text-base font-bold text-[#1a1a2e] mb-3">
-            <span>📌</span> 오늘 왜 이런 모드냐면
-          </h2>
-          <p className="text-sm text-[#4b5563] leading-relaxed whitespace-pre-line">
-            {todayMode.reasonLine}
+        {/* 캐릭터 기준 */}
+        <section className="mb-6 rounded-xl bg-white/80 backdrop-blur p-4 shadow-sm border border-white/50">
+          <p className={`text-xs ${todayMode.color.text} text-center`}>
+            {characterName} 캐릭터 기준
           </p>
         </section>
 
-        {/* 흔들릴 수 있는 상황 */}
-        <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm border border-amber-100">
-          <h2 className="flex items-center gap-2 text-base font-bold text-amber-500 mb-3">
-            <span>💬</span> 오늘 이럴 때 특히 흔들릴 수 있어
+        {/* 모드 배지 */}
+        <section className="mb-6 text-center">
+          <span className={`inline-flex items-center gap-2 rounded-full ${todayMode.color.accent} px-5 py-2.5 text-base font-bold text-white shadow-lg`}>
+            {todayMode.modeEmoji} {todayMode.modeName}
+          </span>
+        </section>
+
+        {/* 상태 요약 + 팁 */}
+        <section className="mb-6 rounded-2xl bg-white/90 backdrop-blur p-6 shadow-lg border border-white/50">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">
+            {todayMode.detail.main_sentence}
           </h2>
-          <ul className="space-y-2">
-            {todayMode.vulnerableLines.map((line, index) => (
-              <li key={index} className="flex items-start gap-2">
-                <span className="w-2 h-2 mt-1.5 rounded-full bg-amber-400 shrink-0"></span>
-                <span className="text-sm text-amber-700">{line}</span>
+          <p className={`text-sm ${todayMode.color.text} leading-relaxed`}>
+            {todayMode.homeSummary}
+          </p>
+        </section>
+
+        {/* 상세 설명 섹션 */}
+        <section className="mb-6 rounded-2xl bg-white/90 backdrop-blur p-6 shadow-lg border border-white/50">
+          {/* 오늘 왜 이런 모드냐면 */}
+          <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span className={todayMode.color.text}>📌</span> 오늘 왜 이런 모드냐면
+          </h3>
+          <p className="text-sm text-gray-700 leading-relaxed mb-5">
+            {todayMode.detail.reason}
+          </p>
+
+          {/* 오늘 이럴 때 특히 흔들릴 수 있어 */}
+          <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span className={todayMode.color.text}>💬</span> 오늘 이럴 때 특히 흔들릴 수 있어
+          </h3>
+          <ul className="space-y-2 mb-5">
+            {todayMode.detail.triggers.map((trigger, i) => (
+              <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                <span className={`${todayMode.color.text} opacity-70`}>•</span>
+                <span>{trigger}</span>
               </li>
             ))}
           </ul>
-        </section>
 
-        {/* 오늘의 한 줄 가이드 */}
-        <section className="mb-5 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-300 p-5 shadow-sm">
-          <h2 className="flex items-center gap-2 text-sm font-medium text-amber-800/70 mb-2">
-            <span>🧠</span> 오늘의 한 줄 가이드
-          </h2>
-          <p className="text-base font-bold text-[#1a1a2e] leading-relaxed">
-            {todayMode.guideLine}
+          {/* 오늘의 한 줄 가이드 */}
+          <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <span className={todayMode.color.text}>🧠</span> 오늘의 한 줄 가이드
+          </h3>
+          <p className={`text-sm ${todayMode.color.text} font-medium leading-relaxed p-3 rounded-xl bg-gray-50`}>
+            &ldquo;{todayMode.detail.one_line_guide}&rdquo;
           </p>
         </section>
 
         {/* 공유 버튼 */}
         <button
-          onClick={handleShare}
-          className="w-full mb-4 rounded-2xl bg-amber-400 py-4 text-base font-bold text-white transition-all hover:bg-amber-500 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
+          className={`w-full mb-4 rounded-xl ${todayMode.color.accent} py-4 text-[15px] font-bold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]`}
+          onClick={() => {
+            const shareText = `[오늘의 연애 운세: ${characterName}]\n${todayMode.modeLabel}\n\n${todayMode.detail.main_sentence}\n\n${todayMode.detail.one_line_guide}`;
+            if (navigator.share) {
+              navigator.share({
+                title: `오늘의 연애 운세: ${characterName}`,
+                text: shareText,
+              });
+            } else {
+              navigator.clipboard.writeText(shareText);
+              alert("클립보드에 복사됨!\n" + shareText);
+            }
+          }}
         >
-          <span>🚗</span>
-          <span>오늘의 운세 공유하기</span>
+          <span>📤</span>
+          <span>오늘의 연애 운세 공유하기</span>
         </button>
 
         {/* 하단 안내 */}
-        <div className="rounded-xl bg-white/60 p-3 border border-amber-100">
-          <p className="text-xs text-[#9ca3af] text-center">
-            이건 예언이 아니라,<br />
-            오늘 네 컨디션에 맞는 리포트야 😊
-          </p>
-        </div>
+        <p className="text-center text-[10px] text-gray-500">
+          이건 운세가 아니라, 오늘의 감정 컨디션 리포트예요 😊
+        </p>
       </div>
     </div>
   );

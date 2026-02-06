@@ -84,3 +84,17 @@ body {
 .animate-slideUp {
   animation: slideUp 0.3s ease-out forwards;
 }
+
+/* Safe Area for Bottom Navigation */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.h-safe-area-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+/* Bottom Nav가 있을 때 컨텐츠 하단 여백 */
+.pb-bottom-nav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}

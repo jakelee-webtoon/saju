@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { calculateManseWithLibrary, type ManseResult, type BirthInput, type Element, type TrustLevel } from "./lib/saju";
 import { computeTodayMode, type TodayModeResult } from "./lib/todayMode/computeTodayMode";
 import TodayModeSnippet from "./components/todayMode/TodayModeSnippet";
 import TodayModeBottomSheet from "./components/todayMode/TodayModeBottomSheet";
 import TodayLovePage from "./components/todayMode/TodayLovePage";
+import BottomNav, { type TabId } from "./components/BottomNav";
 // 홈 화면 컴포넌트
 import TodayStatusLine from "./components/home/TodayStatusLine";
 import CharacterSummaryCard from "./components/home/CharacterSummaryCard";
 import TodayLoveModeCard from "./components/home/TodayLoveModeCard";
 import ManseryeokAccordion from "./components/home/ManseryeokAccordion";
+import CompatibilityMiniCard from "./components/home/CompatibilityMiniCard";
 
 // ========================
 // 오행 UI 스타일
@@ -41,10 +44,12 @@ interface FormData {
 
 function BirthInfoForm({ 
   onSubmit, 
-  initialData 
+  initialData,
+  onBack 
 }: { 
   onSubmit: (data: FormData) => void;
   initialData?: FormData | null;
+  onBack?: () => void;
 }) {
   const [name, setName] = useState(initialData?.name || "");
   const [calendarType, setCalendarType] = useState<"양력" | "음력">(initialData?.calendarType || "양력");
@@ -72,6 +77,18 @@ function BirthInfoForm({
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
       <div className="mx-auto max-w-md px-5 py-8">
+        {/* 뒤로가기 버튼 */}
+        {onBack && (
+          <button 
+            type="button"
+            onClick={onBack}
+            className="mb-4 flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors"
+          >
+            <span>←</span>
+            <span>돌아가기</span>
+          </button>
+        )}
+        
         <header className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-[#1a1a2e] tracking-tight">만세력 계산기</h1>
           <p className="mt-2 text-sm text-[#6b7280]">생년월일시를 입력하여 사주를 확인하세요</p>
@@ -768,6 +785,9 @@ function InterpretationPage({
   
   // 바텀시트 상태
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  
+  // 에너지 게이지 아코디언 상태
+  const [isEnergyOpen, setIsEnergyOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
@@ -803,22 +823,7 @@ function InterpretationPage({
           </div>
         </section>
 
-        {/* [2] 공감 문장 - "이거 나야" */}
-        <section className="mb-6 rounded-2xl bg-[#f9fafb] p-6 border border-[#e5e7eb]">
-          <h2 className="text-sm font-bold text-[#1a1a2e] mb-4 flex items-center gap-2">
-            <span>👀</span> 이거 나야...
-          </h2>
-          <ul className="space-y-3">
-            {character.empathy.map((text, i) => (
-              <li key={i} className="text-sm text-[#374151] flex items-start gap-3 leading-relaxed">
-                <span className="shrink-0 text-[#9ca3af]">•</span>
-                <span>{text}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* [4] 강점과 약점 */}
+        {/* [2] 강점과 약점 */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           {/* 강점 */}
           <section className="rounded-2xl bg-emerald-50 p-5 border border-emerald-100">
@@ -849,7 +854,63 @@ function InterpretationPage({
           </section>
         </div>
 
-        {/* [3] 오늘 모드 - 캐릭터 성향 기반 오늘의 상태 */}
+        {/* [3] 공감 문장 - "이거 나야" */}
+        <section className="mb-6 rounded-2xl bg-[#f9fafb] p-6 border border-[#e5e7eb]">
+          <h2 className="text-sm font-bold text-[#1a1a2e] mb-4 flex items-center gap-2">
+            <span>👀</span> 이거 나야...
+          </h2>
+          <ul className="space-y-3">
+            {character.empathy.map((text, i) => (
+              <li key={i} className="text-sm text-[#374151] flex items-start gap-3 leading-relaxed">
+                <span className="shrink-0 text-[#9ca3af]">•</span>
+                <span>{text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* [3] 에너지 분포 (능력치 바) - 아코디언 */}
+        <section className="mb-6 rounded-2xl bg-gradient-to-br from-[#1a1a2e] to-[#2d2d44] shadow-xl overflow-hidden">
+          {/* 헤더 - 클릭하면 펼치기/접기 */}
+          <button
+            onClick={() => setIsEnergyOpen(!isEnergyOpen)}
+            className="w-full p-5 flex items-center justify-between text-left"
+          >
+            <h2 className="text-sm font-bold text-white/80 tracking-wide flex items-center gap-2">
+              <span>⚡</span> 에너지 게이지
+            </h2>
+            <span className={`text-white/60 transition-transform duration-300 ${isEnergyOpen ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+          
+          {/* 콘텐츠 - 조건부 렌더링 */}
+          <div className={`transition-all duration-300 ease-in-out ${isEnergyOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+            <div className="px-5 pb-5 space-y-3">
+              {(["목", "화", "토", "금", "수"] as Element[]).map((el) => (
+                <div key={el} className="flex items-center gap-2">
+                  <span className="w-7 text-lg text-center">{elementEmoji[el]}</span>
+                  <span 
+                    className="w-5 text-xs font-bold text-white/60 cursor-help relative group"
+                    title={elementTooltip[el]}
+                  >
+                    {el}
+                    {/* 툴팁 */}
+                    <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-white text-[#1a1a2e] text-xs font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                      {elementTooltip[el]}
+                      <span className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-white"></span>
+                    </span>
+                  </span>
+                  <div className="flex-1">
+                    <EnergyBar element={el} count={elements[el]} total={elements.total} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* [4] 오늘 모드 - 캐릭터 성향 기반 오늘의 상태 */}
         <div className="mb-6">
           <TodayModeSnippet
             todayMode={todayMode}
@@ -857,34 +918,6 @@ function InterpretationPage({
             onShowMore={() => setIsBottomSheetOpen(true)}
           />
         </div>
-
-        {/* [4] 에너지 분포 (능력치 바) */}
-        <section className="mb-6 rounded-2xl bg-gradient-to-br from-[#1a1a2e] to-[#2d2d44] p-6 shadow-xl">
-          <h2 className="text-sm font-bold text-white/60 mb-5 tracking-wide">⚡ 에너지 게이지</h2>
-          
-          <div className="space-y-3">
-            {(["목", "화", "토", "금", "수"] as Element[]).map((el) => (
-              <div key={el} className="flex items-center gap-2">
-                <span className="w-7 text-lg text-center">{elementEmoji[el]}</span>
-                <span 
-                  className="w-5 text-xs font-bold text-white/60 cursor-help relative group"
-                  title={elementTooltip[el]}
-                >
-                  {el}
-                  {/* 툴팁 */}
-                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-1.5 bg-white text-[#1a1a2e] text-xs font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                    {elementTooltip[el]}
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-white"></span>
-                  </span>
-                </span>
-                <div className="flex-1">
-                  <EnergyBar element={el} count={elements[el]} total={elements.total} />
-                </div>
-              </div>
-            ))}
-          </div>
-          
-        </section>
 
         {/* 공유 버튼 */}
         <button 
@@ -949,11 +982,12 @@ function NewHomePage({
   onViewDetail: () => void;
   onViewLove: () => void;
 }) {
+  const router = useRouter();
   const character = generateCharacterType(manseResult.elements);
   const todayMode = computeTodayMode(character.id);
 
   return (
-    <div className="min-h-screen bg-[#FAFBFC]">
+    <div className="min-h-screen bg-[#FAFBFC] pb-bottom-nav">
       <div className="mx-auto max-w-md px-5 py-6">
         {/* 헤더 */}
         <header className="mb-6 flex items-center justify-between">
@@ -991,10 +1025,15 @@ function NewHomePage({
 
         {/* [3] 오늘의 연애 모드 카드 */}
         <div className="mb-4">
-          <TodayLoveModeCard loveModeLine={todayMode.loveModeLine} onClick={onViewLove} />
+          <TodayLoveModeCard todayMode={todayMode} onClick={onViewLove} />
         </div>
 
-        {/* [4] 나의 만세력 보기 */}
+        {/* [4] 궁합 미니 카드 */}
+        <div className="mb-4">
+          <CompatibilityMiniCard onClick={() => router.push("/match")} />
+        </div>
+
+        {/* [5] 나의 만세력 보기 */}
         <div className="mb-8">
           <ManseryeokAccordion manseResult={manseResult} />
         </div>
@@ -1002,6 +1041,96 @@ function NewHomePage({
         {/* 하단 안내 */}
         <p className="text-center text-[10px] text-[#9ca3af]">
           매일 바뀌는 오늘의 상태 · 캐릭터로 풀어본 사주
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ========================
+// 카톡 분석 페이지 (Placeholder)
+// ========================
+function ChatPage() {
+  return (
+    <div className="min-h-screen bg-[#FAFBFC] pb-bottom-nav">
+      <div className="mx-auto max-w-md px-5 py-8">
+        <header className="mb-8 text-center">
+          <span className="text-4xl mb-4 block">💬</span>
+          <h1 className="text-xl font-bold text-[#1a1a2e] mb-2">카톡 분석</h1>
+          <p className="text-sm text-[#6b7280]">곧 출시 예정이에요!</p>
+        </header>
+        
+        <div className="rounded-2xl bg-white p-6 border border-[#e5e7eb] text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+            <span className="text-2xl">🔮</span>
+          </div>
+          <h2 className="text-lg font-semibold text-[#1a1a2e] mb-2">카카오톡 대화 분석</h2>
+          <p className="text-sm text-[#6b7280] leading-relaxed mb-4">
+            대화 내용을 분석해서<br />
+            상대방의 마음을 읽어드려요
+          </p>
+          <div className="inline-block px-4 py-2 rounded-full bg-amber-50 text-amber-600 text-xs font-medium">
+            Coming Soon ✨
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================
+// 내 정보 페이지 (Placeholder)
+// ========================
+function ProfilePage({ formData, onEdit }: { formData: FormData; onEdit: () => void }) {
+  return (
+    <div className="min-h-screen bg-[#FAFBFC] pb-bottom-nav">
+      <div className="mx-auto max-w-md px-5 py-8">
+        <header className="mb-6">
+          <h1 className="text-xl font-bold text-[#1a1a2e]">내 정보</h1>
+        </header>
+        
+        {/* 프로필 카드 */}
+        <div className="rounded-2xl bg-white p-5 border border-[#e5e7eb] mb-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
+              <span className="text-2xl">👤</span>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-[#1a1a2e]">
+                {formData.name || "이름 없음"}
+              </h2>
+              <p className="text-sm text-[#6b7280]">
+                {formData.year}년 {formData.month}월 {formData.day}일생
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={onEdit}
+            className="w-full py-3 rounded-xl bg-[#f3f4f6] text-sm font-medium text-[#374151] hover:bg-[#e5e7eb] transition-colors"
+          >
+            생년월일 수정하기
+          </button>
+        </div>
+        
+        {/* 메뉴 */}
+        <div className="rounded-2xl bg-white border border-[#e5e7eb] overflow-hidden">
+          <button className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-[#f9fafb] transition-colors border-b border-[#e5e7eb]">
+            <span className="text-sm text-[#374151]">알림 설정</span>
+            <span className="text-[#9ca3af]">→</span>
+          </button>
+          <button className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-[#f9fafb] transition-colors border-b border-[#e5e7eb]">
+            <span className="text-sm text-[#374151]">앱 정보</span>
+            <span className="text-[#9ca3af]">→</span>
+          </button>
+          <button className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-[#f9fafb] transition-colors">
+            <span className="text-sm text-[#374151]">문의하기</span>
+            <span className="text-[#9ca3af]">→</span>
+          </button>
+        </div>
+        
+        <p className="mt-6 text-center text-xs text-[#9ca3af]">
+          버전 1.0.0
         </p>
       </div>
     </div>
@@ -1025,8 +1154,10 @@ const defaultFormData: FormData = {
 export default function ManseryeokPage() {
   const [formData, setFormData] = useState<FormData>(defaultFormData);
   const [view, setView] = useState<"home" | "edit" | "detail" | "love">("home");
+  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [manseResult, setManseResult] = useState<ManseResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showChatBadge, setShowChatBadge] = useState(true); // 카톡 탭 배지
 
   // 만세력 계산
   useEffect(() => {
@@ -1054,6 +1185,21 @@ export default function ManseryeokPage() {
     );
   }
 
+  // 탭 변경 핸들러
+  const handleTabChange = (tab: TabId) => {
+    setActiveTab(tab);
+    if (tab === "chat") {
+      setShowChatBadge(false); // 카톡 탭 방문 시 배지 제거
+    }
+    if (tab === "home") {
+      setView("home"); // 홈 탭 클릭 시 홈 뷰로 리셋
+    }
+    if (tab === "love") {
+      setView("love"); // 연애 탭 클릭 시 연애 운세 페이지로
+    }
+  };
+
+  // 편집 모드 (BottomNav 없이)
   if (view === "edit") {
     return (
       <BirthInfoForm
@@ -1061,41 +1207,91 @@ export default function ManseryeokPage() {
         onSubmit={(data) => {
           setFormData(data);
           setView("home");
+          setActiveTab("home");
+        }}
+        onBack={() => {
+          setView("home");
+          setActiveTab("home");
         }}
       />
     );
   }
 
+  // 캐릭터 상세 (BottomNav 없이)
   if (view === "detail") {
     return (
       <InterpretationPage
         manseResult={manseResult}
         formData={formData}
-        onBack={() => setView("home")}
+        onBack={() => {
+          setView("home");
+          setActiveTab("home");
+        }}
       />
     );
   }
 
-  if (view === "love") {
+  // 연애 운세 상세 페이지 (탭에서 진입 시)
+  if (activeTab === "love" || view === "love") {
     const character = generateCharacterType(manseResult.elements);
     const todayMode = computeTodayMode(character.id);
     return (
-      <TodayLovePage
-        todayMode={todayMode}
-        characterName={character.name}
-        onBack={() => setView("home")}
-      />
+      <>
+        <TodayLovePage
+          todayMode={todayMode}
+          characterName={character.name}
+          onBack={() => {
+            setView("home");
+            setActiveTab("home");
+          }}
+        />
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
+      </>
+    );
+  }
+
+  // 카톡 분석 탭
+  if (activeTab === "chat") {
+    return (
+      <>
+        <ChatPage />
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
+      </>
+    );
+  }
+
+  // 내 정보 탭 → 캐릭터 상세 페이지
+  if (activeTab === "me") {
+    return (
+      <>
+        <div className="pb-bottom-nav">
+          <InterpretationPage
+            manseResult={manseResult}
+            formData={formData}
+            onBack={() => {
+              setActiveTab("home");
+            }}
+          />
+        </div>
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
+      </>
     );
   }
 
   // 기본: 홈 화면
   return (
-    <NewHomePage
-      manseResult={manseResult}
-      formData={formData}
-      onEdit={() => setView("edit")}
-      onViewDetail={() => setView("detail")}
-      onViewLove={() => setView("love")}
-    />
+    <>
+      <NewHomePage
+        manseResult={manseResult}
+        formData={formData}
+        onEdit={() => setView("edit")}
+        onViewDetail={() => setView("detail")}
+        onViewLove={() => {
+          setView("love");
+          setActiveTab("love");
+        }}
+      />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
+    </>
   );
 }
