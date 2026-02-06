@@ -12,7 +12,7 @@ const TONE_GUIDES: Record<string, string> = {
   로맨틱: "달달하고 로맨틱한 말투로, 상대방이 두근거릴 수 있게, 사랑스러운 표현으로",
   솔직: "꾸밈없이 있는 그대로 담백하게, 진심이 느껴지도록 솔직하게",
   논리적: "이성적이고 차분한 말투로, 감정보다는 논리적으로, 조리있게 말하는 느낌으로",
-  츤데레: "관심 없는 척 하면서도 은근히 챙기는 말투로, '뭐 별로 관심 없는데...' 같은 뉘앙스지만 사실 관심 있는 느낌",
+  츤데레: "관심 있는데 쿨한 척하는 말투로, 은근히 떠보면서도 '나 별로 신경 안 써~' 느낌, 하지만 대화는 계속 이어가고 싶은 게 느껴지게, 밀당의 정석처럼",
   팩폭: "팩트로 직격하는 말투로, 돌려 말하지 않고 현실적으로, 약간 까칠하지만 맞는 말로",
 };
 
@@ -27,10 +27,13 @@ const CHARACTER_GUIDES: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, tone, characterId, characterName } = await request.json();
+    const { message, tone, tones, characterId, characterName } = await request.json();
+
+    // tones 배열 또는 단일 tone 지원
+    const toneList: string[] = tones || (tone ? [tone] : []);
 
     // 입력 검증
-    if (!message || !tone) {
+    if (!message || toneList.length === 0) {
       return NextResponse.json(
         { error: "메시지와 톤이 필요합니다" },
         { status: 400 }
@@ -49,15 +52,20 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    // 프롬프트 구성
-    const toneGuide = TONE_GUIDES[tone] || TONE_GUIDES["친근"];
+    // 복수 톤 프롬프트 구성
+    const toneDescriptions = toneList
+      .map(t => TONE_GUIDES[t] || "")
+      .filter(Boolean)
+      .join(", 그리고 ");
+    
+    const toneNames = toneList.join(" + ");
     const characterGuide = CHARACTER_GUIDES[characterId] || "";
 
     const prompt = `당신은 한국 20-30대가 카카오톡에서 사용하는 자연스러운 답장을 생성하는 AI입니다.
 
 상황:
 - 상대방 메시지: "${message}"
-- 원하는 톤: ${tone} (${toneGuide})
+- 원하는 톤: ${toneNames} (${toneDescriptions})
 ${characterGuide ? `- 나의 성향: ${characterName} - ${characterGuide}` : ""}
 
 요청사항:
@@ -117,7 +125,7 @@ JSON만 응답해주세요. 다른 설명은 필요 없습니다.`;
     return NextResponse.json({
       success: true,
       replies: replies.slice(0, 3), // 최대 3개
-      tone,
+      tones: toneList,
     });
 
   } catch (error) {
