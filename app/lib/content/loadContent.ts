@@ -38,40 +38,28 @@ const FALLBACK_MODE_LABELS: ModeLabelsData = {
 };
 
 const FALLBACK_TEMPLATES: ModeTemplatesData = {
-  titleTemplate: '⚡ 오늘 모드: {modeName}',
-  statusOneLinerTemplates: {
-    observe: ['오늘은 지켜보는 게 좋은 흐름이에요']
-  },
-  loveModeLine1Templates: {
-    observe: ['상대의 움직임을 살피는 상태예요']
-  },
-  loveModeLine2Templates: {
-    observe: ['괜히 먼저 다가가기보다 기다려보고 싶을 수 있어요']
-  },
-  summaryTemplates: {
-    observe: ['오늘은 지켜보는 게 좋은 날이야']
-  },
-  tipTemplates: {
-    observe: ['조급해하지 않아도 괜찮아']
-  },
-  detailTemplates: {
-    reason: { observe: ['천천히 가도 괜찮아'] },
-    vulnerable: { observe: ['기다리기 힘들 때'] },
-    guide: { observe: ['여유를 가져봐'] }
+  templates: {
+    observe: {
+      statusOneLinerTemplates: ['오늘은 지켜보는 게 좋은 흐름이에요'],
+      loveModeLineTemplates: ['상대의 움직임을 살피는 상태예요'],
+      statusLines: ['오늘은 지켜보는 게 좋은 날이야'],
+      tipLines: ['조급해하지 않아도 괜찮아'],
+      reasonLines: ['천천히 가도 괜찮아'],
+      vulnerableLines: ['기다리기 힘들 때'],
+      guideLines: ['여유를 가져봐']
+    }
   }
 };
 
 const FALLBACK_RULES: ModeRulesData = {
   description: 'Fallback rules',
-  baseWeights: { observe: 10 },
-  characterTendencyMapping: {},
-  situationTagWeights: {},
-  userSignalWeights: {
-    highViewCount: { threshold: 3, weights: {} },
-    repeatStreak: { threshold: 2, weights: {} },
-    recentAnalysis: { withinHours: 24, weights: {} }
+  characterModeWeights: {
+    default: { observe: 10 }
   },
-  dayOfWeekBias: {}
+  dayOfWeekModifiers: {
+    "0": { observe: 1 },
+    "1": { observe: 1 }
+  }
 };
 
 const FALLBACK_CHARACTERS: CharactersData = {
@@ -137,7 +125,9 @@ export function getRules(): ModeRulesData {
 
 export function getCharacters(): CharactersData {
   try {
-    return charactersJson as CharactersData;
+    // JSON에서 recoveryBias의 undefined 값을 처리
+    const data = charactersJson as unknown as CharactersData;
+    return data;
   } catch {
     console.warn('Failed to load characters/index.json, using fallback');
     return FALLBACK_CHARACTERS;

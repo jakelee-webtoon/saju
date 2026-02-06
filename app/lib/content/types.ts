@@ -29,33 +29,29 @@ export interface ModeLabelsData {
   labels: ModeLabel[];
 }
 
-// --- 템플릿 ---
-export interface ModeTemplatesData {
-  titleTemplate: string;
-  statusOneLinerTemplates: Record<string, string[]>;  // 3인칭 한 줄 상태
-  loveModeLine1Templates: Record<string, string[]>;   // 연애 모드 1줄차 (객관적 상태)
-  loveModeLine2Templates: Record<string, string[]>;   // 연애 모드 2줄차 (공감 확장)
-  summaryTemplates: Record<string, string[]>;
-  tipTemplates: Record<string, string[]>;
-  detailTemplates: {
-    reason: Record<string, string[]>;
-    vulnerable: Record<string, string[]>;
-    guide: Record<string, string[]>;
-  };
+// --- 템플릿 (모드별 문장 템플릿) ---
+export interface ModeTemplateSet {
+  statusOneLinerTemplates: string[];
+  loveModeLineTemplates: string[];
+  statusLines: string[];
+  tipLines: string[];
+  reasonLines: string[];
+  vulnerableLines: string[];
+  guideLines: string[];
 }
 
-// --- 규칙 ---
+export interface ModeTemplatesData {
+  version?: string;
+  description?: string;
+  templates: Record<string, ModeTemplateSet>;
+}
+
+// --- 규칙 (캐릭터별 모드 가중치) ---
 export interface ModeRulesData {
-  description: string;
-  baseWeights: Record<string, number>;
-  characterTendencyMapping: Record<string, { add: string[]; weight: number }>;
-  situationTagWeights: Record<string, Record<string, number>>;
-  userSignalWeights: {
-    highViewCount: { threshold: number; weights: Record<string, number> };
-    repeatStreak: { threshold: number; weights: Record<string, number> };
-    recentAnalysis: { withinHours: number; weights: Record<string, number> };
-  };
-  dayOfWeekBias: Record<string, Record<string, number>>;
+  version?: string;
+  description?: string;
+  characterModeWeights: Record<string, Record<string, number>>;
+  dayOfWeekModifiers: Record<string, Record<string, number>>;  // 요일(0-6)별 모드 가중치
 }
 
 // --- 캐릭터 ---
@@ -69,8 +65,8 @@ export interface CharacterTendencies {
 // 상황 태그별 민감도 (0: 무감, 1: 약함, 2: 보통, 3: 예민)
 export type TriggerSensitivity = Record<string, number>;
 
-// 회복 바이어스 (특정 모드로 회복되는 경향)
-export type RecoveryBias = Record<string, number>;
+// 회복 바이어스 (특정 모드로 회복되는 경향) - optional values 허용
+export type RecoveryBias = Record<string, number | undefined>;
 
 // --- 사주 프로필 (캐릭터 + 민감도 통합) ---
 export interface SajuProfile {
@@ -106,49 +102,51 @@ export interface UserSignals {
 }
 
 // --- 연애 모드 데이터 구조 ---
+export interface LoveModeColor {
+  bg: string;
+  accent: string;
+  text: string;
+}
+
+export interface LoveModeDetail {
+  mode_label: string;
+  main_sentence: string;
+  reason: string;
+  triggers: string[];
+  one_line_guide: string;
+}
+
 export interface LoveModeData {
   id: string;
   love_mode: string;
   emoji: string;
-  color: {
-    bg: string;
-    accent: string;
-    text: string;
-  };
+  color: LoveModeColor;
   home_summary: string;
   category?: string;  // optional
-  detail: {
-    mode_label: string;
-    main_sentence: string;
-    reason: string;
-    triggers: string[];
-    one_line_guide: string;
-  };
+  detail: LoveModeDetail;
 }
 
 // --- 오늘 모드 계산 결과 ---
 export interface TodayModeResult {
   modeId: string;
   modeName: string;
+  modeEmoji: string;
   modeLabel: string;         // 아이콘 + 키워드 (예: "❄️ 쿨다운")
+  color: LoveModeColor;
   // HOME용 간략 필드
+  homeTitle: string;
+  homeSummary: string;
   statusOneLiner: string;    // 3인칭 한 줄 상태 (홈 최상단)
-  loveModeLine1: string;     // 연애 모드 1줄차 (객관적 상태)
-  loveModeLine2: string;     // 연애 모드 2줄차 (공감 확장)
+  loveModeLine: string;      // 연애 모드 라인
   // 상세 필드
-  mainSentence: string;      // 오늘의 상태 요약 문장
-  reason: string;            // "오늘 왜 이런 모드냐면"
-  triggers: string[];        // "오늘 이럴 때 특히 흔들릴 수 있어"
-  oneLineGuide: string;      // 오늘의 한 줄 가이드
-  // 기존 상세 필드 (호환성)
+  detail: LoveModeDetail;
+  // Legacy 필드 (기존 호환용)
   titleLine: string;
-  summaryLine: string;
+  statusLine: string;
   tipLine: string;
-  detailLines: {
-    reason: string;
-    vulnerable: string[];
-    guide: string;
-  };
+  reasonLine: string;
+  vulnerableLines: string[];
+  guideLine: string;
 }
 
 // --- 오늘 모드 계산 입력 ---
