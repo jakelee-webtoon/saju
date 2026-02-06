@@ -993,7 +993,7 @@ function NewHomePage({
         <header className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-[#1a1a2e]">
-              {formData.name ? `${formData.name}님` : "오늘의 나"}
+              {formData.name ? `${formData.name}님` : "오늘의 나"} {todayMode.modeEmoji}
             </h1>
             <p className="text-xs text-[#9ca3af]">
               {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
