@@ -682,8 +682,11 @@ ${character.weaknesses.map((w: string) => `• ${w}`).join('\n')}`;
                     onClick={handleKakaoShare}
                     className="flex flex-col items-center gap-2"
                   >
-                    <div className="w-14 h-14 rounded-full bg-[#FEE500] flex items-center justify-center shadow-md">
-                      <span className="text-2xl">💬</span>
+                    <div className="w-14 h-14 rounded-2xl bg-[#FEE500] flex items-center justify-center shadow-md">
+                      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                        <path d="M24 7C13.5 7 5 13.94 5 22.5C5 28.08 8.56 32.92 14 35.75L12.15 43.28C12 43.87 12.67 44.33 13.19 44L22.15 38.22C22.75 38.31 23.37 38.36 24 38.36C34.5 38.36 43 31.42 43 22.86C43 14.3 34.5 7 24 7Z" fill="#3C1E1E"/>
+                        <text x="24" y="27" textAnchor="middle" fill="#FEE500" fontSize="11" fontWeight="bold" fontFamily="Arial">TALK</text>
+                      </svg>
                     </div>
                     <span className="text-xs text-gray-600">카카오톡</span>
                   </button>
