@@ -22,34 +22,23 @@ interface SavedMatchData {
 }
 
 // 사주 기반 MBTI 추정 (사주 원소를 기반으로 가상의 MBTI 생성)
+// 기본값 사용 (앱의 defaultFormData와 동일: 1990-8-20)
 function getSajuBasedMbti(): MbtiType {
-  // localStorage에서 저장된 만세력 결과 불러오기
-  const savedData = localStorage.getItem("sajuFormData");
-  if (!savedData) {
-    // 기본값: 균형잡힌 타입
-    return "INFP";
-  }
+  // 기본 사주 데이터 (항상 존재)
+  const year = 1990;
+  const month = 8;
+  const day = 20;
+  const hour = 9;
   
-  try {
-    const formData = JSON.parse(savedData);
-    // 생년월일 기반으로 간단한 MBTI 추정
-    const year = parseInt(formData.year) || 1990;
-    const month = parseInt(formData.month) || 1;
-    const day = parseInt(formData.day) || 1;
-    const hour = parseInt(formData.hour) || 12;
-    
-    // 간단한 규칙 기반 추정 (실제 사주 로직과 연결 가능)
-    const seed = year + month * 100 + day * 10 + hour;
-    
-    const e_i = (seed % 2 === 0) ? "E" : "I";
-    const n_s = ((seed + month) % 2 === 0) ? "N" : "S";
-    const t_f = ((seed + day) % 2 === 0) ? "T" : "F";
-    const j_p = ((seed + hour) % 2 === 0) ? "J" : "P";
-    
-    return `${e_i}${n_s}${t_f}${j_p}` as MbtiType;
-  } catch {
-    return "INFP";
-  }
+  // 간단한 규칙 기반 추정 (실제 사주 로직과 연결 가능)
+  const seed = year + month * 100 + day * 10 + hour;
+  
+  const e_i = (seed % 2 === 0) ? "E" : "I";
+  const n_s = ((seed + month) % 2 === 0) ? "N" : "S";
+  const t_f = ((seed + day) % 2 === 0) ? "T" : "F";
+  const j_p = ((seed + hour) % 2 === 0) ? "J" : "P";
+  
+  return `${e_i}${n_s}${t_f}${j_p}` as MbtiType;
 }
 
 export default function MatchPage() {
@@ -65,9 +54,8 @@ export default function MatchPage() {
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   
-  // 내 사주 기반 MBTI (자동 계산)
-  const [myMbti, setMyMbti] = useState<MbtiType>("INFP");
-  const [hasMyData, setHasMyData] = useState(false);
+  // 내 사주 기반 MBTI (자동 계산 - 항상 데이터 있음)
+  const [myMbti] = useState<MbtiType>(getSajuBasedMbti());
   
   // 결과
   const [result, setResult] = useState<MatchResult | null>(null);
@@ -75,13 +63,6 @@ export default function MatchPage() {
 
   // localStorage에서 데이터 불러오기
   useEffect(() => {
-    // 내 사주 데이터 확인
-    const savedFormData = localStorage.getItem("sajuFormData");
-    if (savedFormData) {
-      setHasMyData(true);
-      setMyMbti(getSajuBasedMbti());
-    }
-    
     // 이전 파트너 정보 불러오기
     const savedPartner = localStorage.getItem("savedPartner");
     if (savedPartner) {
@@ -157,40 +138,6 @@ export default function MatchPage() {
     setResult(null);
     setTexts(null);
   };
-
-  // 내 사주 데이터 없을 때
-  if (!hasMyData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="mx-auto max-w-md px-5 py-8">
-          <button
-            onClick={() => router.push("/")}
-            className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
-          >
-            <span>←</span>
-            <span>홈으로</span>
-          </button>
-
-          <div className="text-center py-16">
-            <div className="text-6xl mb-6">🔮</div>
-            <h1 className="text-xl font-bold text-purple-900 mb-4">
-              먼저 내 정보를 입력해주세요
-            </h1>
-            <p className="text-sm text-purple-600 mb-8 leading-relaxed">
-              궁합을 보려면 먼저<br />
-              내 생년월일을 입력해야 해요
-            </p>
-            <button
-              onClick={() => router.push("/")}
-              className="px-8 py-4 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 transition-colors"
-            >
-              내 정보 입력하러 가기
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // MBTI 결과 화면
   if (view === "result" && result && texts && inputType === "mbti") {
