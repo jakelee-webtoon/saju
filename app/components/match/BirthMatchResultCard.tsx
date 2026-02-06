@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type BirthMatchResult } from "@/app/lib/match/birth";
 import { type BirthMatchTexts } from "@/app/lib/match/texts";
-import { getArrowBalance, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface BirthMatchResultCardProps {
   nickname: string;
@@ -30,7 +32,29 @@ export default function BirthMatchResultCard({
   const { score, gradeInfo, comparison } = result;
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const arrowBalance = getArrowBalance();
+  const [arrowBalance, setArrowBalance] = useState(0);
+  const [isDetailUnlocked, setIsDetailUnlocked] = useState(false);
+  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
+
+  // 궁합 고유 ID 생성
+  const matchId = `birth_${theirBirth.replace(/[^0-9]/g, '')}`;
+
+  useEffect(() => {
+    const loadData = async () => {
+      const balance = await getArrowBalanceSync();
+      setArrowBalance(balance);
+      
+      // Firebase에서 언락 상태 확인
+      if (isLoggedIn()) {
+        const kakaoUser = getKakaoUser();
+        if (kakaoUser) {
+          const unlocked = await isContentUnlocked(kakaoUser.id, "matchDetails", matchId);
+          setIsDetailUnlocked(unlocked);
+        }
+      }
+    };
+    loadData();
+  }, [matchId]);
 
   // 공유 텍스트 생성
   const shareText = `💕 ${nickname}님과의 궁합
@@ -213,34 +237,108 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
       </div>
 
       {/* 🔒 유료 영역: 상세 분석 */}
-      <button
-        onClick={() => router.push("/shop")}
-        className="w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98]"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🔒</span>
-            <div>
-              <p className="text-sm font-bold text-white mb-0.5">
-                왜 잘 맞는지, 어디서 어긋나는지
-              </p>
-              <p className="text-xs text-gray-400">
-                자세히 보기
-              </p>
+      {!isDetailUnlocked ? (
+        <button
+          onClick={async () => {
+            if (canUseArrow(2)) {
+              setShowUnlockAnimation(true);
+              const result = await useArrowSync(2);
+              if (result.success) {
+                setArrowBalance(result.newBalance);
+                
+                // Firebase에 언락 기록 (영구)
+                if (isLoggedIn()) {
+                  const kakaoUser = getKakaoUser();
+                  if (kakaoUser) {
+                    await recordContentUnlock(kakaoUser.id, "matchDetails", matchId);
+                  }
+                }
+                
+                setTimeout(() => {
+                  setIsDetailUnlocked(true);
+                  setShowUnlockAnimation(false);
+                }, 500);
+              } else {
+                setShowUnlockAnimation(false);
+                router.push("/shop");
+              }
+            } else {
+              router.push("/shop");
+            }
+          }}
+          className={`w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98] ${
+            showUnlockAnimation ? "scale-95 opacity-50" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{showUnlockAnimation ? "🔓" : "🔒"}</span>
+              <div>
+                <p className="text-sm font-bold text-white mb-0.5">
+                  왜 잘 맞는지, 어디서 어긋나는지
+                </p>
+                <p className="text-xs text-gray-400">
+                  자세히 보기
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
+              <span>💘</span>
+              <span>화살 2개</span>
+              <span>→</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
-            <span>💘</span>
-            <span>화살 2개</span>
-            <span>→</span>
-          </div>
-        </div>
-        {arrowBalance > 0 && (
           <p className="mt-2 text-[10px] text-gray-500 text-right">
             내 화살 {arrowBalance}개
           </p>
-        )}
-      </button>
+        </button>
+      ) : (
+        /* 🔓 언락된 상세 분석 */
+        <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 p-5 space-y-4 animate-fadeIn">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">🔓</span>
+            <h3 className="text-sm font-bold text-purple-800">상세 궁합 분석</h3>
+          </div>
+          
+          {/* 띠 궁합 상세 */}
+          <div className="p-3 rounded-xl bg-white/80">
+            <h4 className="text-xs font-bold text-emerald-600 mb-2">🐾 띠 궁합 분석</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {comparison.zodiacRelation.isYukhap 
+                ? `${comparison.zodiacRelation.myZodiac}띠와 ${comparison.zodiacRelation.theirZodiac}띠는 육합 관계로, 천생연분이에요! 서로의 에너지가 완벽하게 맞아떨어져요.`
+                : comparison.zodiacRelation.isSamhap
+                ? `${comparison.zodiacRelation.myZodiac}띠와 ${comparison.zodiacRelation.theirZodiac}띠는 삼합 관계로, 함께할 때 시너지가 폭발해요!`
+                : comparison.zodiacRelation.isConflict
+                ? `${comparison.zodiacRelation.myZodiac}띠와 ${comparison.zodiacRelation.theirZodiac}띠는 충 관계지만, 노력하면 오히려 강한 끌림이 될 수 있어요.`
+                : `${comparison.zodiacRelation.myZodiac}띠와 ${comparison.zodiacRelation.theirZodiac}띠는 안정적인 관계를 만들 수 있어요.`}
+            </p>
+          </div>
+          
+          {/* 오행 상세 */}
+          <div className="p-3 rounded-xl bg-white/80">
+            <h4 className="text-xs font-bold text-amber-600 mb-2">🔥 오행 에너지 분석</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {comparison.elementRelation.relation === "상생"
+                ? `${comparison.elementRelation.myElement}과 ${comparison.elementRelation.theirElement}은 상생 관계! 서로를 성장시키고 지지해주는 최고의 조합이에요.`
+                : comparison.elementRelation.relation === "비화"
+                ? `${comparison.elementRelation.myElement}과 ${comparison.elementRelation.theirElement}은 비화 관계로, 비슷한 에너지라 편안하지만 자극이 필요할 수 있어요.`
+                : `${comparison.elementRelation.myElement}과 ${comparison.elementRelation.theirElement}은 상극 관계지만, 서로 다른 점이 매력으로 작용할 수 있어요.`}
+            </p>
+          </div>
+          
+          {/* 꿀팁 */}
+          <div className="p-3 rounded-xl bg-purple-100/50">
+            <h4 className="text-xs font-bold text-purple-700 mb-2">💡 관계 꿀팁</h4>
+            <p className="text-sm text-purple-800 leading-relaxed">
+              {score >= 80 
+                ? "운명적인 만남이에요! 서로의 장점을 인정하고 표현하면 더욱 깊어질 거예요."
+                : score >= 60
+                ? "좋은 케미를 가지고 있어요. 작은 차이점들은 대화로 해결할 수 있어요."
+                : "서로 다른 점이 많지만, 그게 오히려 배움의 기회가 될 수 있어요. 열린 마음이 중요해요!"}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 버튼 영역 */}
       <div className="flex gap-3 pt-2">

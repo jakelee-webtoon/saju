@@ -13,8 +13,8 @@ interface BottomNavProps {
 
 const tabs: { id: TabId; label: string; icon: string; activeIcon: string }[] = [
   { id: "home", label: "홈", icon: "🏠", activeIcon: "🏠" },
-  { id: "love", label: "연애", icon: "💕", activeIcon: "💗" },
-  { id: "chat", label: "카톡", icon: "💬", activeIcon: "💬" },
+  { id: "love", label: "연애", icon: "💗", activeIcon: "💗" },
+  { id: "chat", label: "대화분석", icon: "💬", activeIcon: "💬" },
   { id: "me", label: "나", icon: "👤", activeIcon: "👤" },
 ];
 
@@ -22,7 +22,7 @@ export default function BottomNav({ activeTab, onTabChange, chatBadge = false, i
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe">
       <div className="mx-auto max-w-md">
-        <div className="flex items-center justify-around h-16">
+        <div className="flex items-center h-16">
           {tabs.map((tab) => {
             // 샵이 활성화되어 있으면 다른 탭은 비활성화
             const isActive = !isShopActive && activeTab === tab.id;
@@ -30,18 +30,16 @@ export default function BottomNav({ activeTab, onTabChange, chatBadge = false, i
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all ${
+                className={`relative flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                   isActive ? "text-[#1a1a2e]" : "text-gray-400"
                 }`}
               >
                 {/* 활성 상태 배경 pill */}
-                {isActive && (
-                  <div className="absolute top-2 w-12 h-8 rounded-full bg-indigo-100" />
-                )}
+                <div className={`absolute top-2 w-12 h-8 rounded-full transition-colors ${isActive ? "bg-indigo-100" : "bg-transparent"}`} />
                 
                 {/* 아이콘 */}
-                <span className={`relative text-xl mb-0.5 ${isActive ? "scale-110" : ""} transition-transform`}>
-                  {isActive ? tab.activeIcon : tab.icon}
+                <span className="relative text-xl mb-0.5 w-6 h-6 flex items-center justify-center">
+                  {tab.icon}
                   
                   {/* 카톡 배지 */}
                   {tab.id === "chat" && chatBadge && (
@@ -50,7 +48,7 @@ export default function BottomNav({ activeTab, onTabChange, chatBadge = false, i
                 </span>
                 
                 {/* 라벨 */}
-                <span className={`relative text-[10px] font-medium ${isActive ? "text-[#1a1a2e]" : "text-gray-400"}`}>
+                <span className={`relative text-[10px] font-medium transition-colors ${isActive ? "text-[#1a1a2e]" : "text-gray-400"}`}>
                   {tab.label}
                 </span>
               </button>
@@ -60,22 +58,20 @@ export default function BottomNav({ activeTab, onTabChange, chatBadge = false, i
           {/* 큐피드 샵 */}
           <Link
             href="/shop"
-            className={`relative flex flex-col items-center justify-center flex-1 h-full transition-all ${
+            className={`relative flex flex-col items-center justify-center flex-1 h-full transition-colors ${
               isShopActive ? "text-pink-500" : "text-gray-400 hover:text-pink-500"
             }`}
           >
             {/* 활성 상태 배경 pill */}
-            {isShopActive && (
-              <div className="absolute top-2 w-12 h-8 rounded-full bg-pink-100" />
-            )}
+            <div className={`absolute top-2 w-12 h-8 rounded-full transition-colors ${isShopActive ? "bg-pink-100" : "bg-transparent"}`} />
             
             {/* 큐피드 아이콘 */}
-            <span className={`relative text-xl mb-0.5 ${isShopActive ? "scale-110" : ""} transition-transform`}>
+            <span className="relative text-xl mb-0.5 w-6 h-6 flex items-center justify-center">
               💘
             </span>
             
             {/* 라벨 */}
-            <span className={`relative text-[10px] font-medium ${isShopActive ? "text-pink-500" : ""}`}>
+            <span className={`relative text-[10px] font-medium transition-colors ${isShopActive ? "text-pink-500" : ""}`}>
               샵
             </span>
           </Link>

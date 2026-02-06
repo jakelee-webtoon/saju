@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { type MatchTexts } from "@/app/lib/match/texts";
-import { getArrowBalance } from "@/app/lib/cupid/arrowBalance";
+import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface MatchResultCardProps {
   nickname: string;
@@ -30,7 +32,29 @@ export default function MatchResultCard({
   const { score, gradeInfo } = result;
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const arrowBalance = getArrowBalance();
+  const [arrowBalance, setArrowBalance] = useState(0);
+  const [isDetailUnlocked, setIsDetailUnlocked] = useState(false);
+  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
+
+  // 궁합 고유 ID 생성
+  const matchId = `mbti_${myMbti}_${theirMbti}`;
+
+  useEffect(() => {
+    const loadData = async () => {
+      const balance = await getArrowBalanceSync();
+      setArrowBalance(balance);
+      
+      // Firebase에서 언락 상태 확인
+      if (isLoggedIn()) {
+        const kakaoUser = getKakaoUser();
+        if (kakaoUser) {
+          const unlocked = await isContentUnlocked(kakaoUser.id, "matchDetails", matchId);
+          setIsDetailUnlocked(unlocked);
+        }
+      }
+    };
+    loadData();
+  }, [matchId]);
 
   // 공유 텍스트 생성
   const shareText = `💕 ${nickname}님과의 궁합
@@ -166,34 +190,105 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
       </div>
 
       {/* 🔒 유료 영역: 상세 분석 */}
-      <button
-        onClick={() => router.push("/shop")}
-        className="w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98]"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🔒</span>
-            <div>
-              <p className="text-sm font-bold text-white mb-0.5">
-                왜 잘 맞는지, 어디서 어긋나는지
-              </p>
-              <p className="text-xs text-gray-400">
-                자세히 보기
-              </p>
+      {!isDetailUnlocked ? (
+        <button
+          onClick={async () => {
+            if (canUseArrow(2)) {
+              setShowUnlockAnimation(true);
+              const result = await useArrowSync(2);
+              if (result.success) {
+                setArrowBalance(result.newBalance);
+                
+                // Firebase에 언락 기록 (영구)
+                if (isLoggedIn()) {
+                  const kakaoUser = getKakaoUser();
+                  if (kakaoUser) {
+                    await recordContentUnlock(kakaoUser.id, "matchDetails", matchId);
+                  }
+                }
+                
+                setTimeout(() => {
+                  setIsDetailUnlocked(true);
+                  setShowUnlockAnimation(false);
+                }, 500);
+              } else {
+                setShowUnlockAnimation(false);
+                router.push("/shop");
+              }
+            } else {
+              router.push("/shop");
+            }
+          }}
+          className={`w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98] ${
+            showUnlockAnimation ? "scale-95 opacity-50" : ""
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{showUnlockAnimation ? "🔓" : "🔒"}</span>
+              <div>
+                <p className="text-sm font-bold text-white mb-0.5">
+                  왜 잘 맞는지, 어디서 어긋나는지
+                </p>
+                <p className="text-xs text-gray-400">
+                  자세히 보기
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
+              <span>💘</span>
+              <span>화살 2개</span>
+              <span>→</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
-            <span>💘</span>
-            <span>화살 2개</span>
-            <span>→</span>
-          </div>
-        </div>
-        {arrowBalance > 0 && (
           <p className="mt-2 text-[10px] text-gray-500 text-right">
             내 화살 {arrowBalance}개
           </p>
-        )}
-      </button>
+        </button>
+      ) : (
+        /* 🔓 언락된 상세 분석 */
+        <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 p-5 space-y-4 animate-fadeIn">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">🔓</span>
+            <h3 className="text-sm font-bold text-purple-800">상세 궁합 분석</h3>
+          </div>
+          
+          {/* 왜 잘 맞는지 */}
+          <div className="p-3 rounded-xl bg-white/80">
+            <h4 className="text-xs font-bold text-emerald-600 mb-2">💚 왜 잘 맞나면</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {myMbti}의 {myMbti.includes("E") ? "외향적 에너지" : "내향적 깊이"}와 
+              {theirMbti}의 {theirMbti.includes("E") ? "활발함" : "차분함"}이 
+              서로를 {score >= 70 ? "완벽하게 보완" : "적절히 균형"}해줘요.
+              {score >= 80 && " 특히 대화할 때 서로의 관점이 시너지를 내요."}
+            </p>
+          </div>
+          
+          {/* 어디서 어긋나는지 */}
+          <div className="p-3 rounded-xl bg-white/80">
+            <h4 className="text-xs font-bold text-amber-600 mb-2">⚡ 주의할 포인트</h4>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {myMbti.includes("J") !== theirMbti.includes("J") 
+                ? "계획 vs 즉흥 스타일 차이가 있어서, 여행이나 데이트 계획 시 미리 조율이 필요해요."
+                : myMbti.includes("T") !== theirMbti.includes("T")
+                ? "감정 표현 방식이 달라서, 서로의 사랑 표현 방식을 이해하는 게 중요해요."
+                : "비슷한 성향이라 편하지만, 가끔 새로운 자극이 필요할 수 있어요."}
+            </p>
+          </div>
+          
+          {/* 꿀팁 */}
+          <div className="p-3 rounded-xl bg-purple-100/50">
+            <h4 className="text-xs font-bold text-purple-700 mb-2">💡 관계 꿀팁</h4>
+            <p className="text-sm text-purple-800 leading-relaxed">
+              {score >= 80 
+                ? "이미 좋은 케미! 서로의 장점을 자주 말해주면 더 깊어져요."
+                : score >= 60
+                ? "차이점을 인정하고, 서로 다른 부분에서 배우려는 자세가 중요해요."
+                : "노력이 필요하지만, 그만큼 성장할 수 있는 관계예요. 소통이 핵심!"}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 버튼 영역 */}
       <div className="flex gap-3 pt-2">

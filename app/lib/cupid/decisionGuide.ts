@@ -257,8 +257,7 @@ export function generateDecisionGuide(
   const recommendation = pickFromArray(recommendations, seed, 4);
   
   // 톤 결정
-  const tones: Array<"soft" | "direct" | "warning"> = ["soft", "direct", "warning"];
-  const tone = isPositive 
+  const tone: "soft" | "direct" | "warning" = isPositive 
     ? (seededRandom(seed, 5) > 0.7 ? "direct" : "soft")
     : (seededRandom(seed, 5) > 0.7 ? "warning" : "soft");
   

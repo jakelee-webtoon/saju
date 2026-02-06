@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CupidPackageCard from "@/app/components/shop/CupidPackageCard";
 import {
-  getArrowBalance,
-  addArrow,
+  getArrowBalanceSync,
+  addArrowSync,
   CUPID_PACKAGES,
   type CupidPackage,
 } from "@/app/lib/cupid/arrowBalance";
@@ -17,18 +17,22 @@ export default function ShopPage() {
   const [balance, setBalance] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   // 초기 잔액 로드 & 로그인 상태 확인
   useEffect(() => {
-    setBalance(getArrowBalance());
-    setIsLoggedIn(!!getKakaoUser());
+    const loadBalance = async () => {
+      const currentBalance = await getArrowBalanceSync();
+      setBalance(currentBalance);
+      setIsLoggedIn(!!getKakaoUser());
+    };
+    loadBalance();
   }, []);
 
-  // 패키지 구매 (Stub)
-  const handlePurchase = (pkg: CupidPackage) => {
+  // 패키지 구매 (Firebase 연동)
+  const handlePurchase = async (pkg: CupidPackage) => {
     // 로그인 체크
     if (!getKakaoUser()) {
-      // 로그인 안 됐으면 로그인 페이지로 이동
       setToast("로그인이 필요해요! 🔐");
       setTimeout(() => {
         router.push("/login?redirect=/shop");
@@ -36,13 +40,23 @@ export default function ShopPage() {
       return;
     }
 
-    const totalArrows = pkg.arrows + (pkg.bonusArrows || 0);
-    const newBalance = addArrow(totalArrows);
-    setBalance(newBalance);
+    setIsPurchasing(true);
     
-    // 토스트 표시
-    setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
-    setTimeout(() => setToast(null), 2500);
+    try {
+      const totalArrows = pkg.arrows + (pkg.bonusArrows || 0);
+      const newBalance = await addArrowSync(totalArrows);
+      setBalance(newBalance);
+      
+      // 토스트 표시
+      setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
+      setTimeout(() => setToast(null), 2500);
+    } catch (error) {
+      console.error("Purchase error:", error);
+      setToast("충전에 실패했어요. 다시 시도해주세요 😢");
+      setTimeout(() => setToast(null), 2500);
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   // 탭 변경 시 홈으로 이동 (쿼리 파라미터로 탭 전달)

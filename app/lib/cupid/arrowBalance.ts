@@ -1,12 +1,19 @@
 /**
  * 큐피드 화살 잔액 관리 모듈
- * localStorage 기반 화살(코인) 잔액 저장/조회/차감
+ * localStorage + Firebase Firestore 하이브리드 방식
  */
+
+import { getKakaoUser, isLoggedIn } from "../kakao";
+import { addArrowsToDB, useArrowsFromDB, getArrowBalanceFromDB } from "../firebase/userService";
 
 const STORAGE_KEY = "cupidArrowBalance";
 
+// ========================
+// localStorage 기반 함수들 (비로그인 호환)
+// ========================
+
 /**
- * 현재 화살 잔액 조회
+ * 현재 화살 잔액 조회 (localStorage)
  * @returns 현재 잔액 (없으면 0)
  */
 export function getArrowBalance(): number {
@@ -24,7 +31,7 @@ export function getArrowBalance(): number {
 }
 
 /**
- * 화살 잔액 설정 (내부용)
+ * 화살 잔액 설정 (내부용 - localStorage)
  */
 function setArrowBalance(amount: number): void {
   if (typeof window === "undefined") return;
@@ -34,7 +41,7 @@ function setArrowBalance(amount: number): void {
 }
 
 /**
- * 화살 추가 (충전)
+ * 화살 추가 (충전) - localStorage
  * @param amount 추가할 화살 개수
  * @returns 업데이트된 잔액
  */
@@ -49,7 +56,7 @@ export function addArrow(amount: number): number {
 }
 
 /**
- * 화살 사용 (차감)
+ * 화살 사용 (차감) - localStorage
  * @param amount 사용할 화살 개수
  * @returns 업데이트된 잔액 (잔액 부족 시 -1 반환)
  */
@@ -83,6 +90,83 @@ export function resetArrowBalance(): void {
  * @returns 사용 가능 여부
  */
 export function canUseArrow(amount: number): boolean {
+  return getArrowBalance() >= amount;
+}
+
+// ========================
+// Firebase + localStorage 통합 함수들
+// ========================
+
+/**
+ * 화살 잔액 조회 (Firebase 우선, localStorage 폴백)
+ */
+export async function getArrowBalanceSync(): Promise<number> {
+  if (isLoggedIn()) {
+    const kakaoUser = getKakaoUser();
+    if (kakaoUser) {
+      const balance = await getArrowBalanceFromDB(kakaoUser.id);
+      // localStorage도 동기화
+      setArrowBalance(balance);
+      return balance;
+    }
+  }
+  return getArrowBalance();
+}
+
+/**
+ * 화살 충전 (Firebase + localStorage 동시 업데이트)
+ */
+export async function addArrowSync(amount: number): Promise<number> {
+  if (amount <= 0) return getArrowBalance();
+  
+  // localStorage 먼저 업데이트 (즉시 반영)
+  const localBalance = addArrow(amount);
+  
+  // Firebase 업데이트 (로그인된 경우)
+  if (isLoggedIn()) {
+    const kakaoUser = getKakaoUser();
+    if (kakaoUser) {
+      const firebaseBalance = await addArrowsToDB(kakaoUser.id, amount);
+      // Firebase 잔액으로 localStorage 동기화
+      setArrowBalance(firebaseBalance);
+      return firebaseBalance;
+    }
+  }
+  
+  return localBalance;
+}
+
+/**
+ * 화살 사용 (Firebase + localStorage 동시 업데이트)
+ */
+export async function useArrowSync(amount: number): Promise<{ success: boolean; newBalance: number }> {
+  if (amount <= 0) return { success: true, newBalance: getArrowBalance() };
+  
+  // 로그인된 경우 Firebase 사용
+  if (isLoggedIn()) {
+    const kakaoUser = getKakaoUser();
+    if (kakaoUser) {
+      const result = await useArrowsFromDB(kakaoUser.id, amount);
+      if (result.success) {
+        // localStorage도 동기화
+        setArrowBalance(result.newBalance);
+      }
+      return result;
+    }
+  }
+  
+  // 비로그인: localStorage만 사용
+  const newBalance = useArrow(amount);
+  if (newBalance === -1) {
+    return { success: false, newBalance: getArrowBalance() };
+  }
+  return { success: true, newBalance };
+}
+
+/**
+ * 화살 사용 가능 여부 확인 (동기)
+ */
+export function canUseArrowSync(amount: number): boolean {
   return getArrowBalance() >= amount;
 }
 

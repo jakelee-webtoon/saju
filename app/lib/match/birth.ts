@@ -497,28 +497,3 @@ export function getBirthGradeInfo(score: number): BirthMatchGradeInfo {
 // 테스트 함수
 // ========================
 
-/**
- * 테스트용 - 콘솔 로그 출력
- */
-export function testBirthMatch(
-  myYear: number, myMonth: number, myDay: number,
-  theirYear: number, theirMonth: number, theirDay: number
-): void {
-  const result = calculateBirthMatch(myYear, myMonth, myDay, theirYear, theirMonth, theirDay);
-  console.log(`=== ${myYear}.${myMonth}.${myDay} × ${theirYear}.${theirMonth}.${theirDay} ===`);
-  console.log(`내 띠: ${result.comparison.zodiacRelation.myZodiac}`);
-  console.log(`상대 띠: ${result.comparison.zodiacRelation.theirZodiac}`);
-  console.log(`내 일간: ${result.comparison.elementRelation.myElement}`);
-  console.log(`상대 일간: ${result.comparison.elementRelation.theirElement}`);
-  console.log(`오행 관계: ${result.comparison.elementRelation.relation}`);
-  console.log(`점수: ${result.score}점`);
-  console.log(`등급: ${result.grade} ${result.gradeInfo.emoji}`);
-  console.log(`좋은 점:`, result.bonuses);
-  console.log(`조심할 점:`, result.penalties);
-  console.log("");
-}
-
-// 테스트 실행 (개발 중 확인용)
-// testBirthMatch(1990, 8, 20, 1992, 3, 11);
-// testBirthMatch(1998, 12, 1, 1999, 7, 24);
-// testBirthMatch(2002, 5, 18, 2001, 11, 2);

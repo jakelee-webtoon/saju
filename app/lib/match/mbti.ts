@@ -198,20 +198,3 @@ export function getGradeInfo(score: number): MatchGradeInfo {
   }
 }
 
-/**
- * 테스트용 - 콘솔 로그 출력
- */
-export function testMatch(myMbti: string, theirMbti: string): void {
-  const result = calculateScore(myMbti, theirMbti);
-  console.log(`=== ${myMbti} × ${theirMbti} ===`);
-  console.log(`점수: ${result.score}점`);
-  console.log(`등급: ${result.grade} ${result.gradeInfo.emoji}`);
-  console.log(`좋은 점:`, result.bonuses);
-  console.log(`조심할 점:`, result.penalties);
-  console.log("");
-}
-
-// 테스트 실행 (개발 중 확인용)
-// testMatch("ENFP", "ISTJ");
-// testMatch("INFP", "ENFJ");
-// testMatch("ESTP", "ISFJ");

@@ -10,7 +10,9 @@ import {
   type LoveTendency,
   type LoveTendencyFull,
 } from "@/app/lib/love/loveTendency";
-import { getArrowBalance, useArrow, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface LoveTendencyCardProps {
   characterId: string;
@@ -25,27 +27,53 @@ export default function LoveTendencyCard({ characterId }: LoveTendencyCardProps)
   const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
 
   useEffect(() => {
-    setTendency(getLoveTendency(characterId));
-    setFullTendency(getLoveTendencyFull(characterId));
-    setIsUnlocked(isTendencyUnlocked());
-    setArrowBalance(getArrowBalance());
+    const loadData = async () => {
+      setTendency(getLoveTendency(characterId));
+      setFullTendency(getLoveTendencyFull(characterId));
+      
+      // Firebase에서 언락 상태 확인 (로그인된 경우)
+      if (isLoggedIn()) {
+        const kakaoUser = getKakaoUser();
+        if (kakaoUser) {
+          const unlocked = await isContentUnlocked(kakaoUser.id, "loveTendency");
+          setIsUnlocked(unlocked);
+          if (unlocked) markTendencyUnlocked(); // localStorage 동기화
+        }
+      } else {
+        setIsUnlocked(isTendencyUnlocked());
+      }
+      
+      const balance = await getArrowBalanceSync();
+      setArrowBalance(balance);
+    };
+    loadData();
   }, [characterId]);
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!canUseArrow(1)) {
       router.push("/shop");
       return;
     }
 
-    const newBalance = useArrow(1);
-    if (newBalance === -1) {
+    setShowUnlockAnimation(true);
+    
+    const result = await useArrowSync(1);
+    if (!result.success) {
+      setShowUnlockAnimation(false);
       router.push("/shop");
       return;
     }
 
-    setArrowBalance(newBalance);
-    markTendencyUnlocked();
-    setShowUnlockAnimation(true);
+    setArrowBalance(result.newBalance);
+    markTendencyUnlocked(); // localStorage
+    
+    // Firebase에 언락 기록
+    if (isLoggedIn()) {
+      const kakaoUser = getKakaoUser();
+      if (kakaoUser) {
+        await recordContentUnlock(kakaoUser.id, "loveTendency");
+      }
+    }
 
     setTimeout(() => {
       setIsUnlocked(true);

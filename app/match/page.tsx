@@ -206,7 +206,7 @@ export default function MatchPage() {
         </div>
         
         <BottomNav 
-          activeTab="love" 
+          activeTab="home" 
           onTabChange={handleTabChange}
         />
       </div>
@@ -237,7 +237,7 @@ export default function MatchPage() {
         </div>
         
         <BottomNav 
-          activeTab="love" 
+          activeTab="home" 
           onTabChange={handleTabChange}
         />
       </div>
@@ -488,7 +488,7 @@ export default function MatchPage() {
       </div>
       
       <BottomNav 
-        activeTab="love" 
+        activeTab="home" 
         onTabChange={handleTabChange}
       />
     </div>

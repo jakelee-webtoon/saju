@@ -9,7 +9,9 @@ import {
   markUnlockedToday,
   type DecisionGuide,
 } from "@/app/lib/cupid/decisionGuide";
-import { getArrowBalance, useArrow, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface TodayLovePageProps {
   todayMode: TodayModeResult;
@@ -40,11 +42,23 @@ export default function TodayLovePage({
     const guide = generateDecisionGuide(todayMode);
     setDecisionGuide(guide);
     
-    // 잠금 해제 상태 확인
-    setIsUnlocked(isUnlockedToday());
-    
-    // 화살 잔액 확인
-    setArrowBalance(getArrowBalance());
+    // 잠금 해제 상태 확인 (Firebase 우선)
+    const loadData = async () => {
+      if (isLoggedIn()) {
+        const kakaoUser = getKakaoUser();
+        if (kakaoUser) {
+          const unlocked = await isContentUnlocked(kakaoUser.id, "decisionGuide");
+          setIsUnlocked(unlocked);
+          if (unlocked) markUnlockedToday(); // localStorage 동기화
+        }
+      } else {
+        setIsUnlocked(isUnlockedToday());
+      }
+      
+      const balance = await getArrowBalanceSync();
+      setArrowBalance(balance);
+    };
+    loadData();
   }, [todayMode]);
 
   if (!isMounted) return null;
@@ -107,23 +121,33 @@ ${todayMode.detail.main_sentence}
   };
 
   // 결정 가이드 잠금 해제
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     // 화살 부족 시 샵으로 이동
     if (!canUseArrow(1)) {
       router.push("/shop");
       return;
     }
     
-    // 화살 1개 사용
-    const newBalance = useArrow(1);
-    if (newBalance === -1) {
+    setShowUnlockAnimation(true);
+    
+    // 화살 1개 사용 (Firebase 동기화)
+    const result = await useArrowSync(1);
+    if (!result.success) {
+      setShowUnlockAnimation(false);
       router.push("/shop");
       return;
     }
     
-    setArrowBalance(newBalance);
-    markUnlockedToday();
-    setShowUnlockAnimation(true);
+    setArrowBalance(result.newBalance);
+    markUnlockedToday(); // localStorage
+    
+    // Firebase에 언락 기록 (하루 유지)
+    if (isLoggedIn()) {
+      const kakaoUser = getKakaoUser();
+      if (kakaoUser) {
+        await recordContentUnlock(kakaoUser.id, "decisionGuide");
+      }
+    }
     
     setTimeout(() => {
       setIsUnlocked(true);

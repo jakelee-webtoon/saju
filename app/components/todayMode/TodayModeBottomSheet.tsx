@@ -72,7 +72,7 @@ ${todayMode.detail.main_sentence}
 
       {/* 바텀시트 */}
       <div className="fixed bottom-0 left-0 right-0 z-50 animate-slideUp">
-        <div className="mx-auto max-w-md bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto">
+        <div className="mx-auto max-w-md bg-white rounded-t-3xl max-h-[80vh] overflow-y-auto">
           {/* 핸들 */}
           <div className="sticky top-0 bg-white pt-3 pb-2 rounded-t-3xl">
             <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto" />
@@ -141,7 +141,7 @@ ${todayMode.detail.main_sentence}
             </section>
 
             {/* 버튼 영역 */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 pb-6">
               <button
                 onClick={onClose}
                 className="flex-1 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
@@ -157,6 +157,9 @@ ${todayMode.detail.main_sentence}
               </button>
             </div>
           </div>
+          
+          {/* 하단 Safe Area */}
+          <div className="h-8 bg-white" />
         </div>
       </div>
     </>

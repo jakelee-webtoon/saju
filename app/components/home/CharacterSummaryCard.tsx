@@ -28,7 +28,7 @@ export default function CharacterSummaryCard({
   return (
     <section
       onClick={onClick}
-      className="rounded-3xl bg-[#1A2246] p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden"
+      className="rounded-3xl bg-[#141B38] p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden"
     >
       {/* 배경 이펙트 */}
       <div className="absolute inset-0 opacity-10">
