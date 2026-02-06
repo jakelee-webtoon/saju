@@ -1,15 +1,22 @@
 // ========================
-// MBTI 궁합 문구 선택 로직
+// 궁합 문구 선택 로직 (MBTI + 생년월일)
 // ========================
 
 import { type MatchResult, type AxisComparison, parseMbti } from "./mbti";
+import { type BirthMatchResult, type BirthComparison } from "./birth";
 import textsData from "@/app/data/match/mbti_texts.json";
+import birthTextsData from "@/app/data/match/birth_texts.json";
 
 export interface MatchTexts {
   declaration: string;
   goodPoints: string[];
   cautionPoints: string[];
   action: string;
+}
+
+// 생년월일 궁합 문구 (같은 형식)
+export interface BirthMatchTexts extends MatchTexts {
+  headline: string; // declaration 대신 headline 사용 가능
 }
 
 type TextsDataType = typeof textsData;
@@ -215,5 +222,143 @@ export function getFullMatchResult(
     theirMbti,
     result,
     texts,
+  };
+}
+
+// ========================
+// 생년월일 궁합 문구 선택 로직
+// ========================
+
+type BirthTextsData = typeof birthTextsData;
+
+/**
+ * 생년월일 궁합 선언문/헤드라인 선택
+ */
+function selectBirthHeadline(grade: string, seed?: number): string {
+  const headlines = birthTextsData.headlines as Record<string, string[]>;
+  const pool = headlines[grade] || headlines["무난무난"];
+  return pickRandom(pool, seed);
+}
+
+/**
+ * 생년월일 궁합 좋은 포인트 선택 (2~3개)
+ */
+function selectBirthGoodPoints(comparison: BirthComparison, seed?: number): string[] {
+  const good = birthTextsData.goodPoints;
+  const pool: string[] = [];
+  
+  // 오행 관계에 따른 선택
+  if (comparison.elementRelation.relation === "상생") {
+    pool.push(...good.element_sangsaeng);
+  } else if (comparison.elementRelation.relation === "비화") {
+    pool.push(...good.element_bihwa);
+  }
+  
+  // 띠 관계에 따른 선택
+  if (comparison.zodiacRelation.isYukhap) {
+    pool.push(...good.zodiac_yukhap);
+  } else if (comparison.zodiacRelation.isSamhap) {
+    pool.push(...good.zodiac_samhap);
+  } else if (comparison.zodiacRelation.isSame) {
+    pool.push(...good.zodiac_same);
+  }
+  
+  // 오행 보완 관계
+  if (comparison.elementBalance.complementary.length > 0) {
+    pool.push(...good.element_complement);
+  }
+  
+  // 생일 특성
+  if (comparison.birthdayTraits.sameMonth) {
+    pool.push(...good.same_month);
+  }
+  if (comparison.birthdayTraits.dayDifference <= 3) {
+    pool.push(...good.close_birthday);
+  }
+  
+  // 일반
+  pool.push(...good.general);
+  
+  return pickRandomN(pool, 3, seed);
+}
+
+/**
+ * 생년월일 궁합 조심 포인트 선택 (2개)
+ */
+function selectBirthCautionPoints(comparison: BirthComparison, seed?: number): string[] {
+  const caution = birthTextsData.cautionPoints;
+  const pool: string[] = [];
+  
+  // 오행 상극
+  if (comparison.elementRelation.relation === "상극") {
+    pool.push(...caution.element_sanggeuk);
+  }
+  
+  // 띠 충돌
+  if (comparison.zodiacRelation.isConflict) {
+    pool.push(...caution.zodiac_conflict);
+  }
+  
+  // 오행 과열 (둘 다 같은 오행이 과다)
+  if (comparison.elementBalance.sharedStrong.length > 0) {
+    pool.push(...caution.element_overheat);
+  }
+  
+  // 일반 (pool이 비어있을 때)
+  if (pool.length < 2) {
+    pool.push(...caution.general);
+  }
+  
+  return pickRandomN(pool, 2, seed);
+}
+
+/**
+ * 생년월일 궁합 추천 행동 선택 (1개)
+ */
+function selectBirthAction(comparison: BirthComparison, score: number, seed?: number): string {
+  const actions = birthTextsData.actions;
+  const pool: string[] = [];
+  
+  // 점수에 따른 행동
+  if (score >= 70) {
+    pool.push(...actions.high_score);
+  } else if (score >= 50) {
+    pool.push(...actions.mid_score);
+  } else {
+    pool.push(...actions.low_score);
+  }
+  
+  // 특성별 행동 추가
+  if (comparison.elementRelation.relation === "상극") {
+    pool.push(...actions.element_sanggeuk);
+  }
+  if (comparison.zodiacRelation.isConflict) {
+    pool.push(...actions.zodiac_conflict);
+  }
+  
+  // 일반
+  pool.push(...actions.general);
+  
+  return pickRandom(pool, seed);
+}
+
+/**
+ * 생년월일 궁합 문구 생성
+ */
+export function generateBirthMatchTexts(result: BirthMatchResult): BirthMatchTexts {
+  // 날짜 기반 시드 (같은 날 같은 결과)
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const birthSeed = result.score + (result.comparison.zodiacRelation.myZodiac.charCodeAt(0) || 0);
+  const combinedSeed = seed + birthSeed;
+  
+  const headline = selectBirthHeadline(result.grade, combinedSeed);
+  
+  return {
+    headline,
+    declaration: headline, // 호환성을 위해 동일하게 설정
+    goodPoints: selectBirthGoodPoints(result.comparison, combinedSeed + 1),
+    cautionPoints: selectBirthCautionPoints(result.comparison, combinedSeed + 2),
+    action: selectBirthAction(result.comparison, result.score, combinedSeed + 3),
   };
 }

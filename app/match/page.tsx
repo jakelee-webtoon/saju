@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MbtiPicker from "@/app/components/mbti/MbtiPicker";
 import MatchResultCard from "@/app/components/match/MatchResultCard";
+import BirthMatchResultCard from "@/app/components/match/BirthMatchResultCard";
 import { type MbtiType, calculateScore } from "@/app/lib/match/mbti";
-import { generateMatchTexts, type MatchTexts } from "@/app/lib/match/texts";
+import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type BirthMatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
+import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
 
 type ViewState = "input" | "result";
 type InputType = "mbti" | "birth";
@@ -20,6 +22,13 @@ interface SavedMatchData {
   texts?: MatchTexts;
   savedAt: string;
 }
+
+// 기본 생년월일 (앱의 defaultFormData와 동일: 1990-8-20)
+const DEFAULT_MY_BIRTH = {
+  year: 1990,
+  month: 8,
+  day: 20,
+};
 
 // 사주 기반 MBTI 추정 (사주 원소를 기반으로 가상의 MBTI 생성)
 // 기본값 사용 (앱의 defaultFormData와 동일: 1990-8-20)
@@ -57,9 +66,13 @@ export default function MatchPage() {
   // 내 사주 기반 MBTI (자동 계산 - 항상 데이터 있음)
   const [myMbti] = useState<MbtiType>(getSajuBasedMbti());
   
-  // 결과
+  // MBTI 결과
   const [result, setResult] = useState<MatchResult | null>(null);
   const [texts, setTexts] = useState<MatchTexts | null>(null);
+  
+  // 생년월일 결과
+  const [birthResult, setBirthResult] = useState<BirthMatchResult | null>(null);
+  const [birthTexts, setBirthTexts] = useState<BirthMatchTexts | null>(null);
 
   // localStorage에서 데이터 불러오기
   useEffect(() => {
@@ -111,18 +124,28 @@ export default function MatchPage() {
         type: "mbti",
         mbti: theirMbti,
       }));
-    } else if (inputType === "birth") {
-      // 생년월일 기반 궁합은 추후 구현
-      // 지금은 저장만 하고 안내 표시
+    } else if (inputType === "birth" && birthYear && birthMonth && birthDay) {
+      // 생년월일 기반 궁합 계산
+      const theirYear = parseInt(birthYear);
+      const theirMonth = parseInt(birthMonth);
+      const theirDay = parseInt(birthDay);
+      
+      const matchResult = calculateBirthMatch(
+        DEFAULT_MY_BIRTH.year, DEFAULT_MY_BIRTH.month, DEFAULT_MY_BIRTH.day,
+        theirYear, theirMonth, theirDay
+      );
+      const matchTexts = generateBirthMatchTexts(matchResult);
+      
+      setBirthResult(matchResult);
+      setBirthTexts(matchTexts);
+      setView("result");
+      
+      // localStorage 저장
       localStorage.setItem("savedPartner", JSON.stringify({
         nickname,
         type: "birth",
         birthDate: `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`,
       }));
-      
-      // 임시: 생년월일 저장 완료 안내
-      alert("생년월일 기반 궁합은 곧 제공될 예정이에요! 💫");
-      router.push("/");
     }
   };
 
@@ -137,6 +160,8 @@ export default function MatchPage() {
     setBirthDay("");
     setResult(null);
     setTexts(null);
+    setBirthResult(null);
+    setBirthTexts(null);
   };
 
   // MBTI 결과 화면
@@ -149,7 +174,7 @@ export default function MatchPage() {
             className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
           >
             <span>←</span>
-            <span>홈으로</span>
+            <span>돌아가기</span>
           </button>
 
           <MatchResultCard
@@ -158,6 +183,32 @@ export default function MatchPage() {
             theirMbti={theirMbti!}
             result={result}
             texts={texts}
+            onReset={handleReset}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 생년월일 결과 화면
+  if (view === "result" && birthResult && birthTexts && inputType === "birth") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-8">
+        <div className="mx-auto max-w-md px-5 py-8">
+          <button
+            onClick={() => router.push("/")}
+            className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+          >
+            <span>←</span>
+            <span>돌아가기</span>
+          </button>
+
+          <BirthMatchResultCard
+            nickname={nickname}
+            myBirth={`${DEFAULT_MY_BIRTH.year}.${DEFAULT_MY_BIRTH.month}.${DEFAULT_MY_BIRTH.day}`}
+            theirBirth={`${birthYear}.${birthMonth}.${birthDay}`}
+            result={birthResult}
+            texts={birthTexts}
             onReset={handleReset}
           />
         </div>
@@ -174,7 +225,7 @@ export default function MatchPage() {
           className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
         >
           <span>←</span>
-          <span>홈으로</span>
+          <span>돌아가기</span>
         </button>
 
         {/* 헤더 */}
@@ -329,7 +380,7 @@ export default function MatchPage() {
                     </p>
                   )}
                   <p className="mt-3 text-xs text-purple-400 text-center">
-                    💡 생년월일 기반 궁합은 곧 제공 예정이에요
+                    💡 띠 궁합 + 오행 관계로 분석해드려요
                   </p>
                 </div>
               )}
