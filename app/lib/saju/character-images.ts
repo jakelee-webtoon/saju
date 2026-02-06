@@ -1,26 +1,16 @@
-// 이 파일은 AI가 생성한 이미지를 캐릭터 타입에 매핑하기 위한 설정입니다.
+// 이 파일은 캐릭터 타입에 2D 이미지를 매핑하기 위한 설정입니다.
+// 오행(화,목,토,금,수)에 따라 2D 캐릭터 이미지를 반환합니다.
 
 export type Gender = "male" | "female";
 
-// 기본 오행별 이미지 경로 (성별 이미지가 없는 경우 fallback)
-const BASE_IMAGES: Record<string, string> = {
-  fire: "/characters/character/fire.webp",
-  water: "/characters/character/water.webp",
-  wood: "/characters/character/wood.webp",
-  earth: "/characters/character/earth.webp",
-  metal: "/characters/character/metal.webp",
-  balance: "/characters/character/balance.webp",
-};
-
-// 남성용 이미지 경로
-const MALE_IMAGES: Record<string, string> = {
-  water: "/characters/character/water_m.webp",
-  earth: "/characters/character/earth_m.webp",
-};
-
-// 여성용 이미지 경로
-const FEMALE_IMAGES: Record<string, string> = {
-  water: "/characters/character/water_f.webp",
+// 오행별 2D 이미지 경로
+const ELEMENT_IMAGES: Record<string, string> = {
+  fire: "/characters/character/fire_2d.webp",    // 화
+  wood: "/characters/character/tree_2d.webp",    // 목
+  earth: "/characters/character/soil_2d.webp",   // 토
+  metal: "/characters/character/gold_2d.webp",   // 금
+  water: "/characters/character/water_2d.webp",  // 수
+  balance: "/characters/character/soil_2d.webp", // 균형 (토로 fallback)
 };
 
 // 캐릭터 ID에서 기본 오행 추출
@@ -41,25 +31,22 @@ function getBaseElement(characterId: string): string | null {
   return null;
 }
 
-// 캐릭터 ID에 따른 이미지 경로 반환 (성별 지원)
+// 캐릭터 ID에 따른 이미지 경로 반환 (오행 기반)
+// gender 파라미터는 하위 호환성을 위해 유지하지만 사용하지 않음
 export function getCharacterImage(characterId: string, gender?: Gender): string | undefined {
   const baseElement = getBaseElement(characterId);
   if (baseElement) {
-    // 남성이고 해당 오행의 남성용 이미지가 있는 경우
-    if (gender === "male" && MALE_IMAGES[baseElement]) {
-      return MALE_IMAGES[baseElement];
-    }
-    // 여성이고 해당 오행의 여성용 이미지가 있는 경우
-    if (gender === "female" && FEMALE_IMAGES[baseElement]) {
-      return FEMALE_IMAGES[baseElement];
-    }
-    return BASE_IMAGES[baseElement];
+    return ELEMENT_IMAGES[baseElement];
   }
-  return undefined;
+  return ELEMENT_IMAGES["earth"]; // 기본값: 토
 }
 
-// 기존 호환성을 위한 직접 매핑 (deprecated)
+// 기존 호환성을 위한 직접 매핑
 export const characterImages: Record<string, string> = {
-  fire: "/characters/character/fire.webp",
-  // 다른 캐릭터 이미지들도 추가될 예정입니다.
+  fire: "/characters/character/fire_2d.webp",
+  wood: "/characters/character/tree_2d.webp",
+  earth: "/characters/character/soil_2d.webp",
+  metal: "/characters/character/gold_2d.webp",
+  water: "/characters/character/water_2d.webp",
+  balance: "/characters/character/soil_2d.webp",
 };

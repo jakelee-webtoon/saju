@@ -258,7 +258,7 @@ export default function MatchPage() {
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  MBTI로 보기
+                  상대방 <span className="font-bold">MBTI</span>로 보기
                 </button>
                 <button
                   onClick={() => setInputType("birth")}
@@ -268,7 +268,7 @@ export default function MatchPage() {
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  생년월일로 보기
+                  상대방 <span className="font-bold">생년월일</span>로 보기
                 </button>
               </div>
 
