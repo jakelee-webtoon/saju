@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { calculateManseWithLibrary, type ManseResult, type BirthInput, type Element, type TrustLevel } from "./lib/saju";
 import { computeTodayMode, type TodayModeResult } from "./lib/todayMode/computeTodayMode";
 import TodayModeSnippet from "./components/todayMode/TodayModeSnippet";
@@ -11,6 +11,7 @@ import BottomNav, { type TabId } from "./components/BottomNav";
 // 홈 화면 컴포넌트
 import TodayStatusLine from "./components/home/TodayStatusLine";
 import CharacterSummaryCard from "./components/home/CharacterSummaryCard";
+import LoveTendencyCard from "./components/home/LoveTendencyCard";
 import TodayLoveModeCard from "./components/home/TodayLoveModeCard";
 import ManseryeokAccordion from "./components/home/ManseryeokAccordion";
 import CompatibilityMiniCard from "./components/home/CompatibilityMiniCard";
@@ -766,6 +767,122 @@ function CharacterGraphic({ id, color }: { id: string; color: string }) {
   );
 }
 
+// ========================
+// 계정 섹션 컴포넌트 (나 탭 내부용)
+// ========================
+function AccountSection() {
+  const router = useRouter();
+  const [user, setUser] = useState<{ id: string; nickname: string; profileImage?: string } | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("kakaoUser");
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("kakaoUser");
+    localStorage.removeItem("kakaoAccessToken");
+    setUser(null);
+    setShowLogoutConfirm(false);
+    router.refresh();
+  };
+
+  return (
+    <>
+      <section className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden mb-8">
+        <div className="p-5">
+          <h2 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+            <span>👤</span> 계정
+          </h2>
+
+          {user ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {user.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt={user.nickname}
+                    className="w-12 h-12 rounded-full border-2 border-purple-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
+                    {user.nickname.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <p className="font-semibold text-gray-900">{user.nickname}</p>
+                  <p className="text-xs text-gray-500">카카오 로그인</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-2">
+              <p className="text-sm text-gray-500 mb-4">
+                로그인하면 데이터가 안전하게 저장돼요
+              </p>
+              <button
+                onClick={() => router.push("/login")}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-[#191919] transition-all hover:brightness-95"
+                style={{ backgroundColor: "#FEE500" }}
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M10 2C5.02944 2 1 5.36816 1 9.5C1 12.0703 2.61906 14.3203 5.07031 15.6328L4.21875 18.8516C4.14062 19.1328 4.46094 19.3594 4.70312 19.2031L8.45312 16.8281C8.95312 16.9062 9.46875 16.9531 10 16.9531C14.9706 16.9531 19 13.5859 19 9.45312C19 5.32031 14.9706 2 10 2Z"
+                    fill="#191919"
+                  />
+                </svg>
+                카카오 로그인
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 로그아웃 확인 모달 */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">로그아웃</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              정말 로그아웃 하시겠어요?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function InterpretationPage({
   manseResult,
   formData,
@@ -981,27 +1098,15 @@ ${character.weaknesses.map((w: string) => `• ${w}`).join('\n')}`;
 
         {/* 공유 버튼 */}
         <button 
-          className="w-full mb-4 rounded-xl bg-white py-4 text-[15px] font-bold text-[#1a1a2e] border-2 border-[#1a1a2e] transition-colors hover:bg-[#f9fafb] flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(26,26,46,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+          className="w-full mb-6 rounded-xl bg-white py-4 text-[15px] font-bold text-[#1a1a2e] border-2 border-[#1a1a2e] transition-colors hover:bg-[#f9fafb] flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(26,26,46,1)] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
           onClick={() => setShowShareModal(true)}
         >
           <span>📤</span>
           <span>이 캐릭터 공유하기</span>
         </button>
 
-        {/* [4] 마무리 멘트 */}
-        <section className="mb-8 rounded-xl bg-[#f9fafb] p-4 border border-[#e5e7eb]">
-          <p className="text-xs text-[#9ca3af] text-center leading-relaxed">
-            이건 운세가 아니라,<br />
-            사주 구조를 캐릭터처럼 풀어본 거예요 😊
-          </p>
-        </section>
-
-        {/* 기준 정보 (작게) */}
-        <div className="text-center mb-8">
-          <p className="text-xs text-[#9ca3af]">
-            기준: {ilgan.천간읽기}({pillars.day.천간}) 일간
-          </p>
-        </div>
+        {/* 계정 섹션 */}
+        <AccountSection />
       </div>
 
       {/* 오늘 모드 바텀시트 */}
@@ -1099,6 +1204,7 @@ ${character.weaknesses.map((w: string) => `• ${w}`).join('\n')}`;
           </div>
         </>
       )}
+
     </div>
   );
 }
@@ -1160,17 +1266,22 @@ function NewHomePage({
           />
         </div>
 
-        {/* [3] 오늘의 연애 모드 카드 */}
+        {/* [3] 나의 기본 연애 성향 */}
+        <div className="mb-4">
+          <LoveTendencyCard characterId={character.id} />
+        </div>
+
+        {/* [4] 오늘의 연애 모드 카드 */}
         <div className="mb-4">
           <TodayLoveModeCard todayMode={todayMode} onClick={onViewLove} />
         </div>
 
-        {/* [4] 궁합 미니 카드 */}
+        {/* [5] 궁합 미니 카드 */}
         <div className="mb-4">
           <CompatibilityMiniCard onClick={() => router.push("/match")} />
         </div>
 
-        {/* [5] 나의 만세력 보기 */}
+        {/* [6] 나의 만세력 보기 */}
         <div className="mb-8">
           <ManseryeokAccordion manseResult={manseResult} />
         </div>
@@ -1288,7 +1399,10 @@ const defaultFormData: FormData = {
   hasTime: true,
 };
 
-export default function ManseryeokPage() {
+function ManseryeokPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [formData, setFormData] = useState<FormData>(defaultFormData);
   const [view, setView] = useState<"home" | "edit" | "detail" | "love">("home");
   const [activeTab, setActiveTab] = useState<TabId>("home");
@@ -1310,6 +1424,27 @@ export default function ManseryeokPage() {
     setManseResult(result);
     setLoading(false);
   }, [formData]);
+
+  // URL 쿼리 파라미터로 탭 복원 (샵/궁합 등에서 돌아올 때)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["home", "love", "chat", "me"].includes(tabParam)) {
+      setActiveTab(tabParam as TabId);
+      
+      // view도 함께 변경
+      if (tabParam === "love") {
+        setView("love");
+      } else {
+        setView("home");
+      }
+      if (tabParam === "chat") {
+        setShowChatBadge(false);
+      }
+      
+      // URL에서 tab 파라미터 제거 (깔끔하게)
+      router.replace("/", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   if (loading || !manseResult) {
     return (
@@ -1433,5 +1568,26 @@ export default function ManseryeokPage() {
       />
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
     </>
+  );
+}
+
+// 로딩 컴포넌트
+function PageLoading() {
+  return (
+    <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4" />
+        <p className="text-purple-700 font-medium">로딩 중...</p>
+      </div>
+    </div>
+  );
+}
+
+// Suspense로 감싸기 (useSearchParams 사용)
+export default function ManseryeokPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <ManseryeokPageContent />
+    </Suspense>
   );
 }

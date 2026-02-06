@@ -9,6 +9,7 @@ import { type MbtiType, calculateScore } from "@/app/lib/match/mbti";
 import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type BirthMatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
+import BottomNav, { type TabId } from "@/app/components/BottomNav";
 
 type ViewState = "input" | "result";
 type InputType = "mbti" | "birth";
@@ -176,10 +177,15 @@ export default function MatchPage() {
     setBirthTexts(null);
   };
 
+  // 탭 변경 시 홈으로 이동
+  const handleTabChange = (tab: TabId) => {
+    router.push(`/?tab=${tab}`);
+  };
+
   // MBTI 결과 화면
   if (view === "result" && result && texts && inputType === "mbti") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="mx-auto max-w-md px-5 py-8">
           <button
             onClick={() => router.push("/")}
@@ -198,6 +204,11 @@ export default function MatchPage() {
             onReset={handleReset}
           />
         </div>
+        
+        <BottomNav 
+          activeTab="love" 
+          onTabChange={handleTabChange}
+        />
       </div>
     );
   }
@@ -205,7 +216,7 @@ export default function MatchPage() {
   // 생년월일 결과 화면
   if (view === "result" && birthResult && birthTexts && inputType === "birth") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="mx-auto max-w-md px-5 py-8">
           <button
             onClick={() => router.push("/")}
@@ -224,12 +235,17 @@ export default function MatchPage() {
             onReset={handleReset}
           />
         </div>
+        
+        <BottomNav 
+          activeTab="love" 
+          onTabChange={handleTabChange}
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
       <div className="mx-auto max-w-md px-5 py-8">
         {/* 뒤로가기 */}
         <button
@@ -470,6 +486,11 @@ export default function MatchPage() {
           궁합은 재미로 보는 참고 자료예요 😊
         </p>
       </div>
+      
+      <BottomNav 
+        activeTab="love" 
+        onTabChange={handleTabChange}
+      />
     </div>
   );
 }

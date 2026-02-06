@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { type BirthMatchResult } from "@/app/lib/match/birth";
 import { type BirthMatchTexts } from "@/app/lib/match/texts";
+import { getArrowBalance, canUseArrow } from "@/app/lib/cupid/arrowBalance";
 
 interface BirthMatchResultCardProps {
   nickname: string;
@@ -24,9 +26,11 @@ export default function BirthMatchResultCard({
   texts,
   onReset,
 }: BirthMatchResultCardProps) {
+  const router = useRouter();
   const { score, gradeInfo, comparison } = result;
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const arrowBalance = getArrowBalance();
 
   // 공유 텍스트 생성
   const shareText = `💕 ${nickname}님과의 궁합
@@ -207,6 +211,36 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
           {texts.action}
         </p>
       </div>
+
+      {/* 🔒 유료 영역: 상세 분석 */}
+      <button
+        onClick={() => router.push("/shop")}
+        className="w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98]"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔒</span>
+            <div>
+              <p className="text-sm font-bold text-white mb-0.5">
+                왜 잘 맞는지, 어디서 어긋나는지
+              </p>
+              <p className="text-xs text-gray-400">
+                자세히 보기
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
+            <span>💘</span>
+            <span>화살 2개</span>
+            <span>→</span>
+          </div>
+        </div>
+        {arrowBalance > 0 && (
+          <p className="mt-2 text-[10px] text-gray-500 text-right">
+            내 화살 {arrowBalance}개
+          </p>
+        )}
+      </button>
 
       {/* 버튼 영역 */}
       <div className="flex gap-3 pt-2">
