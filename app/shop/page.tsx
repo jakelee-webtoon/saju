@@ -10,8 +10,26 @@ import {
   type CupidPackage,
 } from "@/app/lib/cupid/arrowBalance";
 import { getKakaoUser } from "@/app/lib/kakao";
+import { getNaverUser } from "@/app/lib/naver";
+import { initPortOne, requestPayment, verifyPayment } from "@/app/lib/portone";
 import BottomNav, { TabId } from "@/app/components/BottomNav";
 import SwipeBack from "@/app/components/SwipeBack";
+
+// 로그인 상태 확인 (카카오 or 네이버)
+function checkLoggedIn() {
+  return !!getKakaoUser() || !!getNaverUser();
+}
+
+// 로그인된 사용자 이름 가져오기
+function getUserName(): string {
+  const kakaoUser = getKakaoUser();
+  if (kakaoUser) return kakaoUser.nickname;
+  
+  const naverUser = getNaverUser();
+  if (naverUser) return naverUser.nickname;
+  
+  return "사용자";
+}
 
 export default function ShopPage() {
   const router = useRouter();
@@ -19,21 +37,32 @@ export default function ShopPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [portoneReady, setPortoneReady] = useState(false);
 
-  // 초기 잔액 로드 & 로그인 상태 확인
+  // 초기 잔액 로드 & PortOne SDK 초기화
   useEffect(() => {
-    const loadBalance = async () => {
+    const init = async () => {
+      // 잔액 로드
       const currentBalance = await getArrowBalanceSync();
       setBalance(currentBalance);
-      setIsLoggedIn(!!getKakaoUser());
+      setIsLoggedIn(checkLoggedIn());
+      
+      // PortOne SDK 초기화
+      try {
+        await initPortOne();
+        setPortoneReady(true);
+      } catch (error) {
+        console.error("PortOne init error:", error);
+        // SDK 초기화 실패해도 테스트 모드로 동작 가능
+      }
     };
-    loadBalance();
+    init();
   }, []);
 
-  // 패키지 구매 (Firebase 연동)
+  // 패키지 구매 (결제 연동)
   const handlePurchase = async (pkg: CupidPackage) => {
     // 로그인 체크
-    if (!getKakaoUser()) {
+    if (!checkLoggedIn()) {
       setToast("로그인이 필요해요! 🔐");
       setTimeout(() => {
         router.push("/login?redirect=/shop");
@@ -42,18 +71,60 @@ export default function ShopPage() {
     }
 
     setIsPurchasing(true);
+    const totalArrows = pkg.arrows + (pkg.bonusArrows || 0);
     
     try {
-      const totalArrows = pkg.arrows + (pkg.bonusArrows || 0);
-      const newBalance = await addArrowSync(totalArrows);
-      setBalance(newBalance);
+      // 모바일 결제를 위해 결제 정보 저장
+      localStorage.setItem("pendingPayment", JSON.stringify({
+        amount: pkg.price,
+        arrows: totalArrows,
+        packageName: pkg.name,
+        packageId: pkg.id,
+      }));
       
-      // 토스트 표시
-      setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
-      setTimeout(() => setToast(null), 2500);
+      // 결제 요청
+      const response = await requestPayment({
+        name: `큐피드 화살 ${pkg.name}`,
+        amount: pkg.price,
+        pay_method: "card",
+        buyer_name: getUserName(),
+        pgType: "KAKAOPAY", // 기본 카카오페이
+      });
+
+      if (response.success) {
+        // 결제 검증
+        const verification = await verifyPayment(
+          response.imp_uid,
+          response.merchant_uid,
+          pkg.price
+        );
+
+        if (verification.success) {
+          // 화살 충전
+          const newBalance = await addArrowSync(totalArrows);
+          setBalance(newBalance);
+          localStorage.removeItem("pendingPayment");
+          
+          setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
+          setTimeout(() => setToast(null), 2500);
+        } else {
+          setToast(verification.message || "결제 검증에 실패했어요 😢");
+          setTimeout(() => setToast(null), 2500);
+        }
+      } else {
+        // 결제 취소 or 실패
+        localStorage.removeItem("pendingPayment");
+        if (response.error_msg) {
+          setToast(`${response.error_msg}`);
+        } else {
+          setToast("결제가 취소되었어요");
+        }
+        setTimeout(() => setToast(null), 2500);
+      }
     } catch (error) {
       console.error("Purchase error:", error);
-      setToast("충전에 실패했어요. 다시 시도해주세요 😢");
+      localStorage.removeItem("pendingPayment");
+      setToast("결제 중 오류가 발생했어요 😢");
       setTimeout(() => setToast(null), 2500);
     } finally {
       setIsPurchasing(false);
@@ -187,7 +258,7 @@ export default function ShopPage() {
 
         {/* 안내 문구 */}
         <p className="mt-8 text-center text-xs text-purple-400">
-          결제는 추후 연동 예정이에요. 지금은 무료 체험! 🎁
+          {portoneReady ? "카카오페이로 간편하게 결제하세요 💳" : "결제 시스템 로딩 중..."}
         </p>
       </div>
 
