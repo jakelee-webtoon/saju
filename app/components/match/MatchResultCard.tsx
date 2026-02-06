@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { type MatchTexts } from "@/app/lib/match/texts";
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn, shareToKakao } from "@/app/lib/kakao";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
+import { shareAsImage } from "@/app/lib/share/imageShare";
+import { ShareableMatchCard } from "@/app/components/share";
 
 interface MatchResultCardProps {
   nickname: string;
@@ -31,10 +33,14 @@ export default function MatchResultCard({
   const router = useRouter();
   const { score, gradeInfo } = result;
   const [showShareModal, setShowShareModal] = useState(false);
-  const [copySuccess, setCopySuccess] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
   const [arrowBalance, setArrowBalance] = useState(0);
   const [isDetailUnlocked, setIsDetailUnlocked] = useState(false);
   const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
+  
+  // 공유 카드 ref
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // 궁합 고유 ID 생성
   const matchId = `mbti_${myMbti}_${theirMbti}`;
@@ -56,51 +62,31 @@ export default function MatchResultCard({
     loadData();
   }, [matchId]);
 
-  // 공유 텍스트 생성
-  const shareText = `💕 ${nickname}님과의 궁합
-
-상대 MBTI: ${theirMbti}
-${gradeInfo.emoji} ${score}점 (${result.grade})
-
-${texts.declaration}
-
-✨ 좋은 점
-${texts.goodPoints.map(p => `• ${p}`).join('\n')}
-
-⚠️ 조심할 점
-${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
-
-💡 오늘 추천: ${texts.action}`;
-
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-
-  // 클립보드 복사
-  const handleCopyClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(shareText);
-      setCopySuccess(true);
-      setTimeout(() => {
-        setCopySuccess(false);
-        setShowShareModal(false);
-      }, 1500);
-    } catch {
-      alert("복사에 실패했어요. 다시 시도해주세요.");
-    }
-  };
-
-  // 카카오톡 네이티브 공유
-  const handleKakaoShare = async () => {
-    const success = await shareToKakao({
-      title: `${gradeInfo.emoji} ${nickname}님과의 MBTI 궁합`,
-      description: `${score}점 (${result.grade}) - ${texts.declaration}`,
-      buttonTitle: "나도 궁합 보기",
+  // 이미지로 공유하기
+  const handleImageShare = async () => {
+    if (!shareCardRef.current || isSharing) return;
+    
+    setIsSharing(true);
+    setShareMessage("이미지 생성 중...");
+    
+    const result2 = await shareAsImage(shareCardRef.current, {
+      title: `${nickname}님과의 MBTI 궁합`,
+      text: `${score}점 (${result.grade})`,
+      filename: `match-mbti-${myMbti}-${theirMbti}.png`,
     });
     
-    if (!success) {
-      navigator.clipboard.writeText(shareText);
-      alert("텍스트가 복사되었어요!\n카카오톡에서 붙여넣기 해주세요 💬");
+    if (result2.success) {
+      setShareMessage(result2.method === "download" ? "이미지가 저장됐어요! 📸" : "공유 완료! 🎉");
+      setTimeout(() => {
+        setShowShareModal(false);
+        setShareMessage("");
+      }, 1500);
+    } else {
+      setShareMessage(result2.message || "공유에 실패했어요");
+      setTimeout(() => setShareMessage(""), 2000);
     }
-    setShowShareModal(false);
+    
+    setIsSharing(false);
   };
 
   // 트위터 공유
@@ -321,7 +307,7 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
           {/* 오버레이 */}
           <div 
             className="fixed inset-0 bg-black/50 z-40 animate-fadeIn"
-            onClick={() => setShowShareModal(false)}
+            onClick={() => !isSharing && setShowShareModal(false)}
           />
           
           {/* 모달 */}
@@ -333,70 +319,52 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
               </div>
 
               <div className="px-6 pb-8">
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-6">
-                  공유하기
+                <h3 className="text-lg font-bold text-gray-900 text-center mb-4">
+                  이미지로 공유하기
                 </h3>
-
-                {/* 공유 옵션들 */}
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                  {/* 카카오톡 */}
-                  <button 
-                    onClick={handleKakaoShare}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-[#FEE500] flex items-center justify-center shadow-md">
-                      <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                        <path d="M24 7C13.5 7 5 13.94 5 22.5C5 28.08 8.56 32.92 14 35.75L12.15 43.28C12 43.87 12.67 44.33 13.19 44L22.15 38.22C22.75 38.31 23.37 38.36 24 38.36C34.5 38.36 43 31.42 43 22.86C43 14.3 34.5 7 24 7Z" fill="#3C1E1E"/>
-                        <text x="24" y="27" textAnchor="middle" fill="#FEE500" fontSize="11" fontWeight="bold" fontFamily="Arial">TALK</text>
-                      </svg>
-                    </div>
-                    <span className="text-xs text-gray-600">카카오톡</span>
-                  </button>
-
-                  {/* 트위터/X */}
-                  <button 
-                    onClick={handleTwitterShare}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center shadow-md">
-                      <span className="text-2xl text-white">𝕏</span>
-                    </div>
-                    <span className="text-xs text-gray-600">X (트위터)</span>
-                  </button>
-
-                  {/* 더보기 (네이티브 공유) */}
-                  {'share' in navigator && (
-                    <button 
-                      onClick={handleNativeShare}
-                      className="flex flex-col items-center gap-2"
-                    >
-                      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center shadow-md">
-                        <span className="text-2xl">📱</span>
-                      </div>
-                      <span className="text-xs text-gray-600">더보기</span>
-                    </button>
-                  )}
-
-                  {/* 클립보드 복사 */}
-                  <button 
-                    onClick={handleCopyClipboard}
-                    className="flex flex-col items-center gap-2"
-                  >
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md transition-colors ${
-                      copySuccess ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
-                      <span className="text-2xl">{copySuccess ? '✅' : '📋'}</span>
-                    </div>
-                    <span className="text-xs text-gray-600">
-                      {copySuccess ? '복사됨!' : '링크 복사'}
-                    </span>
-                  </button>
+                
+                {/* 미리보기 카드 */}
+                <div className="flex justify-center mb-4 overflow-hidden rounded-2xl">
+                  <div className="transform scale-[0.85] origin-top">
+                    <ShareableMatchCard
+                      ref={shareCardRef}
+                      type="mbti"
+                      nickname={nickname}
+                      myValue={myMbti}
+                      theirValue={theirMbti}
+                      score={score}
+                      grade={result.grade}
+                      gradeEmoji={gradeInfo.emoji}
+                      headline={texts.declaration}
+                    />
+                  </div>
                 </div>
+
+                {/* 상태 메시지 */}
+                {shareMessage && (
+                  <p className="text-center text-sm text-purple-600 mb-4 animate-pulse">
+                    {shareMessage}
+                  </p>
+                )}
+
+                {/* 공유 버튼 */}
+                <button
+                  onClick={handleImageShare}
+                  disabled={isSharing}
+                  className={`w-full py-4 rounded-xl font-bold text-white transition-all mb-3 ${
+                    isSharing 
+                      ? "bg-gray-400" 
+                      : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:scale-[0.98]"
+                  }`}
+                >
+                  {isSharing ? "생성 중..." : "📸 이미지 공유하기"}
+                </button>
 
                 {/* 닫기 버튼 */}
                 <button
                   onClick={() => setShowShareModal(false)}
-                  className="w-full py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
+                  disabled={isSharing}
+                  className="w-full py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
                 >
                   닫기
                 </button>
