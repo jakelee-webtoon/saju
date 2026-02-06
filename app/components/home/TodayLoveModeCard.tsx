@@ -20,28 +20,26 @@ export default function TodayLoveModeCard({ todayMode, onClick }: TodayLoveModeC
   
   return (
     <section
-      className={`rounded-2xl ${bgGradient} p-5 border border-white/50 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm`}
+      className={`rounded-2xl ${bgGradient} p-5 border border-white/50 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm h-[120px]`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 h-full">
         <div className="flex-1">
-          <h3 className={`text-base font-bold ${todayMode.color.text} mb-2`}>
+          <h3 className={`text-base font-bold ${todayMode.color.text} mb-3`}>
             {todayMode.homeTitle}
           </h3>
           
-          {/* 모드 배지 */}
-          <div className="mb-2">
-            <span className={`inline-flex items-center gap-1.5 rounded-full ${todayMode.color.accent} px-3 py-1 text-xs font-bold text-white`}>
+          {/* 모드 배지 + 요약 문장 (한 줄) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`inline-flex items-center gap-1 rounded-full ${todayMode.color.accent} px-2.5 py-0.5 text-xs font-bold text-white shrink-0`}>
               {todayMode.modeEmoji} {todayMode.modeName}
             </span>
+            <p className="text-sm text-gray-700 font-medium">
+              {todayMode.homeSummary}
+            </p>
           </div>
-          
-          {/* 요약 문장 */}
-          <p className="text-sm text-gray-700 leading-relaxed font-medium">
-            {todayMode.homeSummary}
-          </p>
         </div>
-        <span className={`${todayMode.color.text} opacity-60`}>
+        <span className={`${todayMode.color.text} opacity-60 shrink-0`}>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
