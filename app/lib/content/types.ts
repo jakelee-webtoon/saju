@@ -18,11 +18,14 @@ export interface SituationTagsData {
 export interface ModeLabel {
   id: string;
   name: string;
-  oneLiner: string;
-  toneHint: string;
+  emoji: string;
+  shortTitle: string;
+  description: string;
 }
 
 export interface ModeLabelsData {
+  version?: string;
+  description?: string;
   labels: ModeLabel[];
 }
 

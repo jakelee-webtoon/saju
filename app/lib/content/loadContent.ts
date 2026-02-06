@@ -33,7 +33,7 @@ const FALLBACK_SITUATION_TAGS: SituationTagsData = {
 
 const FALLBACK_MODE_LABELS: ModeLabelsData = {
   labels: [
-    { id: 'observe', name: '관망', oneLiner: '지켜보기', toneHint: '여유 있는' }
+    { id: 'observe', name: '관망모드', emoji: '👀', shortTitle: '관망 모드', description: '한 발짝 물러서 지켜보는 상태' }
   ]
 };
 
