@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-type TabId = "home" | "love" | "chat" | "me";
+type TabId = "home" | "love" | "chat" | "reply";
 
 interface BottomNavProps {
   activeTab: TabId;
@@ -15,7 +15,7 @@ const tabs: { id: TabId; label: string; icon: string; activeIcon: string }[] = [
   { id: "home", label: "홈", icon: "🏠", activeIcon: "🏠" },
   { id: "love", label: "연애", icon: "💗", activeIcon: "💗" },
   { id: "chat", label: "대화분석", icon: "💬", activeIcon: "💬" },
-  { id: "me", label: "나", icon: "👤", activeIcon: "👤" },
+  { id: "reply", label: "답장", icon: "✨", activeIcon: "✨" },
 ];
 
 export default function BottomNav({ activeTab, onTabChange, chatBadge = false, isShopActive = false }: BottomNavProps) {

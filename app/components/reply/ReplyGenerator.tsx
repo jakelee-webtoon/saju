@@ -1,0 +1,460 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  getRemainingFreeCount,
+  canUseForFree,
+  incrementUsage,
+  DAILY_FREE_LIMIT,
+  ARROW_COST_PER_REPLY,
+} from "@/app/lib/reply/replyUsage";
+import { getArrowBalance, useArrowSync } from "@/app/lib/cupid/arrowBalance";
+
+interface ReplyGeneratorProps {
+  characterName: string;
+  characterId: string;
+  onBack: () => void;
+}
+
+type ToneType = "친근" | "쿨" | "애교" | "직진" | "센스" | "섹시" | "로맨틱" | "솔직" | "논리적" | "츤데레" | "팩폭";
+
+interface GeneratedReply {
+  id: string;
+  text: string;
+  tone: ToneType;
+  emoji: string;
+}
+
+// 톤별 스타일
+const TONE_STYLES: Record<ToneType, { color: string; bg: string; emoji: string; desc: string }> = {
+  친근: { color: "text-green-600", bg: "bg-green-50 border-green-200", emoji: "😊", desc: "편하고 다정하게" },
+  쿨: { color: "text-blue-600", bg: "bg-blue-50 border-blue-200", emoji: "😎", desc: "담백하고 멋있게" },
+  애교: { color: "text-pink-600", bg: "bg-pink-50 border-pink-200", emoji: "🥰", desc: "귀엽고 사랑스럽게" },
+  직진: { color: "text-red-600", bg: "bg-red-50 border-red-200", emoji: "💪", desc: "확실하게 밀어붙이기" },
+  센스: { color: "text-purple-600", bg: "bg-purple-50 border-purple-200", emoji: "✨", desc: "재치있고 유머있게" },
+  섹시: { color: "text-rose-600", bg: "bg-rose-50 border-rose-200", emoji: "🔥", desc: "은근히 설레게" },
+  로맨틱: { color: "text-red-500", bg: "bg-red-50 border-red-200", emoji: "💕", desc: "달달하고 로맨틱하게" },
+  솔직: { color: "text-amber-600", bg: "bg-amber-50 border-amber-200", emoji: "🙂", desc: "있는 그대로 담백하게" },
+  논리적: { color: "text-slate-600", bg: "bg-slate-50 border-slate-200", emoji: "🧠", desc: "이성적이고 차분하게" },
+  츤데레: { color: "text-fuchsia-600", bg: "bg-fuchsia-50 border-fuchsia-200", emoji: "😤", desc: "관심 없는 척 하면서" },
+  팩폭: { color: "text-orange-600", bg: "bg-orange-50 border-orange-200", emoji: "💣", desc: "팩트로 때리기" },
+};
+
+export default function ReplyGenerator({
+  characterName,
+  characterId,
+  onBack,
+}: ReplyGeneratorProps) {
+  const router = useRouter();
+  const [receivedMessage, setReceivedMessage] = useState("");
+  const [selectedTone, setSelectedTone] = useState<ToneType>("친근");
+  const [generatedReplies, setGeneratedReplies] = useState<GeneratedReply[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showTip, setShowTip] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // 유료화 관련 상태
+  const [freeRemaining, setFreeRemaining] = useState(DAILY_FREE_LIMIT);
+  const [arrowBalance, setArrowBalance] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showArrowUsedToast, setShowArrowUsedToast] = useState(false);
+
+  // 초기 로드 시 잔여 횟수 및 화살 확인
+  useEffect(() => {
+    setFreeRemaining(getRemainingFreeCount());
+    setArrowBalance(getArrowBalance());
+  }, []);
+
+  // 화살 잔액 업데이트 (생성 후)
+  const refreshBalances = () => {
+    setFreeRemaining(getRemainingFreeCount());
+    setArrowBalance(getArrowBalance());
+  };
+
+  // AI 답장 생성
+  const handleGenerate = async (toneOverride?: ToneType) => {
+    if (!receivedMessage.trim()) return;
+
+    // 무료 사용 가능 여부 체크
+    const isFree = canUseForFree();
+    
+    if (!isFree) {
+      // 무료 소진 → 화살 체크
+      const currentBalance = getArrowBalance();
+      if (currentBalance < ARROW_COST_PER_REPLY) {
+        // 화살 부족 → 페이월 표시
+        setShowPaywall(true);
+        return;
+      }
+      
+      // 화살 차감
+      useArrowSync(ARROW_COST_PER_REPLY);
+      setShowArrowUsedToast(true);
+      setTimeout(() => setShowArrowUsedToast(false), 2000);
+    }
+    
+    const tone = toneOverride || selectedTone;
+    setIsGenerating(true);
+    setShowTip(false);
+    setError(null);
+    
+    try {
+      const response = await fetch("/api/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: receivedMessage,
+          tone,
+          characterId,
+          characterName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "답장 생성에 실패했습니다");
+      }
+
+      // 성공 시 사용량 증가 (무료인 경우만)
+      if (isFree) {
+        incrementUsage();
+      }
+
+      // 응답을 GeneratedReply 형태로 변환
+      const replies: GeneratedReply[] = data.replies.map((text: string, idx: number) => ({
+        id: `${tone}-${idx}-${Date.now()}`,
+        text,
+        tone,
+        emoji: TONE_STYLES[tone].emoji,
+      }));
+
+      setGeneratedReplies(replies);
+      setError(null);
+      refreshBalances();
+    } catch (err) {
+      if (generatedReplies.length === 0) {
+        setError(err instanceof Error ? err.message : "오류가 발생했습니다");
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // 답장 복사
+  const handleCopy = async (reply: GeneratedReply) => {
+    try {
+      await navigator.clipboard.writeText(reply.text);
+      setCopiedId(reply.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // 클립보드 실패 시 무시
+    }
+  };
+
+  // 톤 변경 핸들러 (자동 재생성 X - 화살 절약)
+  const handleToneChange = (tone: ToneType) => {
+    setSelectedTone(tone);
+  };
+
+  // 화살로 생성하기
+  const handleUseArrow = () => {
+    setShowPaywall(false);
+    handleGenerate();
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-24">
+      <div className="mx-auto max-w-md px-5 py-6">
+        {/* 헤더 */}
+        <header className="mb-6">
+          <button
+            onClick={onBack}
+            className="mb-4 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+          >
+            <span>←</span>
+            <span>돌아가기</span>
+          </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-2xl shadow-lg">
+                ✨
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">AI 답장 생성기</h1>
+                <p className="text-sm text-purple-600">
+                  {characterName} 스타일로 답장해드려요
+                </p>
+              </div>
+            </div>
+            {/* 화살 잔액 표시 */}
+            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-100 text-pink-600 text-sm font-medium">
+              <span>💘</span>
+              <span>{arrowBalance}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* 무료 횟수 표시 */}
+        <div className="mb-5 p-3 rounded-xl bg-white/70 border border-purple-100">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-600">오늘 무료 {DAILY_FREE_LIMIT}회 중</span>
+            <span className="text-sm font-bold text-purple-600">{freeRemaining}회 남음</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
+              style={{ width: `${(freeRemaining / DAILY_FREE_LIMIT) * 100}%` }}
+            />
+          </div>
+          {freeRemaining === 0 && (
+            <p className="mt-2 text-xs text-gray-500 text-center">
+              🏹 화살 1개로 추가 생성 가능!
+            </p>
+          )}
+        </div>
+
+        {/* 받은 메시지 입력 */}
+        <section className="mb-5">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            💬 상대방이 뭐라고 했어요?
+          </label>
+          <textarea
+            value={receivedMessage}
+            onChange={(e) => setReceivedMessage(e.target.value)}
+            placeholder="상대방 메시지를 입력해주세요..."
+            className="w-full h-24 rounded-2xl border-2 border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100 resize-none"
+          />
+        </section>
+
+        {/* 톤 선택 */}
+        <section className="mb-5">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            🎨 어떤 느낌으로 답장할까요?
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(TONE_STYLES) as ToneType[]).map((tone) => {
+              const style = TONE_STYLES[tone];
+              const isSelected = selectedTone === tone;
+              return (
+                <button
+                  key={tone}
+                  onClick={() => handleToneChange(tone)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                    isSelected
+                      ? `${style.bg} ${style.color} border-current shadow-sm scale-105`
+                      : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="mr-1">{style.emoji}</span>
+                  {tone}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            {TONE_STYLES[selectedTone].desc}
+          </p>
+        </section>
+
+        {/* 생성 버튼 */}
+        <button
+          onClick={() => handleGenerate()}
+          disabled={!receivedMessage.trim() || isGenerating}
+          className={`w-full py-4 rounded-2xl font-bold text-white transition-all mb-6 ${
+            !receivedMessage.trim() || isGenerating
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:scale-[0.98] shadow-lg"
+          }`}
+        >
+          {isGenerating ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">✨</span>
+              <span>답장 만드는 중...</span>
+            </span>
+          ) : freeRemaining > 0 ? (
+            <span className="flex items-center justify-center gap-2">
+              <span>✨</span>
+              <span>답장 생성하기</span>
+              <span className="text-xs opacity-80">(무료)</span>
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <span>🏹</span>
+              <span>화살 1개로 생성하기</span>
+            </span>
+          )}
+        </button>
+
+        {/* 에러 메시지 (답장이 없을 때만 표시) */}
+        {error && generatedReplies.length === 0 && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 relative">
+            <button 
+              onClick={() => setError(null)}
+              className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+            <p className="text-sm text-red-600 text-center">
+              ⚠️ {error}
+            </p>
+          </div>
+        )}
+
+        {/* 팁 (처음에만 표시) */}
+        {showTip && !generatedReplies.length && !error && (
+          <div className="mb-6 p-4 rounded-2xl bg-purple-100/50 border border-purple-200">
+            <p className="text-sm text-purple-700 text-center">
+              💡 <b>{characterName}</b> 캐릭터의 성향을 반영해서<br/>
+              AI가 3가지 답장을 추천해드려요!
+            </p>
+          </div>
+        )}
+
+        {/* 생성된 답장들 */}
+        {generatedReplies.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <span>💌</span>
+              <span>이렇게 답장해보세요</span>
+            </h2>
+            
+            {generatedReplies.map((reply, index) => (
+              <div
+                key={reply.id}
+                className="relative rounded-2xl bg-white border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                {/* 번호 배지 */}
+                <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shadow">
+                  {index + 1}
+                </div>
+                
+                {/* 답장 내용 */}
+                <p className="text-gray-800 text-[15px] leading-relaxed pr-16 mb-2">
+                  {reply.text}
+                </p>
+                
+                {/* 복사 버튼 */}
+                <button
+                  onClick={() => handleCopy(reply)}
+                  className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    copiedId === reply.id
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-600 hover:bg-purple-100 hover:text-purple-700"
+                  }`}
+                >
+                  {copiedId === reply.id ? "복사됨! ✓" : "복사"}
+                </button>
+                
+                {/* 톤 태그 */}
+                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${TONE_STYLES[reply.tone].bg} ${TONE_STYLES[reply.tone].color}`}>
+                  <span>{reply.emoji}</span>
+                  <span>{reply.tone}</span>
+                </div>
+              </div>
+            ))}
+            
+            {/* 재생성 버튼 */}
+            <button
+              onClick={() => handleGenerate()}
+              disabled={isGenerating}
+              className="w-full py-3 rounded-xl bg-white border-2 border-purple-200 text-purple-600 text-sm font-medium hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🔄</span>
+              <span>다른 답장 보기</span>
+              {freeRemaining === 0 && <span className="text-xs opacity-70">(🏹 1개)</span>}
+            </button>
+          </section>
+        )}
+
+        {/* 하단 안내 */}
+        <p className="mt-8 text-center text-[10px] text-gray-400">
+          AI가 제안하는 답장이에요. 상황에 맞게 수정해서 사용하세요 😊
+        </p>
+      </div>
+
+      {/* 화살 사용 토스트 */}
+      {showArrowUsedToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-pink-500 text-white text-sm font-medium shadow-lg animate-bounce">
+          🏹 화살 1개 사용!
+        </div>
+      )}
+
+      {/* 페이월 모달 */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                <span className="text-3xl">😢</span>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                오늘 무료 답장을 다 썼어요
+              </h3>
+              <p className="text-sm text-gray-500">
+                화살로 계속 이용하거나<br/>
+                내일 다시 만나요!
+              </p>
+            </div>
+
+            {/* 화살 잔액 */}
+            <div className="mb-4 p-3 rounded-xl bg-gray-50 flex items-center justify-between">
+              <span className="text-sm text-gray-600">내 화살</span>
+              <span className="font-bold text-pink-600 flex items-center gap-1">
+                <span>💘</span>
+                <span>{arrowBalance}개</span>
+              </span>
+            </div>
+
+            {arrowBalance >= ARROW_COST_PER_REPLY ? (
+              <>
+                {/* 화살로 생성하기 */}
+                <button
+                  onClick={handleUseArrow}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold mb-3 hover:from-purple-600 hover:to-pink-600 transition-all"
+                >
+                  🏹 화살 {ARROW_COST_PER_REPLY}개로 생성하기
+                </button>
+                <button
+                  onClick={() => setShowPaywall(false)}
+                  className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors"
+                >
+                  다음에 할게요
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 화살 부족 */}
+                <div className="mb-4 p-3 rounded-xl bg-pink-50 border border-pink-200">
+                  <p className="text-sm text-pink-600 text-center">
+                    화살이 부족해요! 충전하고 계속하세요 💕
+                  </p>
+                </div>
+                <button
+                  onClick={() => router.push("/shop")}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold mb-3 hover:from-pink-600 hover:to-rose-600 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>💘</span>
+                  <span>화살 충전하러 가기</span>
+                </button>
+                <button
+                  onClick={() => setShowPaywall(false)}
+                  className="w-full py-3 rounded-xl bg-gray-100 text-gray-600 font-medium hover:bg-gray-200 transition-colors"
+                >
+                  다음에 할게요
+                </button>
+              </>
+            )}
+
+            {/* 안내 문구 */}
+            <p className="mt-4 text-center text-[10px] text-gray-400">
+              매일 자정에 무료 {DAILY_FREE_LIMIT}회가 충전돼요!
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

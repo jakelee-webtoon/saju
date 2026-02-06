@@ -18,6 +18,8 @@ import ManseryeokAccordion from "./components/home/ManseryeokAccordion";
 import CompatibilityMiniCard from "./components/home/CompatibilityMiniCard";
 // 온보딩 컴포넌트
 import { OnboardingFlow, CharacterReveal } from "./components/onboarding";
+// 답장 생성기
+import { ReplyGenerator } from "./components/reply";
 import {
   hasCompletedOnboarding,
   markOnboardingComplete,
@@ -836,40 +838,84 @@ function NewHomePage({
 }
 
 // ========================
-// 카톡 분석 페이지 (Placeholder)
+// 카톡 대화 분석 페이지 (Coming Soon)
 // ========================
-function ChatPage({ onBack }: { onBack: () => void }) {
+function ChatAnalysisPage({ onBack }: { onBack: () => void }) {
   return (
-    <div className="min-h-screen bg-[#FAFBFC] pb-bottom-nav">
-      <div className="mx-auto max-w-md px-5 py-8">
-        {/* 돌아가기 버튼 */}
-        <button
-          onClick={onBack}
-          className="mb-6 flex items-center gap-1 text-sm text-[#6b7280] hover:text-[#1a1a2e] transition-colors"
-        >
-          <span>←</span>
-          <span>돌아가기</span>
-        </button>
-
-        <header className="mb-8 text-center">
-          <span className="text-4xl mb-4 block">💬</span>
-          <h1 className="text-xl font-bold text-[#1a1a2e] mb-2">카톡 분석</h1>
-          <p className="text-sm text-[#6b7280]">곧 출시 예정이에요!</p>
-        </header>
-        
-        <div className="rounded-2xl bg-white p-6 border border-[#e5e7eb] text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
-            <span className="text-2xl">🔮</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pb-24">
+      <div className="mx-auto max-w-md px-5 py-6">
+        {/* 헤더 */}
+        <header className="mb-6">
+          <button
+            onClick={onBack}
+            className="mb-4 flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
+          >
+            <span>←</span>
+            <span>돌아가기</span>
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-2xl shadow-lg">
+              💬
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">카톡 대화 분석</h1>
+              <p className="text-sm text-indigo-600">
+                대화 내용으로 상대 마음 읽기
+              </p>
+            </div>
           </div>
-          <h2 className="text-lg font-semibold text-[#1a1a2e] mb-2">카카오톡 대화 분석</h2>
-          <p className="text-sm text-[#6b7280] leading-relaxed mb-4">
-            대화 내용을 분석해서<br />
-            상대방의 마음을 읽어드려요
+        </header>
+
+        {/* Coming Soon 카드 */}
+        <div className="rounded-2xl bg-white/80 backdrop-blur p-8 border border-white/50 shadow-lg text-center">
+          <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+            <span className="text-4xl">🔮</span>
+          </div>
+          
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            AI 대화 분석 준비 중
+          </h2>
+          
+          <p className="text-sm text-gray-600 leading-relaxed mb-6">
+            카카오톡 대화를 붙여넣으면<br/>
+            상대방의 호감도와 감정을<br/>
+            AI가 분석해드려요
           </p>
-          <div className="inline-block px-4 py-2 rounded-full bg-amber-50 text-amber-600 text-xs font-medium">
+
+          {/* 예정 기능 미리보기 */}
+          <div className="space-y-3 text-left mb-6">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50">
+              <span className="text-xl">📊</span>
+              <div>
+                <p className="text-sm font-medium text-gray-800">호감도 분석</p>
+                <p className="text-xs text-gray-500">답장 속도, 이모티콘, 문장 길이로 판단</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50">
+              <span className="text-xl">💭</span>
+              <div>
+                <p className="text-sm font-medium text-gray-800">감정 흐름 추적</p>
+                <p className="text-xs text-gray-500">대화 톤 변화 감지</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-50">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="text-sm font-medium text-gray-800">위험 신호 감지</p>
+                <p className="text-xs text-gray-500">"이 답장 뭔가 이상한데?" 알림</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="inline-block px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-bold">
             Coming Soon ✨
           </div>
         </div>
+
+        {/* 하단 안내 */}
+        <p className="mt-6 text-center text-xs text-gray-400">
+          빠른 시일 내에 만나요! 🚀
+        </p>
       </div>
     </div>
   );
@@ -1174,29 +1220,26 @@ function ManseryeokPageContent() {
     );
   }
 
-  // 카톡 분석 탭
+  // 대화 분석 탭
   if (activeTab === "chat") {
     return (
       <>
-        <ChatPage onBack={() => handleTabChange("home")} />
+        <ChatAnalysisPage onBack={() => handleTabChange("home")} />
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
       </>
     );
   }
 
-  // 내 정보 탭 → 캐릭터 상세 페이지
-  if (activeTab === "me") {
+  // 답장 생성기 탭
+  if (activeTab === "reply") {
+    const character = generateCharacterType(manseResult.elements);
     return (
       <>
-        <div className="pb-bottom-nav">
-          <InterpretationPage
-            manseResult={manseResult}
-            formData={formData}
-            onBack={() => {
-              setActiveTab("home");
-            }}
-          />
-        </div>
+        <ReplyGenerator
+          characterName={character.name}
+          characterId={character.id}
+          onBack={() => handleTabChange("home")}
+        />
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
       </>
     );
@@ -1209,7 +1252,7 @@ function ManseryeokPageContent() {
         manseResult={manseResult}
         formData={formData}
         onEdit={() => setView("edit")}
-        onViewDetail={() => setActiveTab("me")}
+        onViewDetail={() => setView("detail")}
         onViewLove={() => {
           setView("love");
           setActiveTab("love");
