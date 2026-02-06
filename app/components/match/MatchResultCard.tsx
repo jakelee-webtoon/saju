@@ -27,9 +27,9 @@ export default function MatchResultCard({
 
   // 공유 텍스트 생성
   const handleShare = () => {
-    const shareText = `💕 ${nickname}와의 MBTI 궁합
+    const shareText = `💕 ${nickname}님과의 궁합
 
-나: ${myMbti} × 상대: ${theirMbti}
+상대 MBTI: ${theirMbti}
 ${gradeInfo.emoji} ${score}점 (${result.grade})
 
 ${texts.declaration}
@@ -44,7 +44,7 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
 
     if (navigator.share) {
       navigator.share({
-        title: `${nickname}와의 MBTI 궁합`,
+        title: `${nickname}님과의 궁합`,
         text: shareText,
       });
     } else {
@@ -58,10 +58,10 @@ ${texts.cautionPoints.map(p => `• ${p}`).join('\n')}
       {/* 헤더 */}
       <div className="text-center">
         <h2 className="text-xl font-bold text-gray-800 mb-1">
-          {nickname}와의 MBTI 궁합
+          {nickname}님과의 궁합
         </h2>
         <p className="text-sm text-gray-500">
-          {myMbti} × {theirMbti}
+          내 사주 기반 × {theirMbti}
         </p>
       </div>
 

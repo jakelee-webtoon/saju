@@ -9,14 +9,47 @@ import { generateMatchTexts, type MatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
 
 type ViewState = "input" | "result";
+type InputType = "mbti" | "birth";
 
 interface SavedMatchData {
-  myMbti: string;
   nickname: string;
-  theirMbti: string;
-  result: MatchResult;
-  texts: MatchTexts;
+  type: InputType;
+  theirMbti?: string;
+  birthDate?: string;
+  result?: MatchResult;
+  texts?: MatchTexts;
   savedAt: string;
+}
+
+// 사주 기반 MBTI 추정 (사주 원소를 기반으로 가상의 MBTI 생성)
+function getSajuBasedMbti(): MbtiType {
+  // localStorage에서 저장된 만세력 결과 불러오기
+  const savedData = localStorage.getItem("sajuFormData");
+  if (!savedData) {
+    // 기본값: 균형잡힌 타입
+    return "INFP";
+  }
+  
+  try {
+    const formData = JSON.parse(savedData);
+    // 생년월일 기반으로 간단한 MBTI 추정
+    const year = parseInt(formData.year) || 1990;
+    const month = parseInt(formData.month) || 1;
+    const day = parseInt(formData.day) || 1;
+    const hour = parseInt(formData.hour) || 12;
+    
+    // 간단한 규칙 기반 추정 (실제 사주 로직과 연결 가능)
+    const seed = year + month * 100 + day * 10 + hour;
+    
+    const e_i = (seed % 2 === 0) ? "E" : "I";
+    const n_s = ((seed + month) % 2 === 0) ? "N" : "S";
+    const t_f = ((seed + day) % 2 === 0) ? "T" : "F";
+    const j_p = ((seed + hour) % 2 === 0) ? "J" : "P";
+    
+    return `${e_i}${n_s}${t_f}${j_p}` as MbtiType;
+  } catch {
+    return "INFP";
+  }
 }
 
 export default function MatchPage() {
@@ -26,30 +59,42 @@ export default function MatchPage() {
   const [view, setView] = useState<ViewState>("input");
   const [step, setStep] = useState(1);
   const [nickname, setNickname] = useState("");
-  const [myMbti, setMyMbti] = useState<MbtiType | null>(null);
+  const [inputType, setInputType] = useState<InputType>("mbti");
   const [theirMbti, setTheirMbti] = useState<MbtiType | null>(null);
+  const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  
+  // 내 사주 기반 MBTI (자동 계산)
+  const [myMbti, setMyMbti] = useState<MbtiType>("INFP");
+  const [hasMyData, setHasMyData] = useState(false);
   
   // 결과
   const [result, setResult] = useState<MatchResult | null>(null);
   const [texts, setTexts] = useState<MatchTexts | null>(null);
 
-  // localStorage에서 저장된 데이터 불러오기
+  // localStorage에서 데이터 불러오기
   useEffect(() => {
-    // 내 MBTI 불러오기
-    const savedMyMbti = localStorage.getItem("myMbti");
-    if (savedMyMbti) {
-      setMyMbti(savedMyMbti as MbtiType);
+    // 내 사주 데이터 확인
+    const savedFormData = localStorage.getItem("sajuFormData");
+    if (savedFormData) {
+      setHasMyData(true);
+      setMyMbti(getSajuBasedMbti());
     }
     
-    // 마지막 결과 불러오기 (옵션)
-    const lastResult = localStorage.getItem("lastMatchResult");
-    if (lastResult) {
+    // 이전 파트너 정보 불러오기
+    const savedPartner = localStorage.getItem("savedPartner");
+    if (savedPartner) {
       try {
-        const parsed = JSON.parse(lastResult) as SavedMatchData;
-        setNickname(parsed.nickname);
-        setTheirMbti(parsed.theirMbti as MbtiType);
-        if (parsed.myMbti) {
-          setMyMbti(parsed.myMbti as MbtiType);
+        const parsed = JSON.parse(savedPartner);
+        if (parsed.nickname) setNickname(parsed.nickname);
+        if (parsed.type) setInputType(parsed.type);
+        if (parsed.mbti) setTheirMbti(parsed.mbti as MbtiType);
+        if (parsed.birthDate) {
+          const [y, m, d] = parsed.birthDate.split("-");
+          setBirthYear(y);
+          setBirthMonth(m);
+          setBirthDay(d);
         }
       } catch {
         // 파싱 오류 무시
@@ -59,35 +104,45 @@ export default function MatchPage() {
 
   // 유효성 검사
   const isNicknameValid = nickname.length >= 1 && nickname.length <= 10;
-  const canProceedStep2 = isNicknameValid;
-  const canCalculate = myMbti && theirMbti;
+  const isMbtiValid = inputType === "mbti" && theirMbti !== null;
+  const isBirthValid = inputType === "birth" && birthYear && birthMonth && birthDay;
+  const canCalculate = isNicknameValid && (isMbtiValid || isBirthValid);
+
+  // 년/월/일 옵션
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 80 }, (_, i) => currentYear - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   // 궁합 계산
   const handleCalculate = () => {
-    if (!myMbti || !theirMbti) return;
-    
-    const matchResult = calculateScore(myMbti, theirMbti);
-    const matchTexts = generateMatchTexts(matchResult, myMbti, theirMbti);
-    
-    setResult(matchResult);
-    setTexts(matchTexts);
-    setView("result");
-    
-    // localStorage 저장
-    localStorage.setItem("myMbti", myMbti);
-    localStorage.setItem("savedPartner", JSON.stringify({
-      nickname,
-      type: "mbti",
-      mbti: theirMbti,
-    }));
-    localStorage.setItem("lastMatchResult", JSON.stringify({
-      myMbti,
-      nickname,
-      theirMbti,
-      result: matchResult,
-      texts: matchTexts,
-      savedAt: new Date().toISOString(),
-    }));
+    if (inputType === "mbti" && theirMbti) {
+      const matchResult = calculateScore(myMbti, theirMbti);
+      const matchTexts = generateMatchTexts(matchResult, myMbti, theirMbti);
+      
+      setResult(matchResult);
+      setTexts(matchTexts);
+      setView("result");
+      
+      // localStorage 저장
+      localStorage.setItem("savedPartner", JSON.stringify({
+        nickname,
+        type: "mbti",
+        mbti: theirMbti,
+      }));
+    } else if (inputType === "birth") {
+      // 생년월일 기반 궁합은 추후 구현
+      // 지금은 저장만 하고 안내 표시
+      localStorage.setItem("savedPartner", JSON.stringify({
+        nickname,
+        type: "birth",
+        birthDate: `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`,
+      }));
+      
+      // 임시: 생년월일 저장 완료 안내
+      alert("생년월일 기반 궁합은 곧 제공될 예정이에요! 💫");
+      router.push("/");
+    }
   };
 
   // 다시 하기
@@ -96,16 +151,52 @@ export default function MatchPage() {
     setStep(1);
     setNickname("");
     setTheirMbti(null);
+    setBirthYear("");
+    setBirthMonth("");
+    setBirthDay("");
     setResult(null);
     setTexts(null);
   };
 
-  // 결과 화면
-  if (view === "result" && result && texts) {
+  // 내 사주 데이터 없을 때
+  if (!hasMyData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+        <div className="mx-auto max-w-md px-5 py-8">
+          <button
+            onClick={() => router.push("/")}
+            className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+          >
+            <span>←</span>
+            <span>홈으로</span>
+          </button>
+
+          <div className="text-center py-16">
+            <div className="text-6xl mb-6">🔮</div>
+            <h1 className="text-xl font-bold text-purple-900 mb-4">
+              먼저 내 정보를 입력해주세요
+            </h1>
+            <p className="text-sm text-purple-600 mb-8 leading-relaxed">
+              궁합을 보려면 먼저<br />
+              내 생년월일을 입력해야 해요
+            </p>
+            <button
+              onClick={() => router.push("/")}
+              className="px-8 py-4 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 transition-colors"
+            >
+              내 정보 입력하러 가기
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MBTI 결과 화면
+  if (view === "result" && result && texts && inputType === "mbti") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-8">
         <div className="mx-auto max-w-md px-5 py-8">
-          {/* 뒤로가기 */}
           <button
             onClick={() => router.push("/")}
             className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
@@ -116,7 +207,7 @@ export default function MatchPage() {
 
           <MatchResultCard
             nickname={nickname}
-            myMbti={myMbti!}
+            myMbti={myMbti}
             theirMbti={theirMbti!}
             result={result}
             texts={texts}
@@ -140,12 +231,12 @@ export default function MatchPage() {
         </button>
 
         {/* 헤더 */}
-        <header className="mb-8">
+        <header className="mb-6">
           <h1 className="text-2xl font-bold text-purple-900 mb-2">
-            💞 MBTI 궁합 보기
+            💞 궁합 보기
           </h1>
           <p className="text-sm text-purple-600">
-            나와 상대의 MBTI로 궁합을 확인해보세요
+            내 사주 기반으로 상대방과의 궁합을 확인해보세요
           </p>
         </header>
 
@@ -155,10 +246,9 @@ export default function MatchPage() {
           <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
         </div>
 
-        {/* Step 1: 별명 + 나의 MBTI */}
+        {/* Step 1: 별명 입력 */}
         {step === 1 && (
           <section className="space-y-4">
-            {/* 별명 입력 */}
             <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
               <h2 className="text-sm font-bold text-purple-900 mb-3">
                 상대 별명
@@ -176,25 +266,11 @@ export default function MatchPage() {
               </p>
             </div>
 
-            {/* 나의 MBTI */}
-            <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
-              <h2 className="text-sm font-bold text-purple-900 mb-1">
-                나의 MBTI
-              </h2>
-              <p className="text-xs text-purple-500 mb-4">
-                {myMbti ? `선택됨: ${myMbti}` : "나의 MBTI를 선택하세요"}
-              </p>
-              <MbtiPicker
-                value={myMbti}
-                onChange={(mbti) => setMyMbti(mbti)}
-              />
-            </div>
-
             <button
               onClick={() => setStep(2)}
-              disabled={!canProceedStep2 || !myMbti}
+              disabled={!isNicknameValid}
               className={`w-full py-4 rounded-xl font-bold transition-all ${
-                canProceedStep2 && myMbti
+                isNicknameValid
                   ? "bg-purple-600 text-white hover:bg-purple-700"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
@@ -204,19 +280,14 @@ export default function MatchPage() {
           </section>
         )}
 
-        {/* Step 2: 상대 MBTI */}
+        {/* Step 2: 궁합 방식 선택 */}
         {step === 2 && (
           <section className="space-y-4">
             {/* 입력된 정보 표시 */}
             <div className="rounded-xl bg-purple-100 p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-purple-700">
-                  <span className="font-bold">{nickname}</span>님과의 궁합
-                </p>
-                <p className="text-xs text-purple-500 mt-1">
-                  나의 MBTI: <span className="font-bold">{myMbti}</span>
-                </p>
-              </div>
+              <p className="text-sm text-purple-700">
+                <span className="font-bold">{nickname}</span>님과의 궁합
+              </p>
               <button
                 onClick={() => setStep(1)}
                 className="text-xs text-purple-500 hover:text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-200 transition-colors"
@@ -225,18 +296,96 @@ export default function MatchPage() {
               </button>
             </div>
 
-            {/* 상대 MBTI */}
+            {/* 탭 선택 */}
             <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
-              <h2 className="text-sm font-bold text-purple-900 mb-1">
-                {nickname}님의 MBTI
+              <h2 className="text-sm font-bold text-purple-900 mb-4">
+                궁합 방식 선택
               </h2>
-              <p className="text-xs text-purple-500 mb-4">
-                {theirMbti ? `선택됨: ${theirMbti}` : "상대의 MBTI를 선택하세요"}
-              </p>
-              <MbtiPicker
-                value={theirMbti}
-                onChange={(mbti) => setTheirMbti(mbti)}
-              />
+              
+              <div className="flex gap-2 mb-5">
+                <button
+                  onClick={() => setInputType("mbti")}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                    inputType === "mbti"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  MBTI로 보기
+                </button>
+                <button
+                  onClick={() => setInputType("birth")}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${
+                    inputType === "birth"
+                      ? "bg-purple-600 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  생년월일로 보기
+                </button>
+              </div>
+
+              {/* MBTI 선택 */}
+              {inputType === "mbti" && (
+                <div>
+                  <p className="text-xs text-purple-500 mb-3">
+                    {theirMbti ? `선택됨: ${theirMbti}` : `${nickname}님의 MBTI를 선택하세요`}
+                  </p>
+                  <MbtiPicker
+                    value={theirMbti}
+                    onChange={(mbti) => setTheirMbti(mbti)}
+                  />
+                </div>
+              )}
+
+              {/* 생년월일 입력 */}
+              {inputType === "birth" && (
+                <div>
+                  <p className="text-xs text-purple-500 mb-3">
+                    {nickname}님의 생년월일을 입력하세요
+                  </p>
+                  <div className="flex gap-2">
+                    <select
+                      value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)}
+                      className="flex-1 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    >
+                      <option value="">년</option>
+                      {years.map((y) => (
+                        <option key={y} value={y}>{y}년</option>
+                      ))}
+                    </select>
+                    <select
+                      value={birthMonth}
+                      onChange={(e) => setBirthMonth(e.target.value)}
+                      className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    >
+                      <option value="">월</option>
+                      {months.map((m) => (
+                        <option key={m} value={m}>{m}월</option>
+                      ))}
+                    </select>
+                    <select
+                      value={birthDay}
+                      onChange={(e) => setBirthDay(e.target.value)}
+                      className="w-24 rounded-xl border border-purple-200 bg-white px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    >
+                      <option value="">일</option>
+                      {days.map((d) => (
+                        <option key={d} value={d}>{d}일</option>
+                      ))}
+                    </select>
+                  </div>
+                  {isBirthValid && (
+                    <p className="mt-3 text-sm text-purple-700 text-center">
+                      입력: <span className="font-bold">{birthYear}.{birthMonth}.{birthDay}</span>
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-purple-400 text-center">
+                    💡 생년월일 기반 궁합은 곧 제공 예정이에요
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* 궁합 보기 버튼 */}
@@ -264,7 +413,7 @@ export default function MatchPage() {
 
         {/* 안내 문구 */}
         <p className="mt-8 text-center text-xs text-purple-400">
-          MBTI 궁합은 재미로 보는 참고 자료예요 😊
+          궁합은 재미로 보는 참고 자료예요 😊
         </p>
       </div>
     </div>
