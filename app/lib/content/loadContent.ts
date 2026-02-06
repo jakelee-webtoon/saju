@@ -39,6 +39,15 @@ const FALLBACK_MODE_LABELS: ModeLabelsData = {
 
 const FALLBACK_TEMPLATES: ModeTemplatesData = {
   titleTemplate: '⚡ 오늘 모드: {modeName}',
+  statusOneLinerTemplates: {
+    observe: ['오늘은 지켜보는 게 좋은 흐름이에요']
+  },
+  loveModeLine1Templates: {
+    observe: ['상대의 움직임을 살피는 상태예요']
+  },
+  loveModeLine2Templates: {
+    observe: ['괜히 먼저 다가가기보다 기다려보고 싶을 수 있어요']
+  },
   summaryTemplates: {
     observe: ['오늘은 지켜보는 게 좋은 날이야']
   },
@@ -221,7 +230,7 @@ export function getLoveModeById(modeId: string): LoveModeData | null {
 
 export function getLoveModesByCategory(category: string): LoveModeData[] {
   const modes = getLoveModes();
-  return modes.filter(m => m.category === category);
+  return modes.filter(m => m.category && m.category === category);
 }
 
 export function getRandomLoveMode(seed: number): LoveModeData {

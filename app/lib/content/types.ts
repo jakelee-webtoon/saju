@@ -106,9 +106,14 @@ export interface UserSignals {
 export interface LoveModeData {
   id: string;
   love_mode: string;
-  category: string;
-  home_summary_line1: string;
-  home_summary_line2: string;
+  emoji: string;
+  color: {
+    bg: string;
+    accent: string;
+    text: string;
+  };
+  home_summary: string;
+  category?: string;  // optional
   detail: {
     mode_label: string;
     main_sentence: string;
