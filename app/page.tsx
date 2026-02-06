@@ -986,11 +986,29 @@ function ManseryeokPageContent() {
       return;
     }
     
+    // 이미 로그인되어 있고 Firebase에 데이터가 있으면 온보딩 스킵
+    if (isLoggedIn() && firebaseUser?.birthInfo) {
+      markOnboardingComplete(); // localStorage 동기화
+      setShowOnboarding(false);
+      setIsFirstVisit(false);
+      return;
+    }
+    
+    // 로그인되어 있지만 birthInfo가 없으면 입력 폼으로 (온보딩 스킵)
+    if (isLoggedIn() && firebaseUser && !firebaseUser.birthInfo) {
+      markOnboardingComplete();
+      setShowOnboarding(false);
+      setIsFirstVisit(true); // 캐릭터 리빌은 보여줌
+      setView("edit");
+      return;
+    }
+    
+    // 비로그인 + 온보딩 미완료 → 온보딩 표시
     if (!hasCompletedOnboarding()) {
       setShowOnboarding(true);
       setIsFirstVisit(true);
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, firebaseUser]);
 
   // 온보딩 완료 핸들러 → 생년월일 입력 화면으로 이동
   const handleOnboardingComplete = () => {
