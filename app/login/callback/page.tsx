@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { saveKakaoUser, type KakaoUser } from "@/app/lib/kakao";
 import { saveNaverUser, verifyState, type NaverUser } from "@/app/lib/naver";
-import { handleUserLogin, incrementLoginCount } from "@/app/lib/firebase/userService";
+import { handleUserLogin, incrementLoginCount, updateBirthInfo } from "@/app/lib/firebase/userService";
+import { hasCompletedOnboarding as checkLocalOnboarding } from "@/app/lib/onboarding";
 
 type SocialUser = KakaoUser | NaverUser;
 
@@ -61,8 +62,19 @@ function CallbackContent() {
           const savedRedirect = localStorage.getItem("loginRedirect");
           localStorage.removeItem("loginRedirect");
           
+          // 온보딩 완료 여부 확인 (localStorage 또는 Firebase)
+          const localOnboardingDone = checkLocalOnboarding();
+          const firebaseOnboardingDone = firebaseUser?.hasCompletedOnboarding ?? false;
+          
+          // localStorage에서 온보딩 완료했지만 Firebase에 없는 경우 → 동기화 필요
+          if (localOnboardingDone && !firebaseOnboardingDone && firebaseUser) {
+            // Firebase 온보딩 상태 업데이트 (birthInfo는 홈에서 저장됨)
+            await updateBirthInfo(firebaseUser.oderId, null);
+            console.log("✅ Synced onboarding status to Firebase");
+          }
+          
           // 온보딩 완료 여부에 따라 분기
-          if (firebaseUser && !firebaseUser.hasCompletedOnboarding) {
+          if (!localOnboardingDone && !firebaseOnboardingDone) {
             // 온보딩 미완료 → 온보딩 플로우
             router.replace("/?newUser=true");
           } else {
