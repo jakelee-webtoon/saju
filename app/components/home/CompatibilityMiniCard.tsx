@@ -58,12 +58,11 @@ export default function CompatibilityMiniCard({ onClick }: CompatibilityMiniCard
           )}
         </div>
         
-        <div className="flex flex-col items-end gap-1">
-          <span className="text-purple-500 text-lg">→</span>
-          <span className="text-xs text-purple-500 font-medium whitespace-nowrap">
-            {savedPartner ? `${savedPartner.nickname}랑 궁합 보기` : "상대 넣어보기"}
-          </span>
-        </div>
+        <span className="text-purple-500 opacity-60">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
       </div>
     </section>
   );
