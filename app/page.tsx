@@ -308,23 +308,42 @@ function CharacterGraphic({ id, color }: { id: string; color: string }) {
 // ========================
 function AccountSection() {
   const router = useRouter();
-  const [user, setUser] = useState<{ id: string; nickname: string; profileImage?: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; nickname: string; profileImage?: string; provider?: string } | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("kakaoUser");
-    if (userStr) {
+    // 카카오 사용자 확인
+    const kakaoUserStr = localStorage.getItem("kakaoUser");
+    if (kakaoUserStr) {
       try {
-        setUser(JSON.parse(userStr));
+        const kakaoUser = JSON.parse(kakaoUserStr);
+        setUser({ ...kakaoUser, provider: "kakao" });
+        return;
       } catch {
-        setUser(null);
+        // 무시
       }
     }
+    
+    // 네이버 사용자 확인
+    const naverUserStr = localStorage.getItem("naverUser");
+    if (naverUserStr) {
+      try {
+        const naverUser = JSON.parse(naverUserStr);
+        setUser({ ...naverUser, provider: "naver" });
+        return;
+      } catch {
+        // 무시
+      }
+    }
+    
+    setUser(null);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("kakaoUser");
     localStorage.removeItem("kakaoAccessToken");
+    localStorage.removeItem("naverUser");
+    localStorage.removeItem("naverAccessToken");
     setUser(null);
     setShowLogoutConfirm(false);
     router.refresh();
@@ -354,7 +373,9 @@ function AccountSection() {
                 )}
                 <div>
                   <p className="font-semibold text-gray-900">{user.nickname}</p>
-                  <p className="text-xs text-gray-500">카카오 로그인</p>
+                  <p className="text-xs text-gray-500">
+                    {user.provider === "naver" ? "네이버 로그인" : "카카오 로그인"}
+                  </p>
                 </div>
               </div>
 
@@ -370,6 +391,7 @@ function AccountSection() {
               <p className="text-sm text-gray-500 mb-4">
                 로그인하면 데이터가 안전하게 저장돼요
               </p>
+              {/* 카카오 로그인 버튼 */}
               <button
                 onClick={() => router.push("/login")}
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-[#191919] transition-all hover:brightness-95"
@@ -384,6 +406,20 @@ function AccountSection() {
                   />
                 </svg>
                 카카오 로그인
+              </button>
+              {/* 네이버 로그인 버튼 */}
+              <button
+                onClick={() => router.push("/login")}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-white transition-all hover:brightness-95 mt-2"
+                style={{ backgroundColor: "#03C75A" }}
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M13.5615 10.6231L6.14231 2H2V18H6.43846V9.37692L13.8577 18H18V2H13.5615V10.6231Z"
+                    fill="white"
+                  />
+                </svg>
+                네이버 로그인
               </button>
             </div>
           )}
