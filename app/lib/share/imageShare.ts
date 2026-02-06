@@ -21,9 +21,14 @@ export async function shareAsImage(
     // 1. DOM을 캔버스로 변환
     const canvas = await html2canvas(element, {
       scale: 2, // 고해상도
-      backgroundColor: null,
+      backgroundColor: "#ffffff",
       useCORS: true,
       logging: false,
+      // CSS lab() 색상 경고 무시
+      onclone: (clonedDoc) => {
+        // 클론된 문서에서 계산된 스타일 사용
+        return clonedDoc;
+      },
     });
 
     // 2. 캔버스를 Blob으로 변환

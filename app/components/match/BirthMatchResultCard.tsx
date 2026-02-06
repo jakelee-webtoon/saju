@@ -89,29 +89,6 @@ export default function BirthMatchResultCard({
     setIsSharing(false);
   };
 
-  // 트위터 공유
-  const handleTwitterShare = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    window.open(twitterUrl, '_blank', 'width=600,height=400');
-    setShowShareModal(false);
-  };
-
-  // 네이티브 공유 (모바일)
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${nickname}님과의 궁합`,
-          text: shareText,
-          url: shareUrl,
-        });
-        setShowShareModal(false);
-      } catch {
-        // 사용자가 취소한 경우
-      }
-    }
-  };
-
   // 띠 관계 설명
   const getZodiacRelationText = () => {
     if (comparison.zodiacRelation.isYukhap) return "육합 (천생연분)";
