@@ -11,12 +11,14 @@ import {
   type UserData 
 } from "./userService";
 import { getKakaoUser, logout as logoutKakao } from "../kakao";
+import { getNaverUser, logoutNaver } from "../naver";
 
 interface UseUserReturn {
   user: UserData | null;
   isLoading: boolean;
   isLoggedIn: boolean;
   error: string | null;
+  provider: "kakao" | "naver" | null;
   
   // 액션
   login: () => Promise<void>;
@@ -28,10 +30,28 @@ interface UseUserReturn {
   unlockContent: (type: "loveTendency" | "matchDetails" | "decisionGuide", contentId?: string) => Promise<boolean>;
 }
 
+// 소셜 로그인 사용자 정보 가져오기 (카카오 또는 네이버)
+function getSocialUser(): { id: string; nickname: string; profileImage?: string; provider: "kakao" | "naver" } | null {
+  // 네이버 먼저 확인 (최근 로그인 우선)
+  const naverUser = getNaverUser();
+  if (naverUser) {
+    return { ...naverUser, provider: "naver" };
+  }
+  
+  // 카카오 확인
+  const kakaoUser = getKakaoUser();
+  if (kakaoUser) {
+    return { ...kakaoUser, provider: "kakao" };
+  }
+  
+  return null;
+}
+
 export function useUser(): UseUserReturn {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<"kakao" | "naver" | null>(null);
 
   // 사용자 데이터 로드
   const loadUser = useCallback(async () => {
@@ -39,26 +59,29 @@ export function useUser(): UseUserReturn {
       setIsLoading(true);
       setError(null);
       
-      // localStorage에서 카카오 사용자 확인
-      const kakaoUser = getKakaoUser();
+      // localStorage에서 소셜 사용자 확인 (카카오 or 네이버)
+      const socialUser = getSocialUser();
       
-      if (!kakaoUser) {
+      if (!socialUser) {
         setUser(null);
+        setProvider(null);
         return;
       }
       
+      setProvider(socialUser.provider);
+      
       // Firebase에서 사용자 데이터 가져오기
-      const userData = await getUserData(kakaoUser.id);
+      const userData = await getUserData(socialUser.id);
       
       if (userData) {
         setUser(userData);
       } else {
         // 새 사용자라면 생성
         const newUser = await handleUserLogin(
-          kakaoUser.id,
-          "kakao",
-          kakaoUser.nickname,
-          kakaoUser.profileImage
+          socialUser.id,
+          socialUser.provider,
+          socialUser.nickname,
+          socialUser.profileImage
         );
         setUser(newUser);
       }
@@ -80,10 +103,12 @@ export function useUser(): UseUserReturn {
     await loadUser();
   }, [loadUser]);
 
-  // 로그아웃
+  // 로그아웃 (두 플랫폼 모두 로그아웃)
   const logout = useCallback(() => {
     logoutKakao();
+    logoutNaver();
     setUser(null);
+    setProvider(null);
   }, []);
 
   // 사용자 새로고침
@@ -156,6 +181,7 @@ export function useUser(): UseUserReturn {
     isLoading,
     isLoggedIn: !!user,
     error,
+    provider,
     login,
     logout,
     refreshUser,

@@ -2,8 +2,11 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { saveKakaoUser, KakaoUser } from "@/app/lib/kakao";
+import { saveKakaoUser, type KakaoUser } from "@/app/lib/kakao";
+import { saveNaverUser, verifyState, type NaverUser } from "@/app/lib/naver";
 import { handleUserLogin } from "@/app/lib/firebase/userService";
+
+type SocialUser = KakaoUser | NaverUser;
 
 function CallbackContent() {
   const router = useRouter();
@@ -14,20 +17,35 @@ function CallbackContent() {
     async function processLogin() {
       const userParam = searchParams.get("user");
       const tokenParam = searchParams.get("token");
+      const provider = searchParams.get("provider") || "kakao";
+      const state = searchParams.get("state");
 
       if (userParam && tokenParam) {
         try {
-          const user: KakaoUser = JSON.parse(decodeURIComponent(userParam));
+          const user: SocialUser = JSON.parse(decodeURIComponent(userParam));
           const token = decodeURIComponent(tokenParam);
           
-          // localStorage에 저장 (기존 호환성)
-          saveKakaoUser(user, token);
+          // 네이버의 경우 state 검증
+          if (provider === "naver" && state) {
+            if (!verifyState(state)) {
+              console.error("Invalid state - possible CSRF attack");
+              router.replace("/login?error=invalid_state");
+              return;
+            }
+          }
+          
+          // localStorage에 저장 (provider에 따라 분기)
+          if (provider === "naver") {
+            saveNaverUser(user as NaverUser, token);
+          } else {
+            saveKakaoUser(user as KakaoUser, token);
+          }
           
           // Firebase Firestore에 사용자 생성/업데이트
           setStatus("데이터 동기화 중...");
           const firebaseUser = await handleUserLogin(
             user.id,
-            "kakao",
+            provider as "kakao" | "naver",
             user.nickname,
             user.profileImage,
             user.email
@@ -70,7 +88,7 @@ function CallbackContent() {
   );
 }
 
-export default function KakaoCallbackPage() {
+export default function LoginCallbackPage() {
   return (
     <Suspense
       fallback={

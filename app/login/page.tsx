@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { initKakao, loginWithKakao, isLoggedIn } from "@/app/lib/kakao";
+import { initKakao, loginWithKakao, isLoggedIn as isKakaoLoggedIn } from "@/app/lib/kakao";
+import { loginWithNaver, isNaverLoggedIn } from "@/app/lib/naver";
 import SwipeBack from "@/app/components/SwipeBack";
 
 function LoginContent() {
@@ -10,7 +11,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sdkReady, setSdkReady] = useState(false);
+  const [kakaoSdkReady, setKakaoSdkReady] = useState(false);
 
   useEffect(() => {
     // 리다이렉트 URL 저장 (로그인 후 돌아갈 페이지)
@@ -20,7 +21,7 @@ function LoginContent() {
     }
 
     // 이미 로그인되어 있으면 리다이렉트 또는 홈으로
-    if (isLoggedIn()) {
+    if (isKakaoLoggedIn() || isNaverLoggedIn()) {
       const savedRedirect = localStorage.getItem("loginRedirect");
       localStorage.removeItem("loginRedirect");
       router.replace(savedRedirect || "/");
@@ -32,12 +33,14 @@ function LoginContent() {
     if (errorParam) {
       const errorMessages: Record<string, string> = {
         kakao_auth_failed: "카카오 로그인에 실패했어요",
+        naver_auth_failed: "네이버 로그인에 실패했어요",
         no_code: "인증 코드를 받지 못했어요",
         token_failed: "토큰 발급에 실패했어요",
         user_info_failed: "사용자 정보를 가져오지 못했어요",
         callback_failed: "로그인 처리 중 오류가 발생했어요",
         parse_failed: "데이터 처리 중 오류가 발생했어요",
         missing_params: "필요한 정보가 없어요",
+        invalid_state: "보안 검증에 실패했어요. 다시 시도해주세요.",
       };
       setError(errorMessages[errorParam] || "로그인에 실패했어요");
     }
@@ -45,22 +48,26 @@ function LoginContent() {
     // 카카오 SDK 초기화
     initKakao()
       .then(() => {
-        setSdkReady(true);
+        setKakaoSdkReady(true);
         setIsLoading(false);
       })
       .catch((err) => {
         console.error("Kakao SDK init error:", err);
-        setError("카카오 SDK 초기화에 실패했어요. 환경변수를 확인해주세요.");
+        // 네이버는 SDK 없이 사용 가능하므로 계속 진행
         setIsLoading(false);
       });
   }, [router, searchParams]);
 
   const handleKakaoLogin = () => {
-    if (!sdkReady) {
+    if (!kakaoSdkReady) {
       setError("카카오 SDK가 준비되지 않았어요");
       return;
     }
     loginWithKakao();
+  };
+
+  const handleNaverLogin = () => {
+    loginWithNaver();
   };
 
   if (isLoading) {
@@ -96,7 +103,7 @@ function LoginContent() {
           {/* 카카오 로그인 버튼 */}
           <button
             onClick={handleKakaoLogin}
-            disabled={!sdkReady}
+            disabled={!kakaoSdkReady}
             className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-bold text-[#191919] transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: "#FEE500" }}
           >
@@ -110,6 +117,22 @@ function LoginContent() {
               />
             </svg>
             <span>카카오 로그인</span>
+          </button>
+
+          {/* 네이버 로그인 버튼 */}
+          <button
+            onClick={handleNaverLogin}
+            className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-bold text-white transition-all hover:brightness-95 active:scale-[0.98] mt-3"
+            style={{ backgroundColor: "#03C75A" }}
+          >
+            {/* 네이버 로고 */}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M13.5615 10.6231L6.14231 2H2V18H6.43846V9.37692L13.8577 18H18V2H13.5615V10.6231Z"
+                fill="white"
+              />
+            </svg>
+            <span>네이버 로그인</span>
           </button>
 
           {/* 안내 문구 */}
