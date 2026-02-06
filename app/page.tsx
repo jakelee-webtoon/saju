@@ -13,7 +13,6 @@ import TodayStatusLine from "./components/home/TodayStatusLine";
 import CharacterSummaryCard from "./components/home/CharacterSummaryCard";
 import TodayLoveModeCard from "./components/home/TodayLoveModeCard";
 import ManseryeokAccordion from "./components/home/ManseryeokAccordion";
-import CompatibilityMiniCard from "./components/home/CompatibilityMiniCard";
 
 // ========================
 // 오행 UI 스타일
@@ -1028,12 +1027,7 @@ function NewHomePage({
           <TodayLoveModeCard todayMode={todayMode} onClick={onViewLove} />
         </div>
 
-        {/* [4] 궁합 미니 카드 */}
-        <div className="mb-4">
-          <CompatibilityMiniCard onClick={() => router.push("/match")} />
-        </div>
-
-        {/* [5] 나의 만세력 보기 */}
+        {/* [4] 나의 만세력 보기 */}
         <div className="mb-8">
           <ManseryeokAccordion manseResult={manseResult} />
         </div>
