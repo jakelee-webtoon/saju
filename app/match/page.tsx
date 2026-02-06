@@ -10,6 +10,7 @@ import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type Birt
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
 import BottomNav, { type TabId } from "@/app/components/BottomNav";
+import SwipeBack from "@/app/components/SwipeBack";
 
 type ViewState = "input" | "result";
 type InputType = "mbti" | "birth";
@@ -185,39 +186,74 @@ export default function MatchPage() {
   // MBTI 결과 화면
   if (view === "result" && result && texts && inputType === "mbti") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
-        <div className="mx-auto max-w-md px-5 py-8">
-          <button
-            onClick={() => router.push("/")}
-            className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
-          >
-            <span>←</span>
-            <span>돌아가기</span>
-          </button>
+      <SwipeBack onBack={() => router.push("/")}>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+          <div className="mx-auto max-w-md px-5 py-8">
+            <button
+              onClick={() => router.push("/")}
+              className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+            >
+              <span>←</span>
+              <span>돌아가기</span>
+            </button>
 
-          <MatchResultCard
-            nickname={nickname}
-            myMbti={myMbti}
-            theirMbti={theirMbti!}
-            result={result}
-            texts={texts}
-            onReset={handleReset}
+            <MatchResultCard
+              nickname={nickname}
+              myMbti={myMbti}
+              theirMbti={theirMbti!}
+              result={result}
+              texts={texts}
+              onReset={handleReset}
+            />
+          </div>
+          
+          <BottomNav 
+            activeTab="home" 
+            onTabChange={handleTabChange}
           />
         </div>
-        
-        <BottomNav 
-          activeTab="home" 
-          onTabChange={handleTabChange}
-        />
-      </div>
+      </SwipeBack>
     );
   }
 
   // 생년월일 결과 화면
   if (view === "result" && birthResult && birthTexts && inputType === "birth") {
     return (
+      <SwipeBack onBack={() => router.push("/")}>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+          <div className="mx-auto max-w-md px-5 py-8">
+            <button
+              onClick={() => router.push("/")}
+              className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+            >
+              <span>←</span>
+              <span>돌아가기</span>
+            </button>
+
+            <BirthMatchResultCard
+              nickname={nickname}
+              myBirth={`${DEFAULT_MY_BIRTH.year}.${DEFAULT_MY_BIRTH.month}.${DEFAULT_MY_BIRTH.day}`}
+              theirBirth={`${birthYear}.${birthMonth}.${birthDay}${includeTime && birthHour ? ` ${birthHour}시` : ""}`}
+              result={birthResult}
+              texts={birthTexts}
+              onReset={handleReset}
+            />
+          </div>
+          
+          <BottomNav 
+            activeTab="home" 
+            onTabChange={handleTabChange}
+          />
+        </div>
+      </SwipeBack>
+    );
+  }
+
+  return (
+    <SwipeBack onBack={() => router.push("/")}>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="mx-auto max-w-md px-5 py-8">
+          {/* 뒤로가기 */}
           <button
             onClick={() => router.push("/")}
             className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
@@ -226,41 +262,11 @@ export default function MatchPage() {
             <span>돌아가기</span>
           </button>
 
-          <BirthMatchResultCard
-            nickname={nickname}
-            myBirth={`${DEFAULT_MY_BIRTH.year}.${DEFAULT_MY_BIRTH.month}.${DEFAULT_MY_BIRTH.day}`}
-            theirBirth={`${birthYear}.${birthMonth}.${birthDay}${includeTime && birthHour ? ` ${birthHour}시` : ""}`}
-            result={birthResult}
-            texts={birthTexts}
-            onReset={handleReset}
-          />
-        </div>
-        
-        <BottomNav 
-          activeTab="home" 
-          onTabChange={handleTabChange}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
-      <div className="mx-auto max-w-md px-5 py-8">
-        {/* 뒤로가기 */}
-        <button
-          onClick={() => router.push("/")}
-          className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
-        >
-          <span>←</span>
-          <span>돌아가기</span>
-        </button>
-
-        {/* 헤더 */}
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold text-purple-900 mb-2">
-            💞 궁합 보기
-          </h1>
+          {/* 헤더 */}
+          <header className="mb-6">
+            <h1 className="text-2xl font-bold text-purple-900 mb-2">
+              💞 궁합 보기
+            </h1>
           <p className="text-sm text-purple-600">
             내 사주 기반으로 상대방과의 궁합을 확인해보세요
           </p>
@@ -491,6 +497,6 @@ export default function MatchPage() {
         activeTab="home" 
         onTabChange={handleTabChange}
       />
-    </div>
+    </SwipeBack>
   );
 }

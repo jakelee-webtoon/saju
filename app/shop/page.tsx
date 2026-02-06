@@ -11,6 +11,7 @@ import {
 } from "@/app/lib/cupid/arrowBalance";
 import { getKakaoUser } from "@/app/lib/kakao";
 import BottomNav, { TabId } from "@/app/components/BottomNav";
+import SwipeBack from "@/app/components/SwipeBack";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -65,26 +66,27 @@ export default function ShopPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
-      <div className="mx-auto max-w-md px-5 py-8">
-        {/* 뒤로가기 */}
-        <button
-          onClick={() => router.push("/")}
-          className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
-        >
-          <span>←</span>
-          <span>돌아가기</span>
-        </button>
+    <SwipeBack onBack={() => router.push("/")}>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
+        <div className="mx-auto max-w-md px-5 py-8">
+          {/* 뒤로가기 */}
+          <button
+            onClick={() => router.push("/")}
+            className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
+          >
+            <span>←</span>
+            <span>돌아가기</span>
+          </button>
 
-        {/* 헤더 */}
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold text-purple-900 mb-2">
-            💘 큐피드 샵
-          </h1>
-          <p className="text-sm text-purple-600">
-            망설이는 순간, 화살 하나로 결정하세요
-          </p>
-        </header>
+          {/* 헤더 */}
+          <header className="mb-6">
+            <h1 className="text-2xl font-bold text-purple-900 mb-2">
+              💘 큐피드 샵
+            </h1>
+            <p className="text-sm text-purple-600">
+              망설이는 순간, 화살 하나로 결정하세요
+            </p>
+          </header>
 
         {/* 잔액 뱃지 */}
         <div className={`rounded-2xl p-4 mb-6 ${
@@ -198,12 +200,13 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* 하단 네비게이션 */}
-      <BottomNav 
-        activeTab="home" 
-        onTabChange={handleTabChange}
-        isShopActive={true}
-      />
-    </div>
+        {/* 하단 네비게이션 */}
+        <BottomNav 
+          activeTab="home" 
+          onTabChange={handleTabChange}
+          isShopActive={true}
+        />
+      </div>
+    </SwipeBack>
   );
 }
