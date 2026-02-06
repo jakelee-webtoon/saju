@@ -32,17 +32,17 @@ function LoginContent() {
     const errorParam = searchParams.get("error");
     if (errorParam) {
       const errorMessages: Record<string, string> = {
-        kakao_auth_failed: "카카오 로그인에 실패했어요",
-        naver_auth_failed: "네이버 로그인에 실패했어요",
-        no_code: "인증 코드를 받지 못했어요",
-        token_failed: "토큰 발급에 실패했어요",
-        user_info_failed: "사용자 정보를 가져오지 못했어요",
-        callback_failed: "로그인 처리 중 오류가 발생했어요",
-        parse_failed: "데이터 처리 중 오류가 발생했어요",
-        missing_params: "필요한 정보가 없어요",
-        invalid_state: "보안 검증에 실패했어요. 다시 시도해주세요.",
+        kakao_auth_failed: "카카오 로그인에 실패했어요. 잠시 후 다시 시도해주세요.",
+        naver_auth_failed: "네이버 로그인에 실패했어요. 잠시 후 다시 시도해주세요.",
+        no_code: "인증 과정에서 문제가 생겼어요. 다시 로그인해주세요.",
+        token_failed: "로그인 처리 중 문제가 생겼어요. 다시 시도해주세요.",
+        user_info_failed: "정보를 가져오지 못했어요. 네트워크 연결을 확인해주세요.",
+        callback_failed: "로그인 처리 중 문제가 생겼어요. 다시 시도해주세요.",
+        parse_failed: "로그인 처리 중 문제가 생겼어요. 다시 시도해주세요.",
+        missing_params: "로그인 정보가 누락됐어요. 다시 시도해주세요.",
+        invalid_state: "보안 검증에 실패했어요. 페이지를 새로고침하고 다시 시도해주세요.",
       };
-      setError(errorMessages[errorParam] || "로그인에 실패했어요");
+      setError(errorMessages[errorParam] || "로그인에 실패했어요. 다시 시도해주세요.");
     }
 
     // 카카오 SDK 초기화
@@ -89,7 +89,7 @@ function LoginContent() {
               오늘의 사주
             </h1>
             <p className="text-purple-600 text-sm">
-              연애 고민, 사주로 해결하세요
+              오늘 연락해도 될까? 사주가 알려줘요
             </p>
           </div>
 
@@ -146,7 +146,7 @@ function LoginContent() {
             onClick={() => router.push("/")}
             className="mt-8 w-full py-3 text-purple-600 text-sm font-medium hover:text-purple-800 transition-colors"
           >
-            로그인 없이 둘러보기 →
+            먼저 둘러볼게요 →
           </button>
         </div>
       </div>

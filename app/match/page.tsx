@@ -331,7 +331,7 @@ export default function MatchPage() {
                   type="text"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  placeholder="별명을 입력하세요"
+                  placeholder="예: 썸남, 직장동료, 친구"
                   maxLength={10}
                   className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
                 />
@@ -516,7 +516,7 @@ export default function MatchPage() {
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                💕 궁합 보기
+                💕 우리 궁합 확인하기
               </button>
 
               {/* 뒤로 버튼 */}
@@ -524,7 +524,7 @@ export default function MatchPage() {
                 onClick={() => setStep(1)}
                 className="w-full py-3 rounded-xl text-purple-600 font-medium hover:bg-purple-50 transition-colors"
               >
-                ← 이전으로
+                ← 돌아가기
               </button>
             </section>
           )}

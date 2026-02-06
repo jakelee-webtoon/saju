@@ -73,12 +73,9 @@ export default function ShopPage() {
 
   // 패키지 구매 (결제 연동)
   const handlePurchase = async (pkg: CupidPackage) => {
-    // 로그인 체크
+    // 로그인 체크 - 바로 이동 (딜레이 제거)
     if (!checkLoggedIn()) {
-      setToast("로그인이 필요해요! 🔐");
-      setTimeout(() => {
-        router.push("/login?redirect=/shop");
-      }, 1000);
+      router.push("/login?redirect=/shop");
       return;
     }
 

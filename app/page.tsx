@@ -56,11 +56,13 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 function BirthInfoForm({ 
   onSubmit, 
   initialData,
-  onBack 
+  onBack,
+  isFirstVisit = false 
 }: { 
   onSubmit: (data: FormData) => void;
   initialData?: FormData | null;
   onBack?: () => void;
+  isFirstVisit?: boolean;
 }) {
   const [name, setName] = useState(initialData?.name || "");
   const [calendarType, setCalendarType] = useState<"양력" | "음력">(initialData?.calendarType || "양력");
@@ -69,7 +71,7 @@ function BirthInfoForm({
   const [day, setDay] = useState(initialData?.day || "");
   const [hour, setHour] = useState(initialData?.hour || "");
   const [minute, setMinute] = useState(initialData?.minute || "");
-  const [hasTime, setHasTime] = useState(initialData?.hasTime ?? true);
+  const [hasTime, setHasTime] = useState(initialData?.hasTime ?? false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +96,18 @@ function BirthInfoForm({
         )}
         
         <header className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a2e] tracking-tight">만세력 계산기</h1>
-          <p className="mt-2 text-sm text-[#6b7280]">생년월일시를 입력하여 사주를 확인하세요</p>
+          {isFirstVisit ? (
+            <>
+              <div className="text-4xl mb-3">👋</div>
+              <h1 className="text-2xl font-semibold text-[#1a1a2e] tracking-tight">환영해요!</h1>
+              <p className="mt-2 text-sm text-[#6b7280]">나를 알아가는 첫 단계,<br/>생년월일을 알려주세요</p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-semibold text-[#1a1a2e] tracking-tight">내 사주 정보</h1>
+              <p className="mt-2 text-sm text-[#6b7280]">생년월일시를 입력해주세요</p>
+            </>
+          )}
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -106,7 +118,7 @@ function BirthInfoForm({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="이름을 입력하세요 (선택)"
+              placeholder="닉네임을 입력해주세요 (선택)"
               className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-[#1a1a2e] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#3b5998] focus:border-transparent"
             />
           </section>
@@ -180,7 +192,7 @@ function BirthInfoForm({
             disabled={!year || !month || !day}
             className="w-full rounded-xl bg-[#1a1a2e] py-4 text-[15px] font-medium text-white transition-colors hover:bg-[#2d2d44] disabled:bg-[#d1d5db] disabled:cursor-not-allowed"
           >
-            만세력 계산하기
+            {isFirstVisit ? "내 캐릭터 확인하기 ✨" : "저장하기"}
           </button>
         </form>
       </div>
@@ -507,7 +519,7 @@ function InterpretationPage({
       setTimeout(() => {
         setShowShareModal(false);
         setShareMessage("");
-      }, 1500);
+      }, 2500);
     } else {
       setShareMessage(result.message || "공유에 실패했어요");
       setTimeout(() => setShareMessage(""), 2000);
@@ -872,9 +884,9 @@ const defaultFormData: FormData = {
   year: "1990",
   month: "8",
   day: "20",
-  hour: "9",
-  minute: "00",
-  hasTime: true,
+  hour: "",
+  minute: "",
+  hasTime: false,
 };
 
 function ManseryeokPageContent() {
@@ -1078,8 +1090,10 @@ function ManseryeokPageContent() {
     return (
       <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
         <div className="text-center">
+          <div className="text-5xl mb-4 animate-bounce">💫</div>
           <div className="animate-spin inline-block w-8 h-8 border-2 border-[#3b5998] border-t-transparent rounded-full mb-4"></div>
-          <p className="text-[#6b7280]">로딩 중...</p>
+          <p className="text-[#6b7280] font-medium">사주 분석 중...</p>
+          <p className="text-[#9ca3af] text-sm mt-1">캐릭터를 불러오고 있어요</p>
         </div>
       </div>
     );
@@ -1104,6 +1118,7 @@ function ManseryeokPageContent() {
     return (
       <BirthInfoForm
         initialData={isFirstVisit ? null : formData}
+        isFirstVisit={isFirstVisit}
         onSubmit={async (data) => {
           // Firebase에 저장 + 캐릭터 리빌 표시
           await handleFormSubmitWithReveal(data);
@@ -1210,8 +1225,9 @@ function PageLoading() {
   return (
     <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
       <div className="text-center">
+        <div className="text-5xl mb-4 animate-bounce">💘</div>
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4" />
-        <p className="text-purple-700 font-medium">로딩 중...</p>
+        <p className="text-purple-700 font-medium">사주큐피드 준비 중...</p>
       </div>
     </div>
   );

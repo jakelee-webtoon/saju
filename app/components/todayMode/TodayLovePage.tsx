@@ -90,7 +90,7 @@ export default function TodayLovePage({
       setTimeout(() => {
         setShowShareModal(false);
         setShareMessage("");
-      }, 1500);
+      }, 2500);
     } else {
       setShareMessage(result.message || "공유에 실패했어요");
       setTimeout(() => setShareMessage(""), 2000);

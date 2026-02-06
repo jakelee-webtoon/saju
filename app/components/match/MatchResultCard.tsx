@@ -80,7 +80,7 @@ export default function MatchResultCard({
       setTimeout(() => {
         setShowShareModal(false);
         setShareMessage("");
-      }, 1500);
+      }, 2500);
     } else {
       setShareMessage(result2.message || "공유에 실패했어요");
       setTimeout(() => setShareMessage(""), 2000);
@@ -267,7 +267,7 @@ export default function MatchResultCard({
           onClick={onReset}
           className="flex-1 py-3.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
         >
-          다시 하기
+          다른 사람과 궁합 보기
         </button>
         <button
           onClick={() => setShowShareModal(true)}
@@ -277,6 +277,15 @@ export default function MatchResultCard({
           <span>공유하기</span>
         </button>
       </div>
+      
+      {/* 추가 CTA */}
+      <button
+        onClick={() => router.push("/?tab=love")}
+        className="w-full py-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+      >
+        <span>💗</span>
+        <span>오늘의 연애 운세도 확인하기</span>
+      </button>
 
       {/* 공유 모달 */}
       {showShareModal && (
