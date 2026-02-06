@@ -1,0 +1,40 @@
+{
+  "tags": [
+    {
+      "id": "new_interest",
+      "label": "썸 시작",
+      "shortLabel": "시작",
+      "emoji": "💫"
+    },
+    {
+      "id": "maintaining",
+      "label": "썸 유지",
+      "shortLabel": "유지",
+      "emoji": "💕"
+    },
+    {
+      "id": "slow_reply",
+      "label": "반응 느림",
+      "shortLabel": "느림",
+      "emoji": "⏳"
+    },
+    {
+      "id": "need_confirm",
+      "label": "확신 필요",
+      "shortLabel": "확신",
+      "emoji": "🤔"
+    },
+    {
+      "id": "anxious",
+      "label": "불안",
+      "shortLabel": "불안",
+      "emoji": "😰"
+    },
+    {
+      "id": "consider_end",
+      "label": "정리 고민",
+      "shortLabel": "정리",
+      "emoji": "💭"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "description": "오늘 모드 상태 라벨 정의",
+  "labels": [
+    {
+      "id": "rush",
+      "name": "급발진",
+      "emoji": "🔥",
+      "shortTitle": "급발진 확률 ↑",
+      "description": "감정이 빠르게 반응하는 상태"
+    },
+    {
+      "id": "observe",
+      "name": "관망모드",
+      "emoji": "👀",
+      "shortTitle": "관망 모드",
+      "description": "한 발짝 물러서 지켜보는 상태"
+    },
+    {
+      "id": "overheat",
+      "name": "과몰입",
+      "emoji": "💫",
+      "shortTitle": "관심 과열 주의",
+      "description": "상대에게 과하게 집중하는 상태"
+    },
+    {
+      "id": "cooldown",
+      "name": "쿨다운",
+      "emoji": "❄️",
+      "shortTitle": "감정 정비 중",
+      "description": "감정이 가라앉고 정리되는 상태"
+    },
+    {
+      "id": "sensitive",
+      "name": "눈치모드",
+      "emoji": "🎭",
+      "shortTitle": "눈치 예민 주의보",
+      "description": "상대 반응에 민감해지는 상태"
+    },
+    {
+      "id": "direct",
+      "name": "직진모드",
+      "emoji": "🚀",
+      "shortTitle": "직진 본능 ON",
+      "description": "망설임 없이 앞으로 나가는 상태"
+    },
+    {
+      "id": "doubt",
+      "name": "의심모드",
+      "emoji": "🤔",
+      "shortTitle": "확인 욕구 ↑",
+      "description": "확신이 필요해지는 상태"
+    },
+    {
+      "id": "hopeful",
+      "name": "기대모드",
+      "emoji": "✨",
+      "shortTitle": "기대감 상승 중",
+      "description": "좋은 쪽으로 해석하고 싶은 상태"
+    }
+  ]
+}

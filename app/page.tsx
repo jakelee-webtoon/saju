@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { calculateManseWithLibrary, type ManseResult, type BirthInput, type Element, type TrustLevel } from "./lib/saju";
+import { computeTodayMode, type TodayModeResult } from "./lib/todayMode/computeTodayMode";
+import TodayModeSnippet from "./components/todayMode/TodayModeSnippet";
+import TodayModeBottomSheet from "./components/todayMode/TodayModeBottomSheet";
+import TodayLovePage from "./components/todayMode/TodayLovePage";
+// 홈 화면 컴포넌트
+import TodayStatusLine from "./components/home/TodayStatusLine";
+import CharacterSummaryCard from "./components/home/CharacterSummaryCard";
+import TodayLoveModeCard from "./components/home/TodayLoveModeCard";
+import ManseryeokAccordion from "./components/home/ManseryeokAccordion";
 
 // ========================
 // 오행 UI 스타일
@@ -628,9 +637,9 @@ function generateCharacterType(elements: { 목: number; 화: number; 토: number
 
 /** 오행 바 퍼센트 계산 (극적으로 스케일링) */
 function getElementPercent(count: number, total: number): number {
-  if (total === 0) return 0;
-  // 극적인 스케일링: 0개=5%, 1개=25%, 2개=50%, 3개=75%, 4개+=95%
-  const scaleMap: Record<number, number> = { 0: 5, 1: 25, 2: 50, 3: 75, 4: 90, 5: 95, 6: 100, 7: 100, 8: 100 };
+  if (total === 0 || count === 0) return 0;
+  // 극적인 스케일링: 1개=25%, 2개=50%, 3개=75%, 4개+=95%
+  const scaleMap: Record<number, number> = { 1: 25, 2: 50, 3: 75, 4: 90, 5: 95, 6: 100, 7: 100, 8: 100 };
   return scaleMap[count] ?? Math.min(100, count * 15);
 }
 
@@ -670,7 +679,7 @@ function EnergyBar({ element, count, total }: { element: Element; count: number;
 const elementEmoji: Record<Element, string> = {
   화: "🔥",
   수: "🌊",
-  목: "🌱",
+  목: "🪾",
   토: "🧱",
   금: "🧈",
 };
@@ -753,6 +762,12 @@ function InterpretationPage({
   
   // 캐릭터 타입 생성
   const character = generateCharacterType(elements);
+  
+  // 오늘 모드 계산
+  const todayMode: TodayModeResult = computeTodayMode(character.id);
+  
+  // 바텀시트 상태
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
@@ -834,12 +849,21 @@ function InterpretationPage({
           </section>
         </div>
 
-        {/* [2] 에너지 분포 (능력치 바) */}
+        {/* [3] 오늘 모드 - 캐릭터 성향 기반 오늘의 상태 */}
+        <div className="mb-6">
+          <TodayModeSnippet
+            todayMode={todayMode}
+            characterName={character.name}
+            onShowMore={() => setIsBottomSheetOpen(true)}
+          />
+        </div>
+
+        {/* [4] 에너지 분포 (능력치 바) */}
         <section className="mb-6 rounded-2xl bg-gradient-to-br from-[#1a1a2e] to-[#2d2d44] p-6 shadow-xl">
           <h2 className="text-sm font-bold text-white/60 mb-5 tracking-wide">⚡ 에너지 게이지</h2>
           
           <div className="space-y-3">
-            {(["화", "수", "목", "토", "금"] as Element[]).map((el) => (
+            {(["목", "화", "토", "금", "수"] as Element[]).map((el) => (
               <div key={el} className="flex items-center gap-2">
                 <span className="w-7 text-lg text-center">{elementEmoji[el]}</span>
                 <span 
@@ -897,6 +921,89 @@ function InterpretationPage({
           </p>
         </div>
       </div>
+
+      {/* 오늘 모드 바텀시트 */}
+      <TodayModeBottomSheet
+        isOpen={isBottomSheetOpen}
+        onClose={() => setIsBottomSheetOpen(false)}
+        todayMode={todayMode}
+        characterName={character.name}
+      />
+    </div>
+  );
+}
+
+// ========================
+// 새로운 홈 화면 컴포넌트
+// ========================
+function NewHomePage({
+  manseResult,
+  formData,
+  onEdit,
+  onViewDetail,
+  onViewLove,
+}: {
+  manseResult: ManseResult;
+  formData: FormData;
+  onEdit: () => void;
+  onViewDetail: () => void;
+  onViewLove: () => void;
+}) {
+  const character = generateCharacterType(manseResult.elements);
+  const todayMode = computeTodayMode(character.id);
+
+  return (
+    <div className="min-h-screen bg-[#FAFBFC]">
+      <div className="mx-auto max-w-md px-5 py-6">
+        {/* 헤더 */}
+        <header className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-[#1a1a2e]">
+              {formData.name ? `${formData.name}님` : "오늘의 나"}
+            </h1>
+            <p className="text-xs text-[#9ca3af]">
+              {new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" })}
+            </p>
+          </div>
+          <button
+            onClick={onEdit}
+            className="text-xs text-[#6b7280] hover:text-[#1a1a2e] px-3 py-1.5 rounded-lg bg-white border border-[#e5e7eb]"
+          >
+            정보 수정
+          </button>
+        </header>
+
+        {/* [1] 오늘의 한 줄 상태 */}
+        <div className="mb-4">
+          <TodayStatusLine statusOneLiner={todayMode.statusOneLiner} />
+        </div>
+
+        {/* [2] 나의 캐릭터 요약 카드 */}
+        <div className="mb-4">
+          <CharacterSummaryCard
+            characterId={character.id}
+            characterName={character.name}
+            declaration={character.declaration}
+            color={character.color}
+            onClick={onViewDetail}
+          />
+        </div>
+
+        {/* [3] 오늘의 연애 모드 카드 */}
+        <div className="mb-4">
+          <TodayLoveModeCard loveModeLine={todayMode.loveModeLine} onClick={onViewLove} />
+        </div>
+
+        {/* [4] 나의 만세력 보기 */}
+        <div className="mb-8">
+          <ManseryeokAccordion manseResult={manseResult} />
+        </div>
+
+        {/* 하단 안내 */}
+        <p className="text-center text-[10px] text-[#9ca3af]">
+          매일 바뀌는 오늘의 상태 · 캐릭터로 풀어본 사주
+        </p>
+      </div>
     </div>
   );
 }
@@ -917,78 +1024,23 @@ const defaultFormData: FormData = {
 
 export default function ManseryeokPage() {
   const [formData, setFormData] = useState<FormData>(defaultFormData);
-  const [view, setView] = useState<"result" | "edit" | "interpret">("result");
-  const [manseResult, setManseResult] = useState<ManseResult | null>(null);
-
-  if (view === "edit") {
-    return (
-      <BirthInfoForm
-        initialData={formData}
-        onSubmit={(data) => {
-          setFormData(data);
-          setView("result");
-        }}
-      />
-    );
-  }
-
-  if (view === "interpret" && manseResult) {
-    return (
-      <InterpretationPage
-        manseResult={manseResult}
-        formData={formData}
-        onBack={() => setView("result")}
-      />
-    );
-  }
-
-  return (
-    <SajuResultWithCallback
-      formData={formData} 
-      onEdit={() => setView("edit")}
-      onInterpret={(result) => {
-        setManseResult(result);
-        setView("interpret");
-      }}
-    />
-  );
-}
-
-// SajuResult에서 결과를 전달하기 위한 래퍼 컴포넌트
-function SajuResultWithCallback({ 
-  formData, 
-  onEdit,
-  onInterpret,
-}: { 
-  formData: FormData;
-  onEdit: () => void;
-  onInterpret: (result: ManseResult) => void;
-}) {
-  // 모든 useState는 최상위에서 호출
+  const [view, setView] = useState<"home" | "edit" | "detail" | "love">("home");
   const [manseResult, setManseResult] = useState<ManseResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPillar, setSelectedPillar] = useState<number | null>(null);
 
+  // 만세력 계산
   useEffect(() => {
-    const calculate = async () => {
-      setLoading(true);
-      
-      const birthInput: BirthInput = {
-        year: parseInt(formData.year),
-        month: parseInt(formData.month),
-        day: parseInt(formData.day),
-        hour: formData.hasTime && formData.hour ? parseInt(formData.hour) : undefined,
-        minute: formData.hasTime && formData.minute ? parseInt(formData.minute) : undefined,
-        isLunar: formData.calendarType === "음력",
-      };
-      
-      // manseryeok 라이브러리 사용 - API 호출 없이 로컬 계산
-      const result = calculateManseWithLibrary(birthInput);
-      setManseResult(result);
-      setLoading(false);
+    const birthInput: BirthInput = {
+      year: parseInt(formData.year),
+      month: parseInt(formData.month),
+      day: parseInt(formData.day),
+      hour: formData.hasTime && formData.hour ? parseInt(formData.hour) : undefined,
+      minute: formData.hasTime && formData.minute ? parseInt(formData.minute) : undefined,
+      isLunar: formData.calendarType === "음력",
     };
-    
-    calculate();
+    const result = calculateManseWithLibrary(birthInput);
+    setManseResult(result);
+    setLoading(false);
   }, [formData]);
 
   if (loading || !manseResult) {
@@ -996,205 +1048,54 @@ function SajuResultWithCallback({
       <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin inline-block w-8 h-8 border-2 border-[#3b5998] border-t-transparent rounded-full mb-4"></div>
-          <p className="text-[#6b7280]">만세력 계산 중...</p>
+          <p className="text-[#6b7280]">로딩 중...</p>
         </div>
       </div>
     );
   }
 
-  // 기존 SajuResult 로직
-  const { birthSummary, pillars, ilgan, elements, warnings, calculationMeta } = manseResult;
-  
-  const trustLevelLabel: Record<string, { text: string; color: string }> = {
-    confirmed: { text: "확정", color: "text-emerald-600" },
-    reference: { text: "참고값", color: "text-amber-600" },
-    unavailable: { text: "미확정", color: "text-gray-400" },
-  };
-  
-  const pillarDescriptions: Record<string, string> = {
-    hour: "태어난 시간으로 정해지는 기둥이에요. 위는 천간, 아래는 지지라고 불러요.",
-    day: "태어난 날로 정해지는 기둥이에요. 위의 천간은 '나'를 나타내는 중심이에요.",
-    month: "태어난 달로 정해지는 기둥이에요. 계절의 흐름을 담고 있어요.",
-    year: "태어난 해로 정해지는 기둥이에요. 12년마다 같은 띠가 돌아와요.",
-  };
+  if (view === "edit") {
+    return (
+      <BirthInfoForm
+        initialData={formData}
+        onSubmit={(data) => {
+          setFormData(data);
+          setView("home");
+        }}
+      />
+    );
+  }
 
-  const pillarArray = [
-    { ...pillars.hour, key: "hour" },
-    { ...pillars.day, key: "day" },
-    { ...pillars.month, key: "month" },
-    { ...pillars.year, key: "year" },
-  ];
-  
-  const selectedData = selectedPillar !== null ? pillarArray[selectedPillar] : null;
+  if (view === "detail") {
+    return (
+      <InterpretationPage
+        manseResult={manseResult}
+        formData={formData}
+        onBack={() => setView("home")}
+      />
+    );
+  }
 
+  if (view === "love") {
+    const character = generateCharacterType(manseResult.elements);
+    const todayMode = computeTodayMode(character.id);
+    return (
+      <TodayLovePage
+        todayMode={todayMode}
+        characterName={character.name}
+        onBack={() => setView("home")}
+      />
+    );
+  }
+
+  // 기본: 홈 화면
   return (
-    <div className="min-h-screen bg-[#FAFBFC]">
-      <div className="mx-auto max-w-md px-5 py-8">
-        
-        <header className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a2e] tracking-tight">
-            {formData.name ? `${formData.name}님의 만세력` : "당신의 만세력"}
-          </h1>
-          <p className="mt-2 text-sm text-[#6b7280]">입력하신 정보를 기준으로 계산된 사주 구조입니다</p>
-        </header>
-
-        <section className="mb-6 rounded-xl bg-white p-5 shadow-sm border border-[#e5e7eb]">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-md bg-[#f0f4ff] px-2 py-0.5 text-xs font-medium text-[#3b5998]">양력</span>
-                <span className="text-[15px] font-medium text-[#1a1a2e]">
-                  {birthSummary.solar.year}년 {birthSummary.solar.month}월 {birthSummary.solar.day}일
-                  {birthSummary.time && (
-                    <span className="ml-2 text-[#6b7280] font-normal">
-                      {birthSummary.time.hour}시 {birthSummary.time.minute.toString().padStart(2, '0')}분
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-md bg-[#fef3c7] px-2 py-0.5 text-xs font-medium text-[#92400e]">음력</span>
-                <span className="text-sm text-[#6b7280]">
-                  {birthSummary.lunar.year}년 
-                  {birthSummary.lunar.isLeapMonth && <span className="text-[#f59e0b]">(윤)</span>}
-                  {birthSummary.lunar.month}월 {birthSummary.lunar.day}일
-                </span>
-              </div>
-              {!birthSummary.time && (
-                <p className="text-xs text-[#9ca3af]">※ 시간 미입력 - 시주 제외</p>
-              )}
-            </div>
-            <button onClick={onEdit} className="text-xs text-[#3b5998] hover:text-[#2d4a8a] font-medium">정보 수정</button>
-          </div>
-        </section>
-
-
-        <section className="mb-6">
-          <div className="grid grid-cols-4 gap-2">
-            {pillarArray.map((pillar, index) => (
-              <button 
-                key={pillar.key}
-                onClick={() => setSelectedPillar(selectedPillar === index ? null : index)}
-                disabled={!pillar.isAvailable}
-                className={`relative rounded-xl overflow-hidden transition-all duration-200 ${
-                  selectedPillar === index 
-                    ? 'ring-2 ring-[#1a1a2e] ring-offset-2 scale-[1.02]' 
-                    : pillar.isAvailable ? 'hover:scale-[1.01]' : 'opacity-50'
-                }`}
-              >
-                <div className={`py-2.5 text-center ${
-                  selectedPillar === index ? 'bg-[#1a1a2e]' : 'bg-[#e5e7eb]'
-                }`}>
-                  <span className={`text-xs font-semibold ${
-                    selectedPillar === index ? 'text-white' : 'text-[#6b7280]'
-                  }`}>
-                    {pillar.label}
-                  </span>
-                </div>
-                
-                {pillar.isAvailable ? (
-                  <>
-                    <div className={`py-4 text-center ${elementStyles[pillar.오행천간].cellBg}`}>
-                      <span className={`text-2xl font-bold ${elementStyles[pillar.오행천간].cellText}`}>{pillar.천간}</span>
-                      <div className="mt-1">
-                        <span className={`text-[10px] ${elementStyles[pillar.오행천간].cellText} opacity-70`}>{pillar.천간읽기}</span>
-                      </div>
-                    </div>
-                    <div className={`py-4 text-center ${elementStyles[pillar.오행지지].cellBg}`}>
-                      <span className={`text-2xl font-bold ${elementStyles[pillar.오행지지].cellText}`}>{pillar.지지}</span>
-                      <div className="mt-1">
-                        <span className={`text-[10px] ${elementStyles[pillar.오행지지].cellText} opacity-70`}>{pillar.지지읽기}</span>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="py-8 text-center bg-gray-100">
-                    <span className="text-2xl text-gray-400">?</span>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {selectedData && selectedData.isAvailable && (
-          <section className="mb-6 rounded-xl bg-white p-5 shadow-sm border-2 border-[#1a1a2e]">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-[#1a1a2e]">{selectedData.label} 상세</h3>
-              <span className="text-xs text-[#9ca3af]">클릭하여 다른 주 확인</span>
-            </div>
-            
-            <div className="flex justify-center gap-6">
-              <div className={`flex flex-col items-center p-4 rounded-xl border-2 border-[#1a1a2e] ${elementStyles[selectedData.오행천간].cellBg}`}>
-                <span className="text-xs font-medium text-[#1a1a2e] mb-2 bg-white/90 px-2 py-0.5 rounded">천간</span>
-                <span className={`text-5xl font-bold ${elementStyles[selectedData.오행천간].cellText}`}>{selectedData.천간}</span>
-                <span className={`text-lg mt-2 ${elementStyles[selectedData.오행천간].cellText}`}>{selectedData.천간읽기}</span>
-                <span className={`mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold bg-white/95 ${elementStyles[selectedData.오행천간].text}`}>
-                  {selectedData.오행천간}
-                </span>
-              </div>
-              
-              <div className={`flex flex-col items-center p-4 rounded-xl border-2 border-[#1a1a2e] ${elementStyles[selectedData.오행지지].cellBg}`}>
-                <span className="text-xs font-medium text-[#1a1a2e] mb-2 bg-white/90 px-2 py-0.5 rounded">지지</span>
-                <span className={`text-5xl font-bold ${elementStyles[selectedData.오행지지].cellText}`}>{selectedData.지지}</span>
-                <span className={`text-lg mt-2 ${elementStyles[selectedData.오행지지].cellText}`}>{selectedData.지지읽기}</span>
-                <span className={`mt-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold bg-white/95 ${elementStyles[selectedData.오행지지].text}`}>
-                  {selectedData.오행지지}
-                </span>
-              </div>
-            </div>
-            
-            <p className="mt-4 text-xs text-[#6b7280] text-center bg-[#f9fafb] rounded-lg py-3 px-4 leading-relaxed">
-              {pillarDescriptions[selectedData.key]}
-            </p>
-          </section>
-        )}
-
-        <section className="mb-8 rounded-xl bg-white p-5 shadow-sm border border-[#e5e7eb]">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-[#1a1a2e]">오행 분포</h3>
-            <span className="text-[11px] text-[#9ca3af]">총 {elements.total}개</span>
-          </div>
-          
-          <div className="space-y-3">
-            {(["목", "화", "토", "금", "수"] as Element[]).map((el) => {
-              const count = elements[el];
-              const percentage = elements.total > 0 ? (count / elements.total) * 100 : 0;
-              return (
-                <div key={el} className="flex items-center gap-3">
-                  <div className="w-8 flex items-center justify-center">
-                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${elementStyles[el].bg} ${elementStyles[el].text}`}>
-                      {el}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="h-2 rounded-full bg-[#f3f4f6] overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${elementStyles[el].cellBg}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="w-6 text-right text-xs text-[#6b7280]">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-          
-          <p className="mt-4 text-[11px] text-[#9ca3af] text-center">
-            오행 분포는 천간/지지 각 1점씩 합산 (지장간 미포함)
-          </p>
-        </section>
-
-        <button 
-          onClick={() => onInterpret(manseResult)}
-          className="w-full rounded-xl bg-[#1a1a2e] py-4 text-[15px] font-medium text-white transition-colors hover:bg-[#2d2d44]"
-        >
-          구조 해석 보기
-        </button>
-
-        <div className="h-8" />
-      </div>
-    </div>
+    <NewHomePage
+      manseResult={manseResult}
+      formData={formData}
+      onEdit={() => setView("edit")}
+      onViewDetail={() => setView("detail")}
+      onViewLove={() => setView("love")}
+    />
   );
 }

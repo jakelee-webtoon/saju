@@ -1,0 +1,1644 @@
+{
+  "version": "1.0",
+  "description": "연애 모드 100개+ 데이터 (홈/상세 일관성 유지)",
+  "modes": [
+    {
+      "id": "cooldown",
+      "love_mode": "쿨다운",
+      "category": "energy",
+      "home_summary_line1": "감정이 조금 가라앉아 있는 흐름이에요.",
+      "home_summary_line2": "괜히 내가 차가운 건가 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "❄️ 쿨다운",
+        "main_sentence": "오늘은 감정이 좀 가라앉은 상태야",
+        "reason": "최근 감정 소모가 있었고, 오늘은 자연스럽게 마음이 쉬어가고 있어",
+        "triggers": [
+          "내가 너무 차가운 건 아닐까 자책할 때",
+          "상대가 반응을 더 원하는 것처럼 느껴질 때",
+          "관심이 식은 건가 혼란스러울 때"
+        ],
+        "one_line_guide": "감정이 덜한 날의 판단이 의외로 정확할 때도 있어"
+      }
+    },
+    {
+      "id": "radar",
+      "love_mode": "눈치모드",
+      "category": "sensitivity",
+      "home_summary_line1": "상대의 작은 변화도 눈에 들어오는 상태예요.",
+      "home_summary_line2": "괜히 혼자 생각이 늘어날 수 있어요.",
+      "detail": {
+        "mode_label": "📡 눈치모드",
+        "main_sentence": "오늘은 상대 반응에 촉이 예민해진 날이야",
+        "reason": "요즘 확인하고 싶은 게 있어서 오늘은 작은 것도 크게 감지하게 될 수 있어",
+        "triggers": [
+          "상대 말투가 살짝 달라졌을 때",
+          "평소와 다른 이모티콘을 쓸 때",
+          "대화가 평소보다 짧게 끝났을 때"
+        ],
+        "one_line_guide": "느낀 건 메모해두고, 판단은 내일 해도 늦지 않아"
+      }
+    },
+    {
+      "id": "impulse",
+      "love_mode": "직진모드",
+      "category": "energy",
+      "home_summary_line1": "마음이 먼저 움직이기 쉬운 상태예요.",
+      "home_summary_line2": "괜히 연락을 먼저 하고 싶어질 수 있어요.",
+      "detail": {
+        "mode_label": "⚡ 직진모드",
+        "main_sentence": "오늘은 생각보다 행동이 먼저 나가는 날이야",
+        "reason": "에너지가 많이 쌓여 있어서 뭔가 터뜨리고 싶은 충동이 평소보다 강할 수 있어",
+        "triggers": [
+          "상대가 읽씹하거나 답장이 늦을 때",
+          "예상과 다른 반응이 왔을 때",
+          "혼자 기다리는 시간이 길어질 때"
+        ],
+        "one_line_guide": "지금 느끼는 감정은 진짜야. 근데 행동은 내일 해도 늦지 않아"
+      }
+    },
+    {
+      "id": "overthink",
+      "love_mode": "과몰입",
+      "category": "focus",
+      "home_summary_line1": "상대 반응에 의미를 부여하기 쉬운 상태예요.",
+      "home_summary_line2": "혼자 해석이 늘어날 수 있어요.",
+      "detail": {
+        "mode_label": "🔍 과몰입",
+        "main_sentence": "오늘은 작은 것도 크게 느껴지는 날이야",
+        "reason": "요즘 이 사람 생각을 많이 하고 있어서 뭐든 연결 지어 해석하게 될 수 있어",
+        "triggers": [
+          "상대 프로필 사진이 바뀌었을 때",
+          "읽씹 시간이 평소보다 길 때",
+          "이모티콘 하나에 의미 부여하게 될 때"
+        ],
+        "one_line_guide": "지금 느끼는 건 진짜야. 근데 해석은 50%만 맞을 수도 있어"
+      }
+    },
+    {
+      "id": "observe",
+      "love_mode": "관망모드",
+      "category": "strategy",
+      "home_summary_line1": "먼저 움직이기보다 지켜보고 싶은 상태예요.",
+      "home_summary_line2": "상대 반응이 궁금해질 수 있어요.",
+      "detail": {
+        "mode_label": "👀 관망모드",
+        "main_sentence": "오늘은 움직이기보다 지켜보는 게 맞는 날이야",
+        "reason": "최근 네가 먼저 움직인 게 많았던 것 같아. 잠시 쉬어가면서 상대 반응을 확인하는 게 좋겠어",
+        "triggers": [
+          "상대가 먼저 연락 안 할 때",
+          "불안해서 뭐라도 하고 싶을 때",
+          "다른 사람과 비교될 때"
+        ],
+        "one_line_guide": "기다린다고 지는 게 아니야. 오늘은 여유 있는 쪽이 더 멋있어 보이는 날"
+      }
+    },
+    {
+      "id": "loop",
+      "love_mode": "생각루프",
+      "category": "mental",
+      "home_summary_line1": "그 사람 생각이 자꾸 떠오르는 상태예요.",
+      "home_summary_line2": "혼자 대화를 되짚게 될 수 있어요.",
+      "detail": {
+        "mode_label": "🔄 생각루프",
+        "main_sentence": "오늘은 같은 생각이 자꾸 맴도는 날이야",
+        "reason": "마음이 정리가 안 된 상태야. 그래서 같은 생각이 계속 돌고 도는 거야",
+        "triggers": [
+          "상대 SNS를 확인하게 될 때",
+          "대화 기록을 다시 읽게 될 때",
+          "잠들기 전에 그 사람 생각이 날 때"
+        ],
+        "one_line_guide": "그 생각, 지금은 놓을 수 없어도 괜찮아. 대신 다른 걸로 채워보는 건 어때"
+      }
+    },
+    {
+      "id": "courage",
+      "love_mode": "용기버프",
+      "category": "energy",
+      "home_summary_line1": "평소보다 마음이 단단해진 상태예요.",
+      "home_summary_line2": "말 걸고 싶었던 거 해볼 수 있을 것 같아요.",
+      "detail": {
+        "mode_label": "💪 용기버프",
+        "main_sentence": "오늘은 평소보다 자신감이 올라온 날이야",
+        "reason": "최근 조금씩 자신감이 회복되고 있어. 오늘은 그 에너지가 피크인 날이야",
+        "triggers": [
+          "상대 반응이 기대보다 덤덤할 때",
+          "용기 냈는데 타이밍이 안 맞을 때",
+          "자신감이 갑자기 사라질 때"
+        ],
+        "one_line_guide": "오늘의 자신감, 내일도 있을 거란 보장 없어. 할 말 있으면 오늘 해보는 것도 방법이야"
+      }
+    },
+    {
+      "id": "reality",
+      "love_mode": "현타모드",
+      "category": "clarity",
+      "home_summary_line1": "있는 그대로 보게 되는 상태예요.",
+      "home_summary_line2": "괜히 현실적인 생각이 많아질 수 있어요.",
+      "detail": {
+        "mode_label": "🪞 현타모드",
+        "main_sentence": "오늘은 기대보다 현실이 먼저 보이는 날이야",
+        "reason": "최근 기대와 현실 사이에서 고민이 있었던 것 같아. 오늘은 있는 그대로 보게 되는 날이야",
+        "triggers": [
+          "냉정한 내가 너무 차갑게 느껴질 때",
+          "상대의 부족한 점이 크게 보일 때",
+          "이대로 괜찮은가 싶을 때"
+        ],
+        "one_line_guide": "현실을 본다고 나쁜 게 아니야. 이 시선이 오히려 필요한 때일 수도 있어"
+      }
+    },
+    {
+      "id": "flutter",
+      "love_mode": "설렘모드",
+      "category": "emotion",
+      "home_summary_line1": "작은 것에도 마음이 두근거리는 상태예요.",
+      "home_summary_line2": "괜히 기대가 커질 수 있어요.",
+      "detail": {
+        "mode_label": "💓 설렘모드",
+        "main_sentence": "오늘은 마음이 살짝 들떠 있는 날이야",
+        "reason": "요즘 좋은 신호를 느꼈거나, 기대할 만한 일이 있었던 것 같아",
+        "triggers": [
+          "상대 반응이 기대만큼 안 올 때",
+          "혼자 너무 앞서간 것 같을 때",
+          "현실과 기대가 다를 때"
+        ],
+        "one_line_guide": "설레는 건 좋은 거야. 다만 기대는 80%만 해두는 게 마음 편해"
+      }
+    },
+    {
+      "id": "guard",
+      "love_mode": "경계모드",
+      "category": "defense",
+      "home_summary_line1": "마음의 문이 살짝 닫혀 있는 상태예요.",
+      "home_summary_line2": "쉽게 열리지 않을 수 있어요.",
+      "detail": {
+        "mode_label": "🛡️ 경계모드",
+        "main_sentence": "오늘은 마음을 쉽게 열기 어려운 날이야",
+        "reason": "최근 상처받거나 조심해야 할 일이 있었던 것 같아. 자연스러운 방어 반응이야",
+        "triggers": [
+          "상대가 다가오려고 할 때",
+          "솔직해지라는 말을 들을 때",
+          "마음을 열어야 할 것 같은 상황에서"
+        ],
+        "one_line_guide": "지금은 문을 닫고 있어도 괜찮아. 열고 싶을 때 열면 돼"
+      }
+    },
+    {
+      "id": "wait",
+      "love_mode": "기다림모드",
+      "category": "patience",
+      "home_summary_line1": "상대의 다음 움직임을 기다리는 상태예요.",
+      "home_summary_line2": "조급해질 수 있어요.",
+      "detail": {
+        "mode_label": "⏳ 기다림모드",
+        "main_sentence": "오늘은 기다리는 마음이 큰 날이야",
+        "reason": "뭔가 상대에게 기대하고 있거나, 반응을 기다리는 중인 것 같아",
+        "triggers": [
+          "연락이 오지 않을 때",
+          "기다림이 길어질 때",
+          "먼저 연락하고 싶은 충동이 들 때"
+        ],
+        "one_line_guide": "기다림도 선택이야. 지금 네 선택은 충분히 가치 있어"
+      }
+    },
+    {
+      "id": "doubt",
+      "love_mode": "의심모드",
+      "category": "mental",
+      "home_summary_line1": "확신이 살짝 흔들리는 상태예요.",
+      "home_summary_line2": "괜히 불안해질 수 있어요.",
+      "detail": {
+        "mode_label": "❓ 의심모드",
+        "main_sentence": "오늘은 확신이 좀 부족한 날이야",
+        "reason": "최근 뭔가 불안한 신호를 느꼈거나, 확인하고 싶은 게 생긴 것 같아",
+        "triggers": [
+          "상대 말과 행동이 다르게 느껴질 때",
+          "설명되지 않는 상황이 있을 때",
+          "직감이 뭔가 이상하다고 말할 때"
+        ],
+        "one_line_guide": "의심이 드는 건 이유가 있어. 하지만 확인은 차분하게 해도 늦지 않아"
+      }
+    },
+    {
+      "id": "push",
+      "love_mode": "밀당중",
+      "category": "strategy",
+      "home_summary_line1": "밀고 당기는 흐름 속에 있는 상태예요.",
+      "home_summary_line2": "타이밍을 재게 될 수 있어요.",
+      "detail": {
+        "mode_label": "🎯 밀당중",
+        "main_sentence": "오늘은 밀고 당기는 게임 중인 날이야",
+        "reason": "상대와의 거리감을 조절하는 중이야. 누가 먼저 다가갈지 눈치 보는 상태",
+        "triggers": [
+          "내가 너무 쉬워 보일까 걱정될 때",
+          "상대가 멀어지는 것 같을 때",
+          "밀당이 지칠 때"
+        ],
+        "one_line_guide": "게임도 재밌지만, 진짜 마음은 게임 밖에 있을 수도 있어"
+      }
+    },
+    {
+      "id": "miss",
+      "love_mode": "그리움모드",
+      "category": "emotion",
+      "home_summary_line1": "그 사람이 자꾸 떠오르는 상태예요.",
+      "home_summary_line2": "연락하고 싶은 마음이 커질 수 있어요.",
+      "detail": {
+        "mode_label": "🌙 그리움모드",
+        "main_sentence": "오늘은 그 사람 생각이 유독 많이 나는 날이야",
+        "reason": "함께했던 기억이나 대화가 자꾸 떠오르는 것 같아",
+        "triggers": [
+          "예전에 갔던 장소를 지나갈 때",
+          "상대가 좋아하던 게 눈에 들어올 때",
+          "밤에 혼자 있을 때"
+        ],
+        "one_line_guide": "그리운 건 자연스러운 거야. 그 마음을 느끼는 것도 괜찮아"
+      }
+    },
+    {
+      "id": "jealous",
+      "love_mode": "질투모드",
+      "category": "emotion",
+      "home_summary_line1": "다른 사람이 신경 쓰이는 상태예요.",
+      "home_summary_line2": "괜히 비교하게 될 수 있어요.",
+      "detail": {
+        "mode_label": "💢 질투모드",
+        "main_sentence": "오늘은 다른 사람이 유독 신경 쓰이는 날이야",
+        "reason": "상대 주변에 신경 쓰이는 사람이 있거나, 비교되는 상황이 있었던 것 같아",
+        "triggers": [
+          "상대가 다른 사람과 대화하는 걸 볼 때",
+          "SNS에서 다른 사람이 보일 때",
+          "나만 모르는 게 있는 것 같을 때"
+        ],
+        "one_line_guide": "질투는 관심의 증거야. 하지만 그 감정에 휘둘리지 않아도 돼"
+      }
+    },
+    {
+      "id": "secure",
+      "love_mode": "안정모드",
+      "category": "emotion",
+      "home_summary_line1": "마음이 평온한 상태예요.",
+      "home_summary_line2": "여유가 생길 수 있어요.",
+      "detail": {
+        "mode_label": "☁️ 안정모드",
+        "main_sentence": "오늘은 마음이 비교적 평온한 날이야",
+        "reason": "최근 관계가 안정적이거나, 마음의 정리가 좀 된 상태인 것 같아",
+        "triggers": [
+          "갑자기 불안한 소식이 들려올 때",
+          "상대 반응이 평소와 다를 때",
+          "예상 못한 변수가 생길 때"
+        ],
+        "one_line_guide": "평온한 날에는 평온함을 즐겨도 괜찮아"
+      }
+    },
+    {
+      "id": "confused",
+      "love_mode": "혼란모드",
+      "category": "mental",
+      "home_summary_line1": "마음이 정리가 안 되는 상태예요.",
+      "home_summary_line2": "뭐가 뭔지 모르겠을 수 있어요.",
+      "detail": {
+        "mode_label": "🌀 혼란모드",
+        "main_sentence": "오늘은 마음이 복잡한 날이야",
+        "reason": "여러 가지 감정이 섞여 있어서 뭐가 진짜 내 마음인지 헷갈리는 상태야",
+        "triggers": [
+          "결정해야 할 게 있을 때",
+          "상대가 뭘 원하는지 모르겠을 때",
+          "내 마음도 모르겠을 때"
+        ],
+        "one_line_guide": "혼란스러운 건 정리 중이라는 뜻이야. 지금은 결론 안 내도 괜찮아"
+      }
+    },
+    {
+      "id": "regret",
+      "love_mode": "후회모드",
+      "category": "reflection",
+      "home_summary_line1": "지난 일이 자꾸 떠오르는 상태예요.",
+      "home_summary_line2": "그때 그랬어야 했나 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "😔 후회모드",
+        "main_sentence": "오늘은 지난 일이 자꾸 생각나는 날이야",
+        "reason": "최근 한 말이나 행동이 마음에 걸리는 게 있는 것 같아",
+        "triggers": [
+          "그때 다르게 했으면 어땠을까 생각날 때",
+          "상대 반응이 달라진 것 같을 때",
+          "혼자 자책하게 될 때"
+        ],
+        "one_line_guide": "후회는 성장의 재료가 될 수 있어. 너무 오래 붙잡고 있지 않아도 돼"
+      }
+    },
+    {
+      "id": "hope",
+      "love_mode": "기대모드",
+      "category": "emotion",
+      "home_summary_line1": "뭔가 좋은 일이 생길 것 같은 상태예요.",
+      "home_summary_line2": "기대가 커질 수 있어요.",
+      "detail": {
+        "mode_label": "🌟 기대모드",
+        "main_sentence": "오늘은 뭔가 좋은 일이 있을 것 같은 날이야",
+        "reason": "최근 좋은 신호가 있었거나, 긍정적인 흐름을 느끼고 있는 것 같아",
+        "triggers": [
+          "기대만큼 일이 풀리지 않을 때",
+          "상대 반응이 덤덤할 때",
+          "현실이 기대와 다를 때"
+        ],
+        "one_line_guide": "기대하는 건 좋은 거야. 다만 결과는 열어두는 게 마음 편해"
+      }
+    },
+    {
+      "id": "tired",
+      "love_mode": "지침모드",
+      "category": "energy",
+      "home_summary_line1": "감정적으로 좀 지친 상태예요.",
+      "home_summary_line2": "쉬고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "😮‍💨 지침모드",
+        "main_sentence": "오늘은 감정적으로 좀 지친 날이야",
+        "reason": "최근 감정 소모가 많았던 것 같아. 마음이 쉬고 싶어하는 상태야",
+        "triggers": [
+          "또 뭔가 해야 할 때",
+          "상대가 반응을 원할 때",
+          "관계에 에너지를 써야 할 때"
+        ],
+        "one_line_guide": "지치면 쉬어도 돼. 관계도 충전이 필요할 때가 있어"
+      }
+    },
+    {
+      "id": "focus",
+      "love_mode": "집중모드",
+      "category": "focus",
+      "home_summary_line1": "그 사람에게 온 신경이 쏠린 상태예요.",
+      "home_summary_line2": "다른 일에 집중이 안 될 수 있어요.",
+      "detail": {
+        "mode_label": "🎯 집중모드",
+        "main_sentence": "오늘은 그 사람에게 온 신경이 가 있는 날이야",
+        "reason": "뭔가 확인하고 싶거나, 기다리는 게 있어서 다른 게 눈에 안 들어오는 상태야",
+        "triggers": [
+          "상대에게서 연락이 안 올 때",
+          "다른 일을 해야 할 때",
+          "집중력이 흐트러질 때"
+        ],
+        "one_line_guide": "집중하는 건 자연스러운 거야. 다만 다른 것도 조금씩 챙겨두면 좋아"
+      }
+    },
+    {
+      "id": "distance",
+      "love_mode": "거리두기",
+      "category": "strategy",
+      "home_summary_line1": "살짝 거리를 두고 싶은 상태예요.",
+      "home_summary_line2": "혼자만의 시간이 필요할 수 있어요.",
+      "detail": {
+        "mode_label": "↔️ 거리두기",
+        "main_sentence": "오늘은 살짝 거리를 두고 싶은 날이야",
+        "reason": "최근 너무 가까웠거나, 숨 쉴 공간이 필요한 상태인 것 같아",
+        "triggers": [
+          "상대가 다가오려고 할 때",
+          "연락이 너무 자주 올 때",
+          "혼자 있고 싶은데 방해받을 때"
+        ],
+        "one_line_guide": "거리두기도 관계의 일부야. 지금 필요한 만큼 두는 게 맞아"
+      }
+    },
+    {
+      "id": "curious",
+      "love_mode": "궁금모드",
+      "category": "interest",
+      "home_summary_line1": "상대에 대해 더 알고 싶은 상태예요.",
+      "home_summary_line2": "질문이 많아질 수 있어요.",
+      "detail": {
+        "mode_label": "🔎 궁금모드",
+        "main_sentence": "오늘은 상대에 대해 더 알고 싶은 날이야",
+        "reason": "관심이 커지고 있거나, 더 깊이 알고 싶은 마음이 생긴 것 같아",
+        "triggers": [
+          "상대가 말을 아낄 때",
+          "모르는 부분이 신경 쓰일 때",
+          "질문하면 부담스러울까 걱정될 때"
+        ],
+        "one_line_guide": "궁금한 건 좋은 신호야. 타이밍 봐서 물어봐도 괜찮아"
+      }
+    },
+    {
+      "id": "express",
+      "love_mode": "표현모드",
+      "category": "action",
+      "home_summary_line1": "마음을 표현하고 싶은 상태예요.",
+      "home_summary_line2": "말하고 싶은 게 생길 수 있어요.",
+      "detail": {
+        "mode_label": "💬 표현모드",
+        "main_sentence": "오늘은 뭔가 표현하고 싶은 날이야",
+        "reason": "마음속에 담아둔 말이 있거나, 전하고 싶은 감정이 생긴 것 같아",
+        "triggers": [
+          "표현했는데 반응이 없을 때",
+          "말하고 나서 후회될 때",
+          "타이밍이 안 맞을 때"
+        ],
+        "one_line_guide": "표현하고 싶은 마음, 소중해. 다만 상대 상황도 한 번 봐도 좋아"
+      }
+    },
+    {
+      "id": "hide",
+      "love_mode": "숨김모드",
+      "category": "defense",
+      "home_summary_line1": "마음을 드러내기 싫은 상태예요.",
+      "home_summary_line2": "괜히 티 내기 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "🙈 숨김모드",
+        "main_sentence": "오늘은 마음을 감추고 싶은 날이야",
+        "reason": "티 내면 손해볼 것 같거나, 아직 확신이 없어서 조심하고 있는 상태야",
+        "triggers": [
+          "상대가 내 마음을 눈치챌 것 같을 때",
+          "솔직해지라는 압박을 느낄 때",
+          "먼저 좋아하면 지는 것 같을 때"
+        ],
+        "one_line_guide": "감추고 싶을 때는 감춰도 돼. 보여주고 싶을 때 보여주면 돼"
+      }
+    },
+    {
+      "id": "check",
+      "love_mode": "확인모드",
+      "category": "action",
+      "home_summary_line1": "뭔가 확인하고 싶은 상태예요.",
+      "home_summary_line2": "답을 알고 싶어질 수 있어요.",
+      "detail": {
+        "mode_label": "✅ 확인모드",
+        "main_sentence": "오늘은 뭔가 확인하고 싶은 날이야",
+        "reason": "애매한 상태가 답답하거나, 명확한 답이 필요한 시점인 것 같아",
+        "triggers": [
+          "확인했는데 원하는 답이 아닐 때",
+          "물어보면 관계가 어색해질까 걱정될 때",
+          "모르는 게 더 편할 것 같을 때"
+        ],
+        "one_line_guide": "확인하고 싶은 마음, 자연스러워. 다만 타이밍은 좀 봐도 좋아"
+      }
+    },
+    {
+      "id": "depend",
+      "love_mode": "의존모드",
+      "category": "attachment",
+      "home_summary_line1": "상대에게 기대고 싶은 상태예요.",
+      "home_summary_line2": "혼자가 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "🤲 의존모드",
+        "main_sentence": "오늘은 상대에게 기대고 싶은 날이야",
+        "reason": "외롭거나 지쳐서 누군가가 필요한 상태인 것 같아",
+        "triggers": [
+          "상대가 바쁘다고 할 때",
+          "기대만큼 받쳐주지 않을 때",
+          "혼자 해결해야 할 때"
+        ],
+        "one_line_guide": "기대고 싶은 건 자연스러워. 다만 나도 나를 받쳐줄 수 있어"
+      }
+    },
+    {
+      "id": "independent",
+      "love_mode": "독립모드",
+      "category": "self",
+      "home_summary_line1": "혼자서도 괜찮은 상태예요.",
+      "home_summary_line2": "나에게 집중하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🦋 독립모드",
+        "main_sentence": "오늘은 나에게 집중하고 싶은 날이야",
+        "reason": "관계보다 나 자신에게 에너지를 쓰고 싶은 상태인 것 같아",
+        "triggers": [
+          "상대가 섭섭해할 때",
+          "너무 차갑게 보일까 걱정될 때",
+          "관계에 소홀해지는 것 같을 때"
+        ],
+        "one_line_guide": "나에게 집중하는 시간도 필요해. 관계는 그 다음이어도 괜찮아"
+      }
+    },
+    {
+      "id": "nervous",
+      "love_mode": "긴장모드",
+      "category": "emotion",
+      "home_summary_line1": "마음이 살짝 긴장된 상태예요.",
+      "home_summary_line2": "작은 일에도 신경 쓰일 수 있어요.",
+      "detail": {
+        "mode_label": "😬 긴장모드",
+        "main_sentence": "오늘은 마음이 좀 긴장된 날이야",
+        "reason": "중요한 일이 있거나, 상대 반응이 신경 쓰이는 상태인 것 같아",
+        "triggers": [
+          "예상과 다른 일이 생길 때",
+          "실수할까 걱정될 때",
+          "평가받는 느낌이 들 때"
+        ],
+        "one_line_guide": "긴장되는 건 그만큼 신경 쓰인다는 거야. 천천히 해도 괜찮아"
+      }
+    },
+    {
+      "id": "relax",
+      "love_mode": "편안모드",
+      "category": "emotion",
+      "home_summary_line1": "상대와 있으면 편한 상태예요.",
+      "home_summary_line2": "자연스럽게 대할 수 있을 것 같아요.",
+      "detail": {
+        "mode_label": "😌 편안모드",
+        "main_sentence": "오늘은 상대와 편하게 있을 수 있는 날이야",
+        "reason": "관계가 안정적이거나, 상대에게 마음을 열고 있는 상태인 것 같아",
+        "triggers": [
+          "갑자기 어색한 상황이 생길 때",
+          "상대가 평소와 다를 때",
+          "편한 게 지루함으로 느껴질 때"
+        ],
+        "one_line_guide": "편한 건 좋은 신호야. 그 편안함을 즐겨도 괜찮아"
+      }
+    },
+    {
+      "id": "test",
+      "love_mode": "테스트모드",
+      "category": "strategy",
+      "home_summary_line1": "상대를 살짝 떠보고 싶은 상태예요.",
+      "home_summary_line2": "반응을 확인하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🧪 테스트모드",
+        "main_sentence": "오늘은 상대 반응을 살짝 떠보고 싶은 날이야",
+        "reason": "상대 마음이 궁금하거나, 확인하고 싶은 게 있는 상태인 것 같아",
+        "triggers": [
+          "테스트 결과가 기대와 다를 때",
+          "떠보는 게 티날 것 같을 때",
+          "게임이 지칠 때"
+        ],
+        "one_line_guide": "확인하고 싶은 마음은 이해해. 다만 직접 물어보는 게 더 빠를 때도 있어"
+      }
+    },
+    {
+      "id": "signal",
+      "love_mode": "신호탐지",
+      "category": "sensitivity",
+      "home_summary_line1": "상대의 신호를 읽으려는 상태예요.",
+      "home_summary_line2": "의미를 찾으려 할 수 있어요.",
+      "detail": {
+        "mode_label": "📶 신호탐지",
+        "main_sentence": "오늘은 상대 신호를 열심히 읽으려는 날이야",
+        "reason": "상대 마음이 궁금하거나, 어떤 의미인지 파악하고 싶은 상태야",
+        "triggers": [
+          "신호가 애매할 때",
+          "과해석한 것 같을 때",
+          "읽어도 답이 안 나올 때"
+        ],
+        "one_line_guide": "신호를 읽는 것도 중요하지만, 가끔은 그냥 물어보는 것도 방법이야"
+      }
+    },
+    {
+      "id": "replay",
+      "love_mode": "되감기",
+      "category": "reflection",
+      "home_summary_line1": "지난 대화가 자꾸 떠오르는 상태예요.",
+      "home_summary_line2": "분석하게 될 수 있어요.",
+      "detail": {
+        "mode_label": "⏪ 되감기",
+        "main_sentence": "오늘은 지난 대화를 자꾸 되돌려보는 날이야",
+        "reason": "뭔가 마음에 걸리는 대화가 있거나, 다시 생각해보고 싶은 게 있는 것 같아",
+        "triggers": [
+          "분석해도 답이 안 나올 때",
+          "과거에 너무 매몰될 때",
+          "지금에 집중이 안 될 때"
+        ],
+        "one_line_guide": "되돌려보는 것도 좋지만, 답은 과거가 아니라 앞에 있을 수도 있어"
+      }
+    },
+    {
+      "id": "compare",
+      "love_mode": "비교모드",
+      "category": "mental",
+      "home_summary_line1": "다른 사람과 비교하게 되는 상태예요.",
+      "home_summary_line2": "자신감이 흔들릴 수 있어요.",
+      "detail": {
+        "mode_label": "⚖️ 비교모드",
+        "main_sentence": "오늘은 나도 모르게 비교하게 되는 날이야",
+        "reason": "자신감이 살짝 흔들리거나, 다른 사람이 신경 쓰이는 상태인 것 같아",
+        "triggers": [
+          "상대 주변에 다른 사람이 보일 때",
+          "SNS를 볼 때",
+          "나만 부족한 것 같을 때"
+        ],
+        "one_line_guide": "비교는 자연스러운 거야. 하지만 너는 너만의 매력이 있어"
+      }
+    },
+    {
+      "id": "pride",
+      "love_mode": "자존심모드",
+      "category": "defense",
+      "home_summary_line1": "먼저 다가가기 싫은 상태예요.",
+      "home_summary_line2": "기다리고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "👑 자존심모드",
+        "main_sentence": "오늘은 자존심이 좀 세진 날이야",
+        "reason": "먼저 다가가면 손해볼 것 같거나, 상대가 먼저 오길 바라는 상태야",
+        "triggers": [
+          "상대도 안 다가올 때",
+          "밀당이 길어질 때",
+          "자존심 때문에 손해보는 것 같을 때"
+        ],
+        "one_line_guide": "자존심도 중요하지만, 가끔은 먼저 다가가는 게 더 멋있을 때도 있어"
+      }
+    },
+    {
+      "id": "soft",
+      "love_mode": "부드러움",
+      "category": "emotion",
+      "home_summary_line1": "마음이 부드러워진 상태예요.",
+      "home_summary_line2": "평소보다 다정해질 수 있어요.",
+      "detail": {
+        "mode_label": "🧸 부드러움",
+        "main_sentence": "오늘은 마음이 살살 녹는 날이야",
+        "reason": "상대에게 좋은 감정이 있거나, 따뜻한 에너지가 있는 상태야",
+        "triggers": [
+          "상대가 차갑게 느껴질 때",
+          "내 부드러움이 약해 보일까 걱정될 때",
+          "호의가 이용당하는 것 같을 때"
+        ],
+        "one_line_guide": "부드러운 건 약한 게 아니야. 오늘의 따뜻함을 표현해도 괜찮아"
+      }
+    },
+    {
+      "id": "direct",
+      "love_mode": "직선모드",
+      "category": "action",
+      "home_summary_line1": "돌려 말하기 싫은 상태예요.",
+      "home_summary_line2": "직접적으로 말하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "➡️ 직선모드",
+        "main_sentence": "오늘은 돌려 말하기 귀찮은 날이야",
+        "reason": "답답한 상황이 있거나, 명확하게 정리하고 싶은 상태인 것 같아",
+        "triggers": [
+          "직접적으로 말했는데 상대가 당황할 때",
+          "너무 세게 나간 것 같을 때",
+          "분위기가 어색해질 때"
+        ],
+        "one_line_guide": "직접적인 것도 좋지만, 상대 상황을 한 번 보는 것도 방법이야"
+      }
+    },
+    {
+      "id": "careful",
+      "love_mode": "조심모드",
+      "category": "strategy",
+      "home_summary_line1": "말과 행동에 신경 쓰이는 상태예요.",
+      "home_summary_line2": "실수하지 않으려 할 수 있어요.",
+      "detail": {
+        "mode_label": "🪶 조심모드",
+        "main_sentence": "오늘은 말과 행동에 좀 더 신경 쓰는 날이야",
+        "reason": "상대에게 좋은 인상을 주고 싶거나, 실수하고 싶지 않은 상태인 것 같아",
+        "triggers": [
+          "조심하다가 어색해질 때",
+          "너무 계산적으로 보일까 걱정될 때",
+          "자연스럽지 못한 것 같을 때"
+        ],
+        "one_line_guide": "조심하는 것도 좋지만, 가끔은 자연스러운 게 더 매력 있어"
+      }
+    },
+    {
+      "id": "attach",
+      "love_mode": "애착모드",
+      "category": "attachment",
+      "home_summary_line1": "상대에게 많이 끌리는 상태예요.",
+      "home_summary_line2": "놓치기 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "🧲 애착모드",
+        "main_sentence": "오늘은 상대에게 유독 끌리는 날이야",
+        "reason": "감정이 깊어지고 있거나, 상대가 특별하게 느껴지는 상태인 것 같아",
+        "triggers": [
+          "상대가 멀어지는 것 같을 때",
+          "내가 너무 집착하는 것 같을 때",
+          "감정 조절이 안 될 때"
+        ],
+        "one_line_guide": "끌리는 건 자연스러운 거야. 다만 나도 나만의 중심이 필요해"
+      }
+    },
+    {
+      "id": "free",
+      "love_mode": "자유모드",
+      "category": "self",
+      "home_summary_line1": "구속받기 싫은 상태예요.",
+      "home_summary_line2": "나만의 시간이 필요할 수 있어요.",
+      "detail": {
+        "mode_label": "🕊️ 자유모드",
+        "main_sentence": "오늘은 자유롭고 싶은 날이야",
+        "reason": "관계에서 숨이 막히거나, 혼자만의 공간이 필요한 상태인 것 같아",
+        "triggers": [
+          "상대가 연락을 자주 할 때",
+          "약속이 많아질 때",
+          "내 시간이 없어지는 것 같을 때"
+        ],
+        "one_line_guide": "자유로움도 필요해. 건강한 관계는 서로의 공간을 존중하는 거야"
+      }
+    },
+    {
+      "id": "future",
+      "love_mode": "미래모드",
+      "category": "reflection",
+      "home_summary_line1": "앞으로를 생각하게 되는 상태예요.",
+      "home_summary_line2": "장기적으로 보고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🔮 미래모드",
+        "main_sentence": "오늘은 앞으로의 일이 궁금한 날이야",
+        "reason": "관계의 방향이 궁금하거나, 장기적으로 생각하고 싶은 상태인 것 같아",
+        "triggers": [
+          "미래가 안 보일 때",
+          "상대와 방향이 다른 것 같을 때",
+          "불확실함이 불안할 때"
+        ],
+        "one_line_guide": "미래를 생각하는 건 좋은 거야. 다만 오늘도 중요하다는 거 잊지 마"
+      }
+    },
+    {
+      "id": "present",
+      "love_mode": "현재모드",
+      "category": "focus",
+      "home_summary_line1": "지금 이 순간에 집중하는 상태예요.",
+      "home_summary_line2": "복잡하게 생각하기 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "📍 현재모드",
+        "main_sentence": "오늘은 지금 이 순간이 중요한 날이야",
+        "reason": "미래 걱정보다 현재를 즐기고 싶은 상태인 것 같아",
+        "triggers": [
+          "앞으로를 물어볼 때",
+          "진지한 대화가 필요할 때",
+          "현실을 외면하는 것 같을 때"
+        ],
+        "one_line_guide": "지금에 집중하는 것도 좋은 선택이야. 오늘을 즐겨도 괜찮아"
+      }
+    },
+    {
+      "id": "push_away",
+      "love_mode": "밀어내기",
+      "category": "defense",
+      "home_summary_line1": "상대를 밀어내고 싶은 상태예요.",
+      "home_summary_line2": "가까워지는 게 부담될 수 있어요.",
+      "detail": {
+        "mode_label": "🚫 밀어내기",
+        "main_sentence": "오늘은 상대를 좀 밀어내고 싶은 날이야",
+        "reason": "너무 가까워지는 게 부담되거나, 거리가 필요한 상태인 것 같아",
+        "triggers": [
+          "상대가 다가오려고 할 때",
+          "밀어냈는데 상처받은 것 같을 때",
+          "진짜 원하는 게 뭔지 모를 때"
+        ],
+        "one_line_guide": "밀어내고 싶을 때는 이유가 있어. 그 이유를 먼저 살펴봐도 좋아"
+      }
+    },
+    {
+      "id": "pull_in",
+      "love_mode": "끌어당기기",
+      "category": "action",
+      "home_summary_line1": "상대를 더 가까이 하고 싶은 상태예요.",
+      "home_summary_line2": "적극적으로 나가고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🧲 끌어당기기",
+        "main_sentence": "오늘은 상대를 더 가까이 하고 싶은 날이야",
+        "reason": "감정이 커지고 있거나, 관계를 진전시키고 싶은 상태인 것 같아",
+        "triggers": [
+          "상대가 반응이 없을 때",
+          "너무 급하게 나간 것 같을 때",
+          "부담을 줄까 걱정될 때"
+        ],
+        "one_line_guide": "끌어당기고 싶은 마음, 자연스러워. 다만 상대 페이스도 존중해주면 좋아"
+      }
+    },
+    {
+      "id": "honest",
+      "love_mode": "솔직모드",
+      "category": "action",
+      "home_summary_line1": "있는 그대로 보여주고 싶은 상태예요.",
+      "home_summary_line2": "숨기기 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "💎 솔직모드",
+        "main_sentence": "오늘은 솔직하게 보여주고 싶은 날이야",
+        "reason": "가면을 쓰는 게 지치거나, 진짜 모습을 보여주고 싶은 상태인 것 같아",
+        "triggers": [
+          "솔직했는데 상대가 당황할 때",
+          "너무 많이 보여준 것 같을 때",
+          "약점이 드러난 것 같을 때"
+        ],
+        "one_line_guide": "솔직한 건 용기야. 다만 타이밍과 방법도 중요해"
+      }
+    },
+    {
+      "id": "mask",
+      "love_mode": "가면모드",
+      "category": "defense",
+      "home_summary_line1": "진짜 모습을 숨기고 싶은 상태예요.",
+      "home_summary_line2": "완벽하게 보이고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🎭 가면모드",
+        "main_sentence": "오늘은 진짜 모습을 좀 숨기고 싶은 날이야",
+        "reason": "약한 모습을 보이기 싫거나, 더 좋게 보이고 싶은 상태인 것 같아",
+        "triggers": [
+          "가면이 벗겨질 것 같을 때",
+          "진짜 나를 보여줘야 할 때",
+          "피곤해질 때"
+        ],
+        "one_line_guide": "가면을 쓰는 것도 때론 필요해. 하지만 벗을 때가 오면 벗어도 괜찮아"
+      }
+    },
+    {
+      "id": "risk",
+      "love_mode": "모험모드",
+      "category": "action",
+      "home_summary_line1": "한 번 해볼까 싶은 상태예요.",
+      "home_summary_line2": "용기가 생길 수 있어요.",
+      "detail": {
+        "mode_label": "🎲 모험모드",
+        "main_sentence": "오늘은 한번 시도해보고 싶은 날이야",
+        "reason": "안전하게만 있기엔 답답하거나, 뭔가 변화가 필요한 상태인 것 같아",
+        "triggers": [
+          "모험했는데 결과가 안 좋을 때",
+          "후회될 것 같을 때",
+          "너무 급하게 나간 것 같을 때"
+        ],
+        "one_line_guide": "모험도 좋은 선택이야. 다만 감당할 수 있는 범위에서 해보는 게 좋아"
+      }
+    },
+    {
+      "id": "safe",
+      "love_mode": "안전모드",
+      "category": "strategy",
+      "home_summary_line1": "조심스럽게 가고 싶은 상태예요.",
+      "home_summary_line2": "리스크를 피하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🛟 안전모드",
+        "main_sentence": "오늘은 안전하게 가고 싶은 날이야",
+        "reason": "실패하고 싶지 않거나, 확실한 것만 선택하고 싶은 상태인 것 같아",
+        "triggers": [
+          "안전만 추구하다 기회를 놓칠 때",
+          "답답해질 때",
+          "용기가 필요한 상황에서"
+        ],
+        "one_line_guide": "안전하게 가는 것도 전략이야. 다만 가끔은 살짝 나가봐도 괜찮아"
+      }
+    },
+    {
+      "id": "prove",
+      "love_mode": "증명모드",
+      "category": "action",
+      "home_summary_line1": "내 가치를 보여주고 싶은 상태예요.",
+      "home_summary_line2": "인정받고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🏆 증명모드",
+        "main_sentence": "오늘은 나를 증명하고 싶은 날이야",
+        "reason": "인정받고 싶거나, 내 가치를 보여주고 싶은 상태인 것 같아",
+        "triggers": [
+          "노력해도 인정 안 받을 때",
+          "비교당할 때",
+          "증명하다가 지칠 때"
+        ],
+        "one_line_guide": "증명하고 싶은 마음 이해해. 하지만 너는 이미 충분히 가치 있어"
+      }
+    },
+    {
+      "id": "accept",
+      "love_mode": "수용모드",
+      "category": "emotion",
+      "home_summary_line1": "있는 그대로 받아들이는 상태예요.",
+      "home_summary_line2": "편안하게 느껴질 수 있어요.",
+      "detail": {
+        "mode_label": "🤗 수용모드",
+        "main_sentence": "오늘은 있는 그대로 받아들이는 날이야",
+        "reason": "바꿀 수 없는 걸 인정하거나, 상황을 수용하는 상태인 것 같아",
+        "triggers": [
+          "수용이 포기처럼 느껴질 때",
+          "더 해야 할 것 같을 때",
+          "변화가 필요할 때"
+        ],
+        "one_line_guide": "수용도 힘이야. 바꿀 수 없는 건 받아들이고, 바꿀 수 있는 건 천천히 해봐"
+      }
+    },
+    {
+      "id": "resist",
+      "love_mode": "저항모드",
+      "category": "defense",
+      "home_summary_line1": "받아들이기 싫은 상태예요.",
+      "home_summary_line2": "바꾸고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "✊ 저항모드",
+        "main_sentence": "오늘은 그대로 받아들이기 싫은 날이야",
+        "reason": "현재 상황이 마음에 안 들거나, 변화를 원하는 상태인 것 같아",
+        "triggers": [
+          "바꿀 수 없는 걸 알게 될 때",
+          "저항해도 달라지지 않을 때",
+          "에너지가 소모될 때"
+        ],
+        "one_line_guide": "저항하고 싶은 마음 이해해. 다만 바꿀 수 있는 것에 집중하면 더 좋아"
+      }
+    },
+    {
+      "id": "dream",
+      "love_mode": "몽상모드",
+      "category": "mental",
+      "home_summary_line1": "상상 속에 빠져드는 상태예요.",
+      "home_summary_line2": "현실과 다른 그림을 그릴 수 있어요.",
+      "detail": {
+        "mode_label": "💭 몽상모드",
+        "main_sentence": "오늘은 상상 속에 빠져드는 날이야",
+        "reason": "현실보다 상상이 더 좋거나, 꿈꾸고 싶은 상태인 것 같아",
+        "triggers": [
+          "현실이 상상과 다를 때",
+          "꿈에서 깨야 할 때",
+          "현실을 외면하는 것 같을 때"
+        ],
+        "one_line_guide": "꿈꾸는 것도 좋은 거야. 다만 현실에도 발을 딛고 있으면 더 좋아"
+      }
+    },
+    {
+      "id": "ground",
+      "love_mode": "현실모드",
+      "category": "clarity",
+      "home_summary_line1": "현실적으로 보게 되는 상태예요.",
+      "home_summary_line2": "냉정해질 수 있어요.",
+      "detail": {
+        "mode_label": "🌍 현실모드",
+        "main_sentence": "오늘은 현실이 또렷하게 보이는 날이야",
+        "reason": "꿈에서 깨어나거나, 있는 그대로를 직시하는 상태인 것 같아",
+        "triggers": [
+          "현실이 너무 무겁게 느껴질 때",
+          "꿈꾸고 싶을 때",
+          "너무 냉정한 것 같을 때"
+        ],
+        "one_line_guide": "현실을 보는 것도 필요해. 다만 가끔은 꿈꿔도 괜찮아"
+      }
+    },
+    {
+      "id": "spark",
+      "love_mode": "스파크",
+      "category": "emotion",
+      "home_summary_line1": "뭔가 번쩍하는 느낌이 드는 상태예요.",
+      "home_summary_line2": "특별한 순간이 올 수 있어요.",
+      "detail": {
+        "mode_label": "✨ 스파크",
+        "main_sentence": "오늘은 뭔가 번쩍할 수 있는 날이야",
+        "reason": "에너지가 좋거나, 특별한 일이 생길 수 있는 상태인 것 같아",
+        "triggers": [
+          "기대만큼 일어나지 않을 때",
+          "평범하게 지나갈 때",
+          "스파크가 꺼질 때"
+        ],
+        "one_line_guide": "스파크가 느껴지면 그 순간을 즐겨봐. 특별한 일이 생길 수도 있어"
+      }
+    },
+    {
+      "id": "routine",
+      "love_mode": "일상모드",
+      "category": "stability",
+      "home_summary_line1": "평범하게 흘러가는 상태예요.",
+      "home_summary_line2": "특별한 건 없을 수 있어요.",
+      "detail": {
+        "mode_label": "📅 일상모드",
+        "main_sentence": "오늘은 평범하게 흘러가는 날이야",
+        "reason": "특별한 이벤트 없이 일상이 흘러가는 상태인 것 같아",
+        "triggers": [
+          "지루해질 때",
+          "뭔가 변화가 필요할 때",
+          "평범함이 불안할 때"
+        ],
+        "one_line_guide": "일상도 소중해. 평범한 날도 의미 있을 수 있어"
+      }
+    },
+    {
+      "id": "storm",
+      "love_mode": "폭풍전야",
+      "category": "tension",
+      "home_summary_line1": "뭔가 일어날 것 같은 상태예요.",
+      "home_summary_line2": "긴장될 수 있어요.",
+      "detail": {
+        "mode_label": "⛈️ 폭풍전야",
+        "main_sentence": "오늘은 뭔가 일어날 것 같은 날이야",
+        "reason": "변화의 조짐이 느껴지거나, 긴장감이 있는 상태인 것 같아",
+        "triggers": [
+          "아무 일도 안 일어날 때",
+          "긴장이 너무 길어질 때",
+          "뭘 해야 할지 모를 때"
+        ],
+        "one_line_guide": "폭풍이 올 것 같으면 준비해두는 것도 좋아. 하지만 안 올 수도 있어"
+      }
+    },
+    {
+      "id": "after_storm",
+      "love_mode": "폭풍후",
+      "category": "recovery",
+      "home_summary_line1": "뭔가 지나간 후인 상태예요.",
+      "home_summary_line2": "정리가 필요할 수 있어요.",
+      "detail": {
+        "mode_label": "🌈 폭풍후",
+        "main_sentence": "오늘은 뭔가 지나간 후의 날이야",
+        "reason": "큰 일이 있었거나, 감정 소모가 있었던 후의 상태인 것 같아",
+        "triggers": [
+          "아직 정리가 안 됐을 때",
+          "여파가 남아있을 때",
+          "다시 시작해야 할 때"
+        ],
+        "one_line_guide": "폭풍이 지나갔으면 잠시 쉬어가도 괜찮아. 정리는 천천히 해도 돼"
+      }
+    },
+    {
+      "id": "bloom",
+      "love_mode": "개화모드",
+      "category": "growth",
+      "home_summary_line1": "감정이 피어나는 상태예요.",
+      "home_summary_line2": "점점 커질 수 있어요.",
+      "detail": {
+        "mode_label": "🌸 개화모드",
+        "main_sentence": "오늘은 감정이 피어나는 날이야",
+        "reason": "상대에 대한 마음이 커지고 있거나, 관계가 발전하는 상태인 것 같아",
+        "triggers": [
+          "상대가 기대에 못 미칠 때",
+          "너무 빨리 피어난 것 같을 때",
+          "감정에 휩쓸릴 때"
+        ],
+        "one_line_guide": "감정이 피어나는 건 좋은 거야. 천천히 즐기면서 키워가봐"
+      }
+    },
+    {
+      "id": "wilt",
+      "love_mode": "시들모드",
+      "category": "decline",
+      "home_summary_line1": "감정이 살짝 시들해진 상태예요.",
+      "home_summary_line2": "예전만 못한 것 같을 수 있어요.",
+      "detail": {
+        "mode_label": "🥀 시들모드",
+        "main_sentence": "오늘은 감정이 좀 시들해진 날이야",
+        "reason": "예전만큼 설레지 않거나, 권태가 오는 상태인 것 같아",
+        "triggers": [
+          "예전 감정으로 돌아가고 싶을 때",
+          "이대로 끝나는 건가 싶을 때",
+          "노력해도 안 될 것 같을 때"
+        ],
+        "one_line_guide": "시들해지는 것도 자연스러운 거야. 새로운 자극이 필요할 수도 있어"
+      }
+    },
+    {
+      "id": "recharge",
+      "love_mode": "충전모드",
+      "category": "recovery",
+      "home_summary_line1": "에너지를 모으는 상태예요.",
+      "home_summary_line2": "좀 쉬고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🔋 충전모드",
+        "main_sentence": "오늘은 에너지를 모으는 날이야",
+        "reason": "최근 소모가 많았거나, 재충전이 필요한 상태인 것 같아",
+        "triggers": [
+          "쉬어야 하는데 할 일이 생길 때",
+          "상대가 반응을 원할 때",
+          "충전이 안 될 때"
+        ],
+        "one_line_guide": "충전도 중요한 활동이야. 지금 쉬어야 나중에 더 잘할 수 있어"
+      }
+    },
+    {
+      "id": "overflow",
+      "love_mode": "넘침모드",
+      "category": "energy",
+      "home_summary_line1": "감정이 넘쳐나는 상태예요.",
+      "home_summary_line2": "주체가 안 될 수 있어요.",
+      "detail": {
+        "mode_label": "💦 넘침모드",
+        "main_sentence": "오늘은 감정이 넘쳐나는 날이야",
+        "reason": "마음에 담긴 게 많거나, 표현하고 싶은 게 많은 상태인 것 같아",
+        "triggers": [
+          "넘쳐서 실수할 때",
+          "주체가 안 될 때",
+          "상대가 부담스러워할 때"
+        ],
+        "one_line_guide": "넘치는 감정, 자연스러운 거야. 다만 조금씩 흘려보내는 것도 방법이야"
+      }
+    },
+    {
+      "id": "empty",
+      "love_mode": "공허모드",
+      "category": "emotion",
+      "home_summary_line1": "마음이 텅 빈 것 같은 상태예요.",
+      "home_summary_line2": "뭔가 채우고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🕳️ 공허모드",
+        "main_sentence": "오늘은 마음이 좀 빈 것 같은 날이야",
+        "reason": "뭔가 빠진 느낌이거나, 채워지지 않는 게 있는 상태인 것 같아",
+        "triggers": [
+          "채우려고 해도 안 채워질 때",
+          "무엇을 원하는지 모를 때",
+          "공허함이 깊어질 때"
+        ],
+        "one_line_guide": "공허한 날도 있어. 억지로 채우려 하지 않아도 괜찮아"
+      }
+    },
+    {
+      "id": "warm",
+      "love_mode": "따뜻함",
+      "category": "emotion",
+      "home_summary_line1": "마음이 포근한 상태예요.",
+      "home_summary_line2": "좋은 감정이 있을 수 있어요.",
+      "detail": {
+        "mode_label": "🌤️ 따뜻함",
+        "main_sentence": "오늘은 마음이 따뜻한 날이야",
+        "reason": "좋은 일이 있었거나, 상대에게서 온기를 느끼는 상태인 것 같아",
+        "triggers": [
+          "차가운 반응을 받을 때",
+          "따뜻함이 당연해질 때",
+          "온도차를 느낄 때"
+        ],
+        "one_line_guide": "따뜻한 마음, 소중한 거야. 오늘 그 온기를 즐겨봐"
+      }
+    },
+    {
+      "id": "cold",
+      "love_mode": "차가움",
+      "category": "emotion",
+      "home_summary_line1": "마음이 서늘한 상태예요.",
+      "home_summary_line2": "거리감이 느껴질 수 있어요.",
+      "detail": {
+        "mode_label": "🌬️ 차가움",
+        "main_sentence": "오늘은 마음이 좀 서늘한 날이야",
+        "reason": "실망했거나, 감정이 가라앉은 상태인 것 같아",
+        "triggers": [
+          "따뜻해져야 할 때",
+          "상대가 다가오려고 할 때",
+          "너무 차갑게 굴었나 싶을 때"
+        ],
+        "one_line_guide": "서늘한 것도 하나의 상태야. 따뜻해지고 싶을 때 따뜻해지면 돼"
+      }
+    },
+    {
+      "id": "open",
+      "love_mode": "열린모드",
+      "category": "openness",
+      "home_summary_line1": "마음이 열려 있는 상태예요.",
+      "home_summary_line2": "새로운 걸 받아들일 수 있어요.",
+      "detail": {
+        "mode_label": "🚪 열린모드",
+        "main_sentence": "오늘은 마음이 열려 있는 날이야",
+        "reason": "새로운 것에 열려 있거나, 상대를 받아들이는 상태인 것 같아",
+        "triggers": [
+          "열었는데 상처받을 때",
+          "너무 열어서 지칠 때",
+          "선별이 필요할 때"
+        ],
+        "one_line_guide": "열린 마음, 좋은 거야. 다만 적절한 경계도 함께 있으면 더 좋아"
+      }
+    },
+    {
+      "id": "closed",
+      "love_mode": "닫힌모드",
+      "category": "defense",
+      "home_summary_line1": "마음이 닫혀 있는 상태예요.",
+      "home_summary_line2": "들이기 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "🔒 닫힌모드",
+        "main_sentence": "오늘은 마음이 닫혀 있는 날이야",
+        "reason": "자기 보호가 필요하거나, 누군가를 들이기 싫은 상태인 것 같아",
+        "triggers": [
+          "열어야 할 때",
+          "상대가 다가오려고 할 때",
+          "닫혀서 기회를 놓칠 때"
+        ],
+        "one_line_guide": "닫혀 있어도 괜찮아. 열고 싶을 때 열면 돼"
+      }
+    },
+    {
+      "id": "nostalgic",
+      "love_mode": "향수모드",
+      "category": "reflection",
+      "home_summary_line1": "예전 생각이 나는 상태예요.",
+      "home_summary_line2": "추억에 빠질 수 있어요.",
+      "detail": {
+        "mode_label": "📸 향수모드",
+        "main_sentence": "오늘은 예전 생각이 나는 날이야",
+        "reason": "과거의 좋았던 순간이나 사람이 떠오르는 상태인 것 같아",
+        "triggers": [
+          "과거에 빠져서 현재가 안 보일 때",
+          "예전 사람이 그리워질 때",
+          "지금이 부족하게 느껴질 때"
+        ],
+        "one_line_guide": "추억도 소중해. 다만 지금도 소중하다는 거 잊지 마"
+      }
+    },
+    {
+      "id": "new_start",
+      "love_mode": "새출발",
+      "category": "growth",
+      "home_summary_line1": "새롭게 시작하고 싶은 상태예요.",
+      "home_summary_line2": "변화를 원할 수 있어요.",
+      "detail": {
+        "mode_label": "🌱 새출발",
+        "main_sentence": "오늘은 새롭게 시작하고 싶은 날이야",
+        "reason": "이전과 다르게 해보고 싶거나, 변화가 필요한 상태인 것 같아",
+        "triggers": [
+          "새로 시작해도 달라지지 않을 때",
+          "과거가 발목 잡을 때",
+          "변화가 어려울 때"
+        ],
+        "one_line_guide": "새출발, 좋은 선택이야. 작은 것부터 시작해봐도 괜찮아"
+      }
+    },
+    {
+      "id": "end",
+      "love_mode": "마무리",
+      "category": "closure",
+      "home_summary_line1": "정리하고 싶은 상태예요.",
+      "home_summary_line2": "매듭짓고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🎬 마무리",
+        "main_sentence": "오늘은 뭔가 정리하고 싶은 날이야",
+        "reason": "끝내야 할 게 있거나, 매듭을 지어야 할 상태인 것 같아",
+        "triggers": [
+          "마무리가 안 될 때",
+          "미련이 남을 때",
+          "상대가 놓아주지 않을 때"
+        ],
+        "one_line_guide": "마무리도 시작만큼 중요해. 잘 정리하면 다음이 더 좋아질 수 있어"
+      }
+    },
+    {
+      "id": "grateful",
+      "love_mode": "감사모드",
+      "category": "emotion",
+      "home_summary_line1": "고마운 마음이 드는 상태예요.",
+      "home_summary_line2": "소중하게 느껴질 수 있어요.",
+      "detail": {
+        "mode_label": "🙏 감사모드",
+        "main_sentence": "오늘은 고마운 마음이 드는 날이야",
+        "reason": "상대의 존재나 관계가 소중하게 느껴지는 상태인 것 같아",
+        "triggers": [
+          "감사함이 당연해질 때",
+          "표현이 어려울 때",
+          "상대가 모를까 걱정될 때"
+        ],
+        "one_line_guide": "감사한 마음, 표현해봐도 좋아. 작은 표현도 큰 의미가 될 수 있어"
+      }
+    },
+    {
+      "id": "sorry",
+      "love_mode": "미안모드",
+      "category": "emotion",
+      "home_summary_line1": "미안한 마음이 드는 상태예요.",
+      "home_summary_line2": "표현하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "😢 미안모드",
+        "main_sentence": "오늘은 미안한 마음이 드는 날이야",
+        "reason": "상대에게 잘못한 게 있거나, 마음이 걸리는 게 있는 상태인 것 같아",
+        "triggers": [
+          "사과해도 풀리지 않을 때",
+          "표현이 어려울 때",
+          "계속 미안할 때"
+        ],
+        "one_line_guide": "미안한 마음, 전해봐도 좋아. 진심은 전달되는 법이야"
+      }
+    },
+    {
+      "id": "brave",
+      "love_mode": "용감모드",
+      "category": "action",
+      "home_summary_line1": "두려움을 이겨내는 상태예요.",
+      "home_summary_line2": "도전해볼 수 있을 것 같아요.",
+      "detail": {
+        "mode_label": "🦁 용감모드",
+        "main_sentence": "오늘은 두려움을 이겨낼 수 있는 날이야",
+        "reason": "용기가 필요한 일이 있거나, 도전하고 싶은 상태인 것 같아",
+        "triggers": [
+          "용기 내도 결과가 안 좋을 때",
+          "두려움이 다시 올 때",
+          "혼자 감당해야 할 때"
+        ],
+        "one_line_guide": "용감한 건 두려움이 없는 게 아니라 두려워도 하는 거야"
+      }
+    },
+    {
+      "id": "fear",
+      "love_mode": "두려움",
+      "category": "emotion",
+      "home_summary_line1": "무섭거나 불안한 상태예요.",
+      "home_summary_line2": "조심스러워질 수 있어요.",
+      "detail": {
+        "mode_label": "😰 두려움",
+        "main_sentence": "오늘은 살짝 두려운 날이야",
+        "reason": "무섭거나 불안한 게 있는 상태인 것 같아",
+        "triggers": [
+          "두려움이 커질 때",
+          "회피하고 싶을 때",
+          "해결해야 할 때"
+        ],
+        "one_line_guide": "두려운 건 자연스러운 거야. 천천히 마주하면 작아질 수 있어"
+      }
+    },
+    {
+      "id": "comfort",
+      "love_mode": "위로모드",
+      "category": "emotion",
+      "home_summary_line1": "위로받고 싶은 상태예요.",
+      "home_summary_line2": "기대고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🤱 위로모드",
+        "main_sentence": "오늘은 위로받고 싶은 날이야",
+        "reason": "힘들거나 지친 상태에서 누군가의 따뜻함이 필요한 것 같아",
+        "triggers": [
+          "위로받지 못할 때",
+          "혼자 감당해야 할 때",
+          "약해 보일까 걱정될 때"
+        ],
+        "one_line_guide": "위로받고 싶은 건 자연스러운 거야. 표현해봐도 괜찮아"
+      }
+    },
+    {
+      "id": "cheer",
+      "love_mode": "응원모드",
+      "category": "action",
+      "home_summary_line1": "상대를 응원하고 싶은 상태예요.",
+      "home_summary_line2": "힘이 되어주고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "📣 응원모드",
+        "main_sentence": "오늘은 상대를 응원하고 싶은 날이야",
+        "reason": "상대에게 힘이 되어주고 싶거나, 좋은 일이 있길 바라는 상태인 것 같아",
+        "triggers": [
+          "응원이 부담이 될 때",
+          "거절당할 때",
+          "내 상황도 힘들 때"
+        ],
+        "one_line_guide": "응원하고 싶은 마음, 좋은 거야. 작은 말 한마디도 큰 힘이 돼"
+      }
+    },
+    {
+      "id": "boundary",
+      "love_mode": "경계모드",
+      "category": "defense",
+      "home_summary_line1": "선을 긋고 싶은 상태예요.",
+      "home_summary_line2": "넘어오면 안 되는 게 있을 수 있어요.",
+      "detail": {
+        "mode_label": "🚧 경계모드",
+        "main_sentence": "오늘은 선을 긋고 싶은 날이야",
+        "reason": "보호해야 할 영역이 있거나, 침범당하고 싶지 않은 상태인 것 같아",
+        "triggers": [
+          "경계가 무너질 때",
+          "상대가 넘어올 때",
+          "너무 차갑게 보일까 걱정될 때"
+        ],
+        "one_line_guide": "경계를 긋는 건 자기 보호야. 건강한 관계에는 건강한 경계가 필요해"
+      }
+    },
+    {
+      "id": "merge",
+      "love_mode": "융합모드",
+      "category": "attachment",
+      "home_summary_line1": "상대와 하나가 되고 싶은 상태예요.",
+      "home_summary_line2": "더 가까워지고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🫂 융합모드",
+        "main_sentence": "오늘은 상대와 하나가 되고 싶은 날이야",
+        "reason": "감정이 깊어지고 있거나, 더 가까워지고 싶은 상태인 것 같아",
+        "triggers": [
+          "상대가 거리를 둘 때",
+          "너무 가까워서 숨막힐 때",
+          "나를 잃어버리는 것 같을 때"
+        ],
+        "one_line_guide": "가까워지고 싶은 마음, 자연스러워. 다만 나도 나만의 공간이 필요해"
+      }
+    },
+    {
+      "id": "reflect",
+      "love_mode": "성찰모드",
+      "category": "reflection",
+      "home_summary_line1": "나를 돌아보는 상태예요.",
+      "home_summary_line2": "생각이 많아질 수 있어요.",
+      "detail": {
+        "mode_label": "🪞 성찰모드",
+        "main_sentence": "오늘은 나를 돌아보는 날이야",
+        "reason": "관계 속의 나를 점검하거나, 반성할 게 있는 상태인 것 같아",
+        "triggers": [
+          "자책으로 이어질 때",
+          "답이 안 나올 때",
+          "혼란스러울 때"
+        ],
+        "one_line_guide": "성찰은 좋은 거야. 다만 자책과는 달라. 부드럽게 봐줘도 괜찮아"
+      }
+    },
+    {
+      "id": "flow",
+      "love_mode": "흐름모드",
+      "category": "ease",
+      "home_summary_line1": "자연스럽게 흘러가는 상태예요.",
+      "home_summary_line2": "억지로 하지 않아도 될 것 같아요.",
+      "detail": {
+        "mode_label": "🌊 흐름모드",
+        "main_sentence": "오늘은 자연스럽게 흘러가는 날이야",
+        "reason": "억지로 뭔가 하지 않아도 되는, 편안한 상태인 것 같아",
+        "triggers": [
+          "흐름이 끊길 때",
+          "뭔가 해야 할 것 같을 때",
+          "수동적으로 느껴질 때"
+        ],
+        "one_line_guide": "흐름에 맡기는 것도 좋은 선택이야. 가끔은 그게 정답일 때도 있어"
+      }
+    },
+    {
+      "id": "control",
+      "love_mode": "컨트롤",
+      "category": "strategy",
+      "home_summary_line1": "상황을 통제하고 싶은 상태예요.",
+      "home_summary_line2": "예측 가능하길 원할 수 있어요.",
+      "detail": {
+        "mode_label": "🎮 컨트롤",
+        "main_sentence": "오늘은 상황을 통제하고 싶은 날이야",
+        "reason": "불확실함이 싫거나, 예측 가능한 상황을 원하는 상태인 것 같아",
+        "triggers": [
+          "통제할 수 없을 때",
+          "예상과 다르게 흘러갈 때",
+          "손에서 벗어날 때"
+        ],
+        "one_line_guide": "통제하고 싶은 마음 이해해. 다만 모든 건 통제할 수 없다는 것도 기억해"
+      }
+    },
+    {
+      "id": "surrender",
+      "love_mode": "내려놓기",
+      "category": "ease",
+      "home_summary_line1": "손에서 놓고 싶은 상태예요.",
+      "home_summary_line2": "힘을 빼고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🍃 내려놓기",
+        "main_sentence": "오늘은 좀 내려놓고 싶은 날이야",
+        "reason": "붙잡고 있던 것들이 힘들거나, 휴식이 필요한 상태인 것 같아",
+        "triggers": [
+          "내려놓으면 놓칠 것 같을 때",
+          "포기처럼 느껴질 때",
+          "다시 잡아야 할 때"
+        ],
+        "one_line_guide": "내려놓는 것도 선택이야. 포기가 아니라 쉬어가는 거야"
+      }
+    },
+    {
+      "id": "passionate",
+      "love_mode": "열정모드",
+      "category": "energy",
+      "home_summary_line1": "불타오르는 상태예요.",
+      "home_summary_line2": "뜨겁게 다가가고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "🔥 열정모드",
+        "main_sentence": "오늘은 마음이 불타오르는 날이야",
+        "reason": "상대에 대한 감정이 강하거나, 에너지가 넘치는 상태인 것 같아",
+        "triggers": [
+          "열정이 받아들여지지 않을 때",
+          "너무 뜨거워서 상대가 부담스러워할 때",
+          "식어버릴 때"
+        ],
+        "one_line_guide": "열정은 좋은 거야. 다만 상대 온도도 맞춰보면 더 좋아"
+      }
+    },
+    {
+      "id": "indifferent",
+      "love_mode": "무관심",
+      "category": "emotion",
+      "home_summary_line1": "별로 관심이 없는 상태예요.",
+      "home_summary_line2": "그냥 그런 느낌일 수 있어요.",
+      "detail": {
+        "mode_label": "😐 무관심",
+        "main_sentence": "오늘은 별로 관심이 안 가는 날이야",
+        "reason": "감정이 식었거나, 다른 데 에너지가 가 있는 상태인 것 같아",
+        "triggers": [
+          "관심을 가져야 할 때",
+          "상대가 원할 때",
+          "무관심이 문제가 될 때"
+        ],
+        "one_line_guide": "무관심한 날도 있어. 억지로 관심 가지지 않아도 괜찮아"
+      }
+    },
+    {
+      "id": "playful",
+      "love_mode": "장난모드",
+      "category": "emotion",
+      "home_summary_line1": "가볍게 놀고 싶은 상태예요.",
+      "home_summary_line2": "재미있게 하고 싶을 수 있어요.",
+      "detail": {
+        "mode_label": "😜 장난모드",
+        "main_sentence": "오늘은 가볍게 놀고 싶은 날이야",
+        "reason": "무겁지 않게, 재미있게 관계하고 싶은 상태인 것 같아",
+        "triggers": [
+          "상대가 진지할 때",
+          "장난이 통하지 않을 때",
+          "가벼워 보일까 걱정될 때"
+        ],
+        "one_line_guide": "장난치는 것도 좋은 에너지야. 다만 상대 분위기도 봐주면 좋아"
+      }
+    },
+    {
+      "id": "serious",
+      "love_mode": "진지모드",
+      "category": "focus",
+      "home_summary_line1": "진지하게 대하고 싶은 상태예요.",
+      "home_summary_line2": "무게감이 있을 수 있어요.",
+      "detail": {
+        "mode_label": "🎩 진지모드",
+        "main_sentence": "오늘은 진지하게 대하고 싶은 날이야",
+        "reason": "중요한 얘기가 있거나, 가볍게 넘기고 싶지 않은 상태인 것 같아",
+        "triggers": [
+          "상대가 가볍게 받을 때",
+          "너무 무거워질 때",
+          "분위기가 어색해질 때"
+        ],
+        "one_line_guide": "진지한 것도 필요해. 다만 가끔은 가볍게 가도 괜찮아"
+      }
+    },
+    {
+      "id": "balanced",
+      "love_mode": "균형모드",
+      "category": "stability",
+      "home_summary_line1": "균형 잡힌 상태예요.",
+      "home_summary_line2": "안정적으로 느껴질 수 있어요.",
+      "detail": {
+        "mode_label": "⚖️ 균형모드",
+        "main_sentence": "오늘은 균형이 잡힌 날이야",
+        "reason": "감정과 이성이 적절하게 조화된 상태인 것 같아",
+        "triggers": [
+          "균형이 깨질 때",
+          "한쪽으로 치우칠 때",
+          "유지가 어려울 때"
+        ],
+        "one_line_guide": "균형 잡힌 오늘, 잘 유지해봐. 좋은 결정을 내릴 수 있는 날이야"
+      }
+    },
+    {
+      "id": "unstable",
+      "love_mode": "불안정",
+      "category": "emotion",
+      "home_summary_line1": "마음이 흔들리는 상태예요.",
+      "home_summary_line2": "오락가락할 수 있어요.",
+      "detail": {
+        "mode_label": "🌪️ 불안정",
+        "main_sentence": "오늘은 마음이 좀 흔들리는 날이야",
+        "reason": "확신이 없거나, 감정이 왔다 갔다 하는 상태인 것 같아",
+        "triggers": [
+          "결정해야 할 때",
+          "안정을 원할 때",
+          "흔들림이 티날 때"
+        ],
+        "one_line_guide": "불안정한 날도 있어. 지금은 큰 결정을 미뤄도 괜찮아"
+      }
+    },
+    {
+      "id": "slow",
+      "love_mode": "슬로우",
+      "category": "pace",
+      "home_summary_line1": "천천히 가고 싶은 상태예요.",
+      "home_summary_line2": "급하지 않게 느껴질 수 있어요.",
+      "detail": {
+        "mode_label": "🐢 슬로우",
+        "main_sentence": "오늘은 천천히 가고 싶은 날이야",
+        "reason": "서두르고 싶지 않거나, 느긋하게 있고 싶은 상태인 것 같아",
+        "triggers": [
+          "빨리해야 할 때",
+          "상대가 급할 때",
+          "뒤처지는 것 같을 때"
+        ],
+        "one_line_guide": "천천히 가는 것도 좋은 선택이야. 네 페이스대로 가도 괜찮아"
+      }
+    },
+    {
+      "id": "fast",
+      "love_mode": "급발진",
+      "category": "pace",
+      "home_summary_line1": "빠르게 가고 싶은 상태예요.",
+      "home_summary_line2": "기다리기 어려울 수 있어요.",
+      "detail": {
+        "mode_label": "🚀 급발진",
+        "main_sentence": "오늘은 빨리 진행하고 싶은 날이야",
+        "reason": "기다리기 싫거나, 빨리 결과를 보고 싶은 상태인 것 같아",
+        "triggers": [
+          "상대가 느릴 때",
+          "너무 앞서간 것 같을 때",
+          "급해서 실수할 때"
+        ],
+        "one_line_guide": "빠르게 가고 싶은 마음 이해해. 다만 상대 속도도 맞춰보면 좋아"
+      }
+    },
+    {
+      "id": "simple",
+      "love_mode": "심플모드",
+      "category": "clarity",
+      "home_summary_line1": "단순하게 가고 싶은 상태예요.",
+      "home_summary_line2": "복잡한 게 싫을 수 있어요.",
+      "detail": {
+        "mode_label": "⬜ 심플모드",
+        "main_sentence": "오늘은 단순하게 가고 싶은 날이야",
+        "reason": "복잡한 게 싫거나, 깔끔하게 정리하고 싶은 상태인 것 같아",
+        "triggers": [
+          "상황이 복잡해질 때",
+          "생각해야 할 게 많을 때",
+          "단순함이 유지 안 될 때"
+        ],
+        "one_line_guide": "단순하게 가는 것도 좋아. 복잡하게 만들지 않아도 돼"
+      }
+    },
+    {
+      "id": "complex",
+      "love_mode": "복잡모드",
+      "category": "mental",
+      "home_summary_line1": "생각이 많은 상태예요.",
+      "home_summary_line2": "정리가 안 될 수 있어요.",
+      "detail": {
+        "mode_label": "🧩 복잡모드",
+        "main_sentence": "오늘은 머릿속이 좀 복잡한 날이야",
+        "reason": "여러 가지가 얽혀 있거나, 정리가 안 되는 상태인 것 같아",
+        "triggers": [
+          "결정해야 할 때",
+          "단순해져야 할 때",
+          "정리가 안 될 때"
+        ],
+        "one_line_guide": "복잡한 날도 있어. 지금은 정리하려 하지 말고 그냥 둬도 괜찮아"
+      }
+    }
+  ]
+}
