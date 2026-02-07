@@ -148,10 +148,15 @@ export default function ChatAnalysisPage({ onBack }: { onBack: () => void }) {
       // 메시지 내용에서 시간 제거
       const messageText = trimmed.replace(/(오전|오후)?\s*\d{1,2}:\d{2}/g, "").trim();
       
+      // "나:"로 시작하면 내 메시지
       if (messageText.startsWith("나:")) {
         myMessages.push({ index, time: timeMinutes, text: messageText });
-      } else if (messageText.startsWith("상대:")) {
-        theirMessages.push({ index, time: timeMinutes, text: messageText });
+      } else {
+        // "나:"가 아니고 ":"로 끝나는 패턴이면 상대방 메시지 (예: "민지:", "지훈:", "상대:" 등)
+        const nameMatch = messageText.match(/^([^:]+):/);
+        if (nameMatch) {
+          theirMessages.push({ index, time: timeMinutes, text: messageText });
+        }
       }
     });
 
@@ -345,49 +350,60 @@ export default function ChatAnalysisPage({ onBack }: { onBack: () => void }) {
     }
   };
 
-  // 접두사 추가 함수: 두 번째 이미지의 OCR 결과에 "나:" 또는 "상대:" 접두사가 없으면 추가
+  // 접두사 추가 함수: 두 번째 이미지의 OCR 결과에 "나:" 또는 상대방 이름 접두사가 없으면 추가
   const addPrefixToLines = (text: string, previousContext: string | null): string => {
     if (!previousContext) return text;
     
     const lines = text.split("\n").filter(line => line.trim().length > 0);
     if (lines.length === 0) return text;
 
-    // 첫 번째 이미지의 마지막 발화자 확인
+    // 첫 번째 이미지의 마지막 발화자와 상대방 이름 확인
     const prevLines = previousContext.split("\n").filter(line => line.trim().length > 0);
-    let lastSpeaker: "나" | "상대" | null = null;
+    let lastSpeaker: "나" | "their" | null = null;
+    let opponentName: string | null = null;
     
-    // 뒤에서부터 "나:" 또는 "상대:"로 시작하는 줄 찾기
+    // 뒤에서부터 발화자 찾기
     for (let i = prevLines.length - 1; i >= 0; i--) {
       const line = prevLines[i].trim();
       if (line.startsWith("나:")) {
         lastSpeaker = "나";
         break;
-      } else if (line.startsWith("상대:")) {
-        lastSpeaker = "상대";
-        break;
+      } else {
+        // "나:"가 아니고 ":"로 끝나는 패턴이면 상대방
+        const nameMatch = line.match(/^([^:]+):/);
+        if (nameMatch) {
+          lastSpeaker = "their";
+          if (!opponentName) {
+            opponentName = nameMatch[1].trim();
+          }
+          break;
+        }
       }
     }
+
+    // 상대방 이름이 없으면 "상대" 사용
+    const theirPrefix = opponentName || "상대";
 
     // 접두사가 없는 줄에 자동으로 추가
     const processedLines = lines.map((line, index) => {
       const trimmedLine = line.trim();
       
       // 이미 접두사가 있으면 그대로 반환
-      if (trimmedLine.startsWith("나:") || trimmedLine.startsWith("상대:")) {
+      if (trimmedLine.includes(":")) {
         return line;
       }
       
       // 접두사가 없으면 이전 발화자의 반대편으로 추가
       // 첫 줄은 이전 발화자의 반대편, 그 다음은 번갈아가며
       if (lastSpeaker === "나") {
-        // 이전이 "나"였으면 다음은 "상대"
-        return index === 0 ? `상대: ${trimmedLine}` : (index % 2 === 0 ? `상대: ${trimmedLine}` : `나: ${trimmedLine}`);
-      } else if (lastSpeaker === "상대") {
-        // 이전이 "상대"였으면 다음은 "나"
-        return index === 0 ? `나: ${trimmedLine}` : (index % 2 === 0 ? `나: ${trimmedLine}` : `상대: ${trimmedLine}`);
+        // 이전이 "나"였으면 다음은 상대방
+        return index === 0 ? `${theirPrefix}: ${trimmedLine}` : (index % 2 === 0 ? `${theirPrefix}: ${trimmedLine}` : `나: ${trimmedLine}`);
+      } else if (lastSpeaker === "their") {
+        // 이전이 상대방이었으면 다음은 "나"
+        return index === 0 ? `나: ${trimmedLine}` : (index % 2 === 0 ? `나: ${trimmedLine}` : `${theirPrefix}: ${trimmedLine}`);
       } else {
         // 이전 맥락이 없으면 첫 줄은 "나:"로 시작
-        return index % 2 === 0 ? `나: ${trimmedLine}` : `상대: ${trimmedLine}`;
+        return index % 2 === 0 ? `나: ${trimmedLine}` : `${theirPrefix}: ${trimmedLine}`;
       }
     });
 
