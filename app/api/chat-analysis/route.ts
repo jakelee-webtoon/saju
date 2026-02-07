@@ -1,55 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ========================
-// Rate Limiter (기존 reply와 동일)
-// ========================
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1분
-const RATE_LIMIT_MAX = 10; // 대화 분석은 더 무거우므로 10회로 제한
-
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of requestCounts.entries()) {
-    if (now > value.resetAt) requestCounts.delete(key);
-  }
-}, 5 * 60 * 1000);
-
-// ========================
-// 입력 검증
-// ========================
-function validateChatInput(chatText: string): { valid: boolean; error?: string } {
-  if (!chatText || chatText.trim().length === 0) {
-    return { valid: false, error: "대화 내용을 입력해주세요" };
-  }
-
-  // 최소 길이 체크 (5줄 이상)
-  const lines = chatText.trim().split("\n").filter(line => line.trim().length > 0);
-  if (lines.length < 5) {
-    return { valid: false, error: "분석을 위해서는 최소 5줄 이상의 대화가 필요해요" };
-  }
-
-  // 최소 글자 수 체크
-  if (chatText.trim().length < 50) {
-    return { valid: false, error: "대화 내용이 너무 짧아요. 조금 더 긴 대화를 입력해주세요" };
-  }
-
-  return { valid: true };
-}
+import {
+  checkRateLimit,
+  validateChatInput,
+  checkInappropriateContent,
+  checkDuplicateRequest,
+  getRequestIdentifier,
+  withTimeout,
+  createErrorResponse,
+} from "@/app/lib/security/apiSecurity";
 
 // ========================
 // 프롬프트 생성
@@ -127,14 +86,13 @@ JSON만 응답해주세요. 다른 설명은 필요 없습니다.`;
 }
 
 export async function POST(request: NextRequest) {
+  const identifier = getRequestIdentifier(request);
+
   // Rate Limiting 체크
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")
-    || "unknown";
-  
-  if (isRateLimited(ip)) {
+  const rateLimitCheck = checkRateLimit(identifier, 'chatAnalysis');
+  if (!rateLimitCheck.allowed) {
     return NextResponse.json(
-      { error: "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
+      { error: rateLimitCheck.reason || "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
       { status: 429 }
     );
   }
@@ -148,6 +106,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: validation.error },
         { status: 400 }
+      );
+    }
+
+    // 부적절한 내용 체크
+    const contentCheck = checkInappropriateContent(chatText);
+    if (!contentCheck.safe) {
+      return NextResponse.json(
+        { error: contentCheck.reason || "부적절한 내용이 포함되어 있습니다" },
+        { status: 400 }
+      );
+    }
+
+    // 중복 요청 체크
+    const duplicateCheck = checkDuplicateRequest(identifier, chatText);
+    if (duplicateCheck.isDuplicate) {
+      return NextResponse.json(
+        { error: "같은 내용의 요청이 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요." },
+        { status: 429 }
       );
     }
 
@@ -166,8 +142,11 @@ export async function POST(request: NextRequest) {
     // 프롬프트 생성
     const prompt = buildAnalysisPrompt(chatText);
 
-    // Gemini 호출
-    const result = await model.generateContent(prompt);
+    // Gemini 호출 (타임아웃 적용)
+    const result = await withTimeout(
+      model.generateContent(prompt),
+      30000 // 30초 타임아웃
+    );
     const response = result.response;
     const text = response.text();
 
@@ -225,10 +204,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Chat analysis error:", error);
+    const errorResponse = createErrorResponse(error, "대화 분석 중 오류가 발생했습니다");
     return NextResponse.json(
-      { error: "대화 분석 중 오류가 발생했습니다" },
-      { status: 500 }
+      { error: errorResponse.error },
+      { status: errorResponse.status }
     );
   }
 }

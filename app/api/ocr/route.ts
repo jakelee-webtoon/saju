@@ -1,43 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ========================
-// Rate Limiter
-// ========================
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1분
-const RATE_LIMIT_MAX = 10; // OCR도 무거우므로 10회로 제한
-
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
-}
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of requestCounts.entries()) {
-    if (now > value.resetAt) requestCounts.delete(key);
-  }
-}, 5 * 60 * 1000);
+import {
+  checkRateLimit,
+  validateImageFile,
+  getRequestIdentifier,
+  withTimeout,
+  createErrorResponse,
+} from "@/app/lib/security/apiSecurity";
 
 export async function POST(request: NextRequest) {
+  const identifier = getRequestIdentifier(request);
+
   // Rate Limiting 체크
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")
-    || "unknown";
-  
-  if (isRateLimited(ip)) {
+  const rateLimitCheck = checkRateLimit(identifier, 'ocr');
+  if (!rateLimitCheck.allowed) {
     return NextResponse.json(
-      { error: "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
+      { error: rateLimitCheck.reason || "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
       { status: 429 }
     );
   }
@@ -48,25 +26,11 @@ export async function POST(request: NextRequest) {
     const isSecondImage = formData.get("isSecondImage") === "true";
     const previousContext = formData.get("previousContext") as string | null;
 
-    if (!file) {
+    // 파일 검증
+    const fileValidation = validateImageFile(file);
+    if (!fileValidation.valid) {
       return NextResponse.json(
-        { error: "이미지 파일이 필요해요" },
-        { status: 400 }
-      );
-    }
-
-    // 파일 타입 검증
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "이미지 파일만 업로드할 수 있어요" },
-        { status: 400 }
-      );
-    }
-
-    // 파일 크기 제한 (5MB) - 일반 스크린샷은 1-3MB 정도
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "이미지 크기는 5MB 이하여야 해요" },
+        { error: fileValidation.error },
         { status: 400 }
       );
     }
@@ -113,16 +77,19 @@ ${previousContext}
 
     prompt += `\n\n텍스트만 응답해주세요. 다른 설명은 필요 없습니다.`;
 
-    // Gemini Vision API 호출
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: mimeType,
+    // Gemini Vision API 호출 (타임아웃 적용)
+    const result = await withTimeout(
+      model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Image,
+            mimeType: mimeType,
+          },
         },
-      },
-    ]);
+      ]),
+      45000 // OCR은 더 오래 걸릴 수 있으므로 45초
+    );
 
     const response = result.response;
     const extractedText = response.text().trim();
@@ -140,10 +107,10 @@ ${previousContext}
     });
 
   } catch (error) {
-    console.error("OCR error:", error);
+    const errorResponse = createErrorResponse(error, "이미지 처리 중 오류가 발생했습니다");
     return NextResponse.json(
-      { error: "이미지 처리 중 오류가 발생했습니다" },
-      { status: 500 }
+      { error: errorResponse.error },
+      { status: errorResponse.status }
     );
   }
 }

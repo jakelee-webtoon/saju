@@ -1,34 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// ========================
-// 간단한 인메모리 Rate Limiter
-// ========================
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1분
-const RATE_LIMIT_MAX = 15;           // 1분에 최대 15회
-
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
-}
-
-// 오래된 엔트리 주기적 정리 (메모리 누수 방지)
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of requestCounts.entries()) {
-    if (now > value.resetAt) requestCounts.delete(key);
-  }
-}, 5 * 60 * 1000); // 5분마다 정리
+import {
+  checkRateLimit,
+  validateReplyInput,
+  checkInappropriateContent,
+  checkDuplicateRequest,
+  getRequestIdentifier,
+  withTimeout,
+  createErrorResponse,
+} from "@/app/lib/security/apiSecurity";
 
 // 톤별 프롬프트 가이드
 const TONE_GUIDES: Record<string, string> = {
@@ -55,14 +35,13 @@ const CHARACTER_GUIDES: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  const identifier = getRequestIdentifier(request);
+
   // Rate Limiting 체크
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")
-    || "unknown";
-  
-  if (isRateLimited(ip)) {
+  const rateLimitCheck = checkRateLimit(identifier, 'reply');
+  if (!rateLimitCheck.allowed) {
     return NextResponse.json(
-      { error: "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
+      { error: rateLimitCheck.reason || "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
       { status: 429 }
     );
   }
@@ -74,10 +53,37 @@ export async function POST(request: NextRequest) {
     const toneList: string[] = tones || (tone ? [tone] : []);
 
     // 입력 검증
-    if (!message || toneList.length === 0) {
+    if (toneList.length === 0) {
       return NextResponse.json(
-        { error: "메시지와 톤이 필요합니다" },
+        { error: "톤을 선택해주세요" },
         { status: 400 }
+      );
+    }
+
+    const messageValidation = validateReplyInput(message);
+    if (!messageValidation.valid) {
+      return NextResponse.json(
+        { error: messageValidation.error },
+        { status: 400 }
+      );
+    }
+
+    // 부적절한 내용 체크
+    const contentCheck = checkInappropriateContent(message);
+    if (!contentCheck.safe) {
+      return NextResponse.json(
+        { error: contentCheck.reason || "부적절한 내용이 포함되어 있습니다" },
+        { status: 400 }
+      );
+    }
+
+    // 중복 요청 체크
+    const requestKey = `${message}:${toneList.join(',')}`;
+    const duplicateCheck = checkDuplicateRequest(identifier, requestKey);
+    if (duplicateCheck.isDuplicate) {
+      return NextResponse.json(
+        { error: "같은 내용의 요청이 너무 빠르게 반복되었습니다. 잠시 후 다시 시도해주세요." },
+        { status: 429 }
       );
     }
 
@@ -128,8 +134,11 @@ ${characterGuide ? `- 나의 성향: ${characterName} - ${characterGuide}` : ""}
 
 JSON만 응답해주세요. 다른 설명은 필요 없습니다.`;
 
-    // Gemini 호출
-    const result = await model.generateContent(prompt);
+    // Gemini 호출 (타임아웃 적용)
+    const result = await withTimeout(
+      model.generateContent(prompt),
+      30000 // 30초 타임아웃
+    );
     const response = result.response;
     const text = response.text();
 
@@ -170,10 +179,10 @@ JSON만 응답해주세요. 다른 설명은 필요 없습니다.`;
     });
 
   } catch (error) {
-    console.error("Reply generation error:", error);
+    const errorResponse = createErrorResponse(error, "답장 생성 중 오류가 발생했습니다");
     return NextResponse.json(
-      { error: "답장 생성 중 오류가 발생했습니다" },
-      { status: 500 }
+      { error: errorResponse.error },
+      { status: errorResponse.status }
     );
   }
 }
