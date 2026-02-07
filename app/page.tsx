@@ -45,6 +45,9 @@ const ReplyGenerator = dynamic(
 const ChatAnalysisPage = dynamic(() => import("./components/chat/ChatAnalysisPage"), {
   loading: TabLoadingFallback,
 });
+const MyPage = dynamic(() => import("./components/my/MyPage"), {
+  loading: TabLoadingFallback,
+});
 const BirthInfoForm = dynamic(() => import("./components/birth/BirthInfoForm"), {
   loading: TabLoadingFallback,
 });
@@ -153,14 +156,9 @@ function ManseryeokPageContent() {
   // URL 쿼리 파라미터로 탭 복원 (샵/궁합 등에서 돌아올 때)
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["home", "love", "chat", "reply"].includes(tabParam)) {
+    if (tabParam && ["home", "chat", "reply", "my"].includes(tabParam)) {
       setActiveTab(tabParam as TabId);
-      
-      if (tabParam === "love") {
-        setView("love");
-      } else {
-        setView("home");
-      }
+      setView("home");
       router.replace("/", { scroll: false });
     }
   }, [searchParams, router]);
@@ -255,8 +253,6 @@ function ManseryeokPageContent() {
     setActiveTab(tab);
     if (tab === "home") {
       setView("home");
-    } else if (tab === "love") {
-      setView("love");
     } else {
       setView("home");
     }
@@ -337,8 +333,8 @@ function ManseryeokPageContent() {
     );
   }
 
-  // 연애 운세 상세 페이지
-  if ((activeTab === "love" || view === "love") && character && todayMode) {
+  // 연애 운세 상세 페이지 (홈에서 메인 카드 클릭 시)
+  if (view === "love" && character && todayMode) {
     return (
       <>
         <TodayLovePage
@@ -378,6 +374,22 @@ function ManseryeokPageContent() {
     );
   }
 
+  // MY 탭
+  if (activeTab === "my" && character && manseResult) {
+    return (
+      <>
+        <MyPage
+          manseResult={manseResult}
+          character={character}
+          formData={formData}
+          onEdit={() => setView("edit")}
+          onBack={() => handleTabChange("home")}
+        />
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
+      </>
+    );
+  }
+
   // 기본: 홈 화면
   return (
     <>
@@ -390,8 +402,9 @@ function ManseryeokPageContent() {
         onViewDetail={() => setView("detail")}
         onViewLove={() => {
           setView("love");
-          setActiveTab("love");
+          setActiveTab("home");
         }}
+        onTabChange={handleTabChange}
       />
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
     </>

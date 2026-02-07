@@ -2,6 +2,27 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### 환경 변수 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 내용을 추가하세요:
+
+```bash
+# PortOne (구 아임포트) 설정
+# 테스트용 Merchant ID (실제 결제를 위해서는 포트원 가입 후 발급받은 ID를 사용하세요)
+NEXT_PUBLIC_PORTONE_MERCHANT_ID=imp00000000
+
+# PortOne API 키 (서버 사이드 결제 검증용, 선택사항)
+# 실제 결제 검증을 위해서는 포트원 대시보드에서 발급받은 키를 사용하세요
+# PORTONE_API_KEY=your_api_key_here
+# PORTONE_API_SECRET=your_api_secret_here
+```
+
+**참고**: 
+- 테스트 환경에서는 `imp00000000`을 사용할 수 있습니다.
+- 실제 결제를 위해서는 [포트원](https://portone.io)에 가입 후 발급받은 Merchant ID를 사용하세요.
+
+### 개발 서버 실행
+
 First, run the development server:
 
 ```bash

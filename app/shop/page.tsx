@@ -168,12 +168,12 @@ export default function ShopPage() {
   };
 
   return (
-    <SwipeBack onBack={() => router.push("/")}>
+    <SwipeBack onBack={() => router.push("/?tab=my")}>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
         <div className="mx-auto max-w-md px-5 py-8">
           {/* 뒤로가기 */}
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/?tab=my")}
             className="mb-6 flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors"
           >
             <span>←</span>
@@ -304,9 +304,8 @@ export default function ShopPage() {
 
         {/* 하단 네비게이션 */}
         <BottomNav 
-          activeTab="home" 
+          activeTab="my" 
           onTabChange={handleTabChange}
-          isShopActive={true}
         />
       </div>
     </SwipeBack>

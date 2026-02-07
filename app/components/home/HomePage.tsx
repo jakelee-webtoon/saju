@@ -4,11 +4,7 @@ import { useRouter } from "next/navigation";
 import type { ManseResult } from "@/app/lib/saju";
 import type { CharacterType } from "@/app/lib/saju/characterTypes";
 import type { TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
-import TodayStatusLine from "@/app/components/home/TodayStatusLine";
-import CharacterSummaryCard from "@/app/components/home/CharacterSummaryCard";
-import LoveTendencyCard from "@/app/components/home/LoveTendencyCard";
-import TodayLoveModeCard from "@/app/components/home/TodayLoveModeCard";
-import ManseryeokAccordion from "@/app/components/home/ManseryeokAccordion";
+import TodayLoveHeroCard from "@/app/components/home/TodayLoveHeroCard";
 import CompatibilityMiniCard from "@/app/components/home/CompatibilityMiniCard";
 import type { FormData } from "@/app/types";
 
@@ -20,6 +16,7 @@ interface HomePageProps {
   onEdit: () => void;
   onViewDetail: () => void;
   onViewLove: () => void;
+  onTabChange?: (tab: "home" | "chat" | "reply") => void;
 }
 
 export default function HomePage({
@@ -30,8 +27,21 @@ export default function HomePage({
   onEdit,
   onViewDetail,
   onViewLove,
+  onTabChange,
 }: HomePageProps) {
   const router = useRouter();
+
+  const handleChatClick = () => {
+    if (onTabChange) {
+      onTabChange("chat");
+    }
+  };
+
+  const handleReplyClick = () => {
+    if (onTabChange) {
+      onTabChange("reply");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FAFBFC] pb-bottom-nav">
@@ -54,40 +64,62 @@ export default function HomePage({
           </button>
         </header>
 
-        {/* [1] 오늘의 한 줄 상태 */}
+        {/* 메인 카드: 오늘의 연애 */}
+        <TodayLoveHeroCard todayMode={todayMode} onClick={onViewLove} />
+
+        {/* 상대방과의 나의 대화분석 */}
         <div className="mb-4">
-          <TodayStatusLine statusOneLiner={todayMode.statusOneLiner} />
+          <section
+            className="rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 p-5 border border-blue-200 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm"
+            onClick={handleChatClick}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <span>💬</span>
+                  <span>상대방과의 나의 대화분석</span>
+                </h3>
+                <p className="text-sm text-gray-600">
+                  카톡 대화로 상대 마음 읽기
+                </p>
+              </div>
+              <span className="text-gray-400 opacity-60 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </div>
+          </section>
         </div>
 
-        {/* [2] 나의 캐릭터 요약 카드 */}
+        {/* 답장 자동 생성기 */}
         <div className="mb-4">
-          <CharacterSummaryCard
-            characterId={character.id}
-            characterName={character.name}
-            declaration={character.declaration}
-            color={character.color}
-            onClick={onViewDetail}
-          />
+          <section
+            className="rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 p-5 border border-purple-200 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm"
+            onClick={handleReplyClick}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <span>✨</span>
+                  <span>답장 자동 생성기</span>
+                </h3>
+                <p className="text-sm text-gray-600">
+                  AI가 만들어주는 완벽한 답장
+                </p>
+              </div>
+              <span className="text-gray-400 opacity-60 shrink-0">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </div>
+          </section>
         </div>
 
-        {/* [3] 나의 기본 연애 성향 */}
-        <div className="mb-4">
-          <LoveTendencyCard characterId={character.id} />
-        </div>
-
-        {/* [4] 오늘의 연애 모드 카드 */}
-        <div className="mb-4">
-          <TodayLoveModeCard todayMode={todayMode} onClick={onViewLove} />
-        </div>
-
-        {/* [5] 궁합 미니 카드 */}
+        {/* 궁합 미니 카드 */}
         <div className="mb-4">
           <CompatibilityMiniCard onClick={() => router.push("/match")} />
-        </div>
-
-        {/* [6] 나의 만세력 보기 */}
-        <div className="mb-8">
-          <ManseryeokAccordion manseResult={manseResult} />
         </div>
 
         {/* 하단 안내 */}

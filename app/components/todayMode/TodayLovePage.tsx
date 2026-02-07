@@ -5,13 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   generateDecisionGuide,
-  isUnlockedToday,
-  markUnlockedToday,
   type DecisionGuide,
 } from "@/app/lib/cupid/decisionGuide";
-import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
-import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 import { ShareableFortuneCard, ShareModal } from "@/app/components/share";
 import { useImageShare } from "@/app/hooks/useImageShare";
 
@@ -33,10 +28,7 @@ export default function TodayLovePage({
   const { showShareModal, isSharing, shareMessage, shareCardRef, handleShare, openModal, closeModal } = useImageShare();
   
   // 결정 가이드 상태
-  const [isUnlocked, setIsUnlocked] = useState(false);
   const [decisionGuide, setDecisionGuide] = useState<DecisionGuide | null>(null);
-  const [arrowBalance, setArrowBalance] = useState(0);
-  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -44,24 +36,6 @@ export default function TodayLovePage({
     // 결정 가이드 생성
     const guide = generateDecisionGuide(todayMode);
     setDecisionGuide(guide);
-    
-    // 잠금 해제 상태 확인 (Firebase 우선)
-    const loadData = async () => {
-      if (isLoggedIn()) {
-        const kakaoUser = getKakaoUser();
-        if (kakaoUser) {
-          const unlocked = await isContentUnlocked(kakaoUser.id, "decisionGuide");
-          setIsUnlocked(unlocked);
-          if (unlocked) markUnlockedToday(); // localStorage 동기화
-        }
-      } else {
-        setIsUnlocked(isUnlockedToday());
-      }
-      
-      const balance = await getArrowBalanceSync();
-      setArrowBalance(balance);
-    };
-    loadData();
   }, [todayMode]);
 
   if (!isMounted) return null;
@@ -75,41 +49,6 @@ export default function TodayLovePage({
     text: "내 오늘의 연애 운세를 확인해보세요!",
     filename: `fortune-${todayMode.modeName}.png`,
   });
-
-  // 결정 가이드 잠금 해제
-  const handleUnlock = async () => {
-    // 화살 부족 시 샵으로 이동
-    if (!canUseArrow(1)) {
-      router.push("/shop");
-      return;
-    }
-    
-    setShowUnlockAnimation(true);
-    
-    // 화살 1개 사용 (Firebase 동기화)
-    const result = await useArrowSync(1);
-    if (!result.success) {
-      setShowUnlockAnimation(false);
-      router.push("/shop");
-      return;
-    }
-    
-    setArrowBalance(result.newBalance);
-    markUnlockedToday(); // localStorage
-    
-    // Firebase에 언락 기록 (하루 유지)
-    if (isLoggedIn()) {
-      const kakaoUser = getKakaoUser();
-      if (kakaoUser) {
-        await recordContentUnlock(kakaoUser.id, "decisionGuide");
-      }
-    }
-    
-    setTimeout(() => {
-      setIsUnlocked(true);
-      setShowUnlockAnimation(false);
-    }, 600);
-  };
 
   return (
     <div className={`min-h-screen ${bgGradient} pb-20`}>
@@ -180,9 +119,7 @@ export default function TodayLovePage({
           </p>
         </section>
 
-        {/* ========================================
-            💘 유료 영역: 오늘의 연애 결정 가이드
-        ======================================== */}
+        {/* 오늘의 연애 결정 가이드 */}
         {decisionGuide && (
           <section className="mb-6">
             {/* 일일 특별 태그 */}
@@ -194,132 +131,62 @@ export default function TodayLovePage({
               </div>
             )}
 
-            {!isUnlocked ? (
-              /* 🔒 잠금 상태 카드 */
-              <div 
-                className={`relative rounded-2xl overflow-hidden shadow-lg border border-white/50 transition-all duration-300 ${
-                  showUnlockAnimation ? "scale-95 opacity-50" : ""
-                }`}
-              >
-                {/* 블러 배경 */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 backdrop-blur-sm" />
-                
-                {/* 콘텐츠 */}
-                <div className="relative p-6 text-center">
-                  {/* 자물쇠 아이콘 */}
-                  <div className="mb-4">
-                    <span className="text-5xl">{showUnlockAnimation ? "🔓" : "🔒"}</span>
-                  </div>
-                  
-                  {/* 타이틀 */}
-                  <h3 className="text-lg font-bold text-white mb-2">
-                    오늘의 연애 결정 가이드
-                  </h3>
-                  
-                  {/* 오늘의 질문 미리보기 */}
-                  <p className="text-white/80 text-sm mb-1">
-                    {decisionGuide.question.emoji} &ldquo;{decisionGuide.question.question}&rdquo;
-                  </p>
-                  
-                  {/* 설명 */}
-                  <p className="text-white/60 text-xs mb-5">
-                    오늘 운세 기준으로 지금 이 행동, 해도 될지 알려드려요
-                  </p>
-                  
-                  {/* CTA 버튼 */}
-                  {canUseArrow(1) ? (
-                    <button
-                      onClick={handleUnlock}
-                      disabled={showUnlockAnimation}
-                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold text-sm transition-all hover:from-pink-600 hover:to-purple-600 active:scale-[0.98] shadow-lg disabled:opacity-70"
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        <span>🔓</span>
-                        <span>화살 1개로 열기</span>
-                        <span className="text-white/70">💘</span>
-                      </span>
-                    </button>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-white/80 text-xs">
-                        화살이 있으면 바로 볼 수 있어요
-                      </p>
-                      <button
-                        onClick={() => router.push("/shop")}
-                        className="w-full py-3.5 rounded-xl bg-white/20 text-white font-bold text-sm transition-all hover:bg-white/30 active:scale-[0.98]"
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <span>💘</span>
-                          <span>화살 충전하러 가기 →</span>
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* 잔액 표시 */}
-                  <p className="mt-3 text-white/50 text-xs">
-                    내 화살 {arrowBalance}개
-                  </p>
-                </div>
+            {/* 결정 가이드 카드 */}
+            <div className="rounded-2xl bg-white/95 backdrop-blur p-6 shadow-lg border border-white/50">
+              {/* 헤더 */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">{decisionGuide.question.emoji}</span>
+                <h3 className="text-base font-bold text-gray-900">
+                  {decisionGuide.question.question}
+                </h3>
               </div>
-            ) : (
-              /* 🔓 잠금 해제 카드 */
-              <div className="rounded-2xl bg-white/95 backdrop-blur p-6 shadow-lg border border-white/50 animate-fadeIn">
-                {/* 헤더 */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-2xl">{decisionGuide.question.emoji}</span>
-                  <h3 className="text-base font-bold text-gray-900">
-                    {decisionGuide.question.question}
-                  </h3>
-                </div>
-                
-                {/* 결론 */}
-                <div className={`p-4 rounded-xl mb-4 ${
-                  decisionGuide.result.isPositive 
-                    ? "bg-emerald-50 border border-emerald-100" 
-                    : "bg-amber-50 border border-amber-100"
+              
+              {/* 결론 */}
+              <div className={`p-4 rounded-xl mb-4 ${
+                decisionGuide.result.isPositive 
+                  ? "bg-emerald-50 border border-emerald-100" 
+                  : "bg-amber-50 border border-amber-100"
+              }`}>
+                <p className={`text-lg font-bold flex items-start gap-2 ${
+                  decisionGuide.result.isPositive ? "text-emerald-700" : "text-amber-700"
                 }`}>
-                  <p className={`text-lg font-bold flex items-start gap-2 ${
-                    decisionGuide.result.isPositive ? "text-emerald-700" : "text-amber-700"
-                  }`}>
-                    <span>{decisionGuide.result.isPositive ? "👉" : "⚠️"}</span>
-                    <span>{decisionGuide.result.conclusion}</span>
-                  </p>
-                </div>
-                
-                {/* 이유 */}
-                <div className="mb-4">
-                  <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                    Why
-                  </h4>
-                  <ul className="space-y-1.5">
-                    {decisionGuide.result.reasons.map((reason, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                        <span className="text-gray-400">•</span>
-                        <span>{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                {/* 추천 행동 */}
-                <div className={`p-3 rounded-xl ${
-                  decisionGuide.result.isPositive ? "bg-purple-50" : "bg-gray-50"
-                }`}>
-                  <p className={`text-sm font-medium flex items-start gap-2 ${
-                    decisionGuide.result.isPositive ? "text-purple-700" : "text-gray-700"
-                  }`}>
-                    <span>💡</span>
-                    <span>{decisionGuide.result.recommendation}</span>
-                  </p>
-                </div>
-                
-                {/* 하단 안내 */}
-                <p className="mt-4 text-center text-[10px] text-gray-400">
-                  내일 다시 열면 새로운 질문이 나와요 ✨
+                  <span>{decisionGuide.result.isPositive ? "👉" : "⚠️"}</span>
+                  <span>{decisionGuide.result.conclusion}</span>
                 </p>
               </div>
-            )}
+              
+              {/* 이유 */}
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                  Why
+                </h4>
+                <ul className="space-y-1.5">
+                  {decisionGuide.result.reasons.map((reason, i) => (
+                    <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
+                      <span className="text-gray-400">•</span>
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {/* 추천 행동 */}
+              <div className={`p-3 rounded-xl ${
+                decisionGuide.result.isPositive ? "bg-purple-50" : "bg-gray-50"
+              }`}>
+                <p className={`text-sm font-medium flex items-start gap-2 ${
+                  decisionGuide.result.isPositive ? "text-purple-700" : "text-gray-700"
+                }`}>
+                  <span>💡</span>
+                  <span>{decisionGuide.result.recommendation}</span>
+                </p>
+              </div>
+              
+              {/* 하단 안내 */}
+              <p className="mt-4 text-center text-[10px] text-gray-400">
+                내일 다시 열면 새로운 질문이 나와요 ✨
+              </p>
+            </div>
           </section>
         )}
 

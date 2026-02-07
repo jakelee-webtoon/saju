@@ -6,7 +6,6 @@ import type { CharacterType } from "@/app/lib/saju/characterTypes";
 import type { TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
 import TodayModeSnippet from "@/app/components/todayMode/TodayModeSnippet";
 import TodayModeBottomSheet from "@/app/components/todayMode/TodayModeBottomSheet";
-import AccountSection from "@/app/components/account/AccountSection";
 import Image from "next/image";
 import { getCharacterImage } from "@/app/lib/saju/character-images";
 import { ShareableCharacterCard, ShareModal } from "@/app/components/share";
@@ -289,8 +288,6 @@ export default function InterpretationPage({
           <span>이 캐릭터 공유하기</span>
         </button>
 
-        {/* 계정 섹션 */}
-        <AccountSection />
       </div>
 
       {/* 오늘 모드 바텀시트 */}

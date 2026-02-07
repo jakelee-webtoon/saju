@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("image") as File;
+    const isSecondImage = formData.get("isSecondImage") === "true";
+    const previousContext = formData.get("previousContext") as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -61,10 +63,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 파일 크기 제한 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // 파일 크기 제한 (5MB) - 일반 스크린샷은 1-3MB 정도
+    if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "이미지 크기는 10MB 이하여야 해요" },
+        { error: "이미지 크기는 5MB 이하여야 해요" },
         { status: 400 }
       );
     }
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // OCR 프롬프트
-    const prompt = `이 이미지는 카카오톡 대화 스크린샷입니다.
+    let prompt = `이 이미지는 카카오톡 대화 스크린샷입니다.
 이미지에서 대화 내용을 텍스트로 추출해주세요.
 
 요구사항:
@@ -96,9 +98,20 @@ export async function POST(request: NextRequest) {
 2. 이모티콘은 그대로 유지해주세요
 3. 시간 정보는 제외해주세요
 4. 순서대로 정확하게 추출해주세요
-5. 한국어 대화만 추출해주세요
+5. 한국어 대화만 추출해주세요`;
 
-텍스트만 응답해주세요. 다른 설명은 필요 없습니다.`;
+    // 두 번째 이미지인 경우 첫 번째 이미지의 맥락 제공
+    if (isSecondImage && previousContext) {
+      prompt += `
+
+중요: 이것은 두 번째 이미지입니다. 이전 대화 맥락:
+${previousContext}
+
+위 맥락을 참고하여, 이 이미지의 대화도 반드시 "나: ..." 또는 "상대: ..." 형식으로 추출해주세요.
+각 메시지가 누구의 말인지 정확히 구분하여 접두사를 붙여주세요.`;
+    }
+
+    prompt += `\n\n텍스트만 응답해주세요. 다른 설명은 필요 없습니다.`;
 
     // Gemini Vision API 호출
     const result = await model.generateContent([
