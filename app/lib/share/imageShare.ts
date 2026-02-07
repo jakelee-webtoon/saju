@@ -1,7 +1,5 @@
 "use client";
 
-import html2canvas from "html2canvas";
-
 export interface ShareOptions {
   title?: string;
   text?: string;
@@ -18,7 +16,8 @@ export async function shareAsImage(
   const { title = "사주큐피드", text = "내 결과를 확인해보세요!", filename = "sajucupid.png" } = options;
 
   try {
-    // 1. DOM을 캔버스로 변환
+    // 1. DOM을 캔버스로 변환 (동적 import로 번들 최적화)
+    const { default: html2canvas } = await import("html2canvas");
     const canvas = await html2canvas(element, {
       scale: 2, // 고해상도
       backgroundColor: "#ffffff",
@@ -80,6 +79,7 @@ export async function shareAsImage(
  */
 export async function captureToDataUrl(element: HTMLElement): Promise<string | null> {
   try {
+    const { default: html2canvas } = await import("html2canvas");
     const canvas = await html2canvas(element, {
       scale: 2,
       backgroundColor: null,

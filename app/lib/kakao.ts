@@ -138,13 +138,30 @@ export function initKakao(): Promise<void> {
 }
 
 /**
- * 카카오 로그인 페이지로 이동
+ * CSRF 방지용 state 생성
+ */
+function generateState(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * 카카오 로그인 페이지로 이동 (CSRF 보호 포함)
  */
 export function loginWithKakao(): void {
   if (typeof window === "undefined" || !window.Kakao?.isInitialized()) {
     console.error("Kakao SDK is not initialized");
     return;
   }
+
+  // CSRF 방지를 위한 state 생성 및 저장
+  const state = generateState();
+  sessionStorage.setItem("kakao_oauth_state", state);
+
+  // Kakao SDK는 state를 직접 지원하지 않으므로, 
+  // 서버 사이드에서 state를 검증할 수 있도록 쿠키에도 저장
+  document.cookie = `kakao_oauth_state=${state}; path=/; max-age=600; SameSite=Lax`;
 
   window.Kakao.Auth.authorize({
     redirectUri: REDIRECT_URI,

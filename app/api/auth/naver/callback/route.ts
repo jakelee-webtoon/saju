@@ -20,6 +20,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=no_code", request.url));
   }
 
+  // CSRF 보호: state 검증 (쿠키에서 확인)
+  const cookieState = request.cookies.get("naver_oauth_state")?.value;
+  if (!cookieState || cookieState !== state) {
+    console.error("CSRF: Invalid state", { cookieState, state });
+    return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+  }
+
+  // CSRF 보호: Origin 검증
+  const origin = request.headers.get("origin") || request.headers.get("referer");
+  const expectedOrigin = request.nextUrl.origin;
+  if (origin && !origin.startsWith(expectedOrigin)) {
+    console.error("CSRF: Invalid origin", origin);
+    return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+  }
+
   try {
     // 1. 인가 코드로 액세스 토큰 받기
     const redirectUri = `${request.nextUrl.origin}/api/auth/naver/callback`;
@@ -73,7 +88,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?error=user_info_failed", request.url));
     }
 
-    // 3. 사용자 정보를 쿼리 파라미터로 전달 (클라이언트에서 localStorage에 저장)
+    // 3. 사용자 정보를 쿠키로 전달 (URL 노출 방지)
     const naverUser = {
       id: `naver_${userData.response.id}`,
       nickname: userData.response.nickname || userData.response.name || "네이버 사용자",
@@ -82,13 +97,28 @@ export async function GET(request: NextRequest) {
       provider: "naver",
     };
 
-    // URL-safe하게 인코딩
-    const userParam = encodeURIComponent(JSON.stringify(naverUser));
-    const tokenParam = encodeURIComponent(accessToken);
-
-    return NextResponse.redirect(
-      new URL(`/login/callback?user=${userParam}&token=${tokenParam}&provider=naver&state=${state}`, request.url)
+    // 쿠키로 전달 (SameSite=Lax로 CSRF 방지, httpOnly=false로 클라이언트에서 읽기 가능)
+    const response = NextResponse.redirect(
+      new URL(`/login/callback?provider=naver&state=${state}`, request.url)
     );
+    response.cookies.set("oauth_user", JSON.stringify(naverUser), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60,
+      path: "/",
+    });
+    response.cookies.set("oauth_token", accessToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60,
+      path: "/",
+    });
+    
+    // 사용된 state 쿠키 삭제 (재사용 방지)
+    response.cookies.delete("naver_oauth_state");
+    return response;
   } catch (error) {
     console.error("Naver callback error:", error);
     return NextResponse.redirect(new URL("/login?error=callback_failed", request.url));

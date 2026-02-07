@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// ========================
+// 간단한 인메모리 Rate Limiter
+// ========================
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1분
+const RATE_LIMIT_MAX = 15;           // 1분에 최대 15회
+
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = requestCounts.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
+// 오래된 엔트리 주기적 정리 (메모리 누수 방지)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of requestCounts.entries()) {
+    if (now > value.resetAt) requestCounts.delete(key);
+  }
+}, 5 * 60 * 1000); // 5분마다 정리
+
 // 톤별 프롬프트 가이드
 const TONE_GUIDES: Record<string, string> = {
   친근: "친근하고 다정한 말투로, 이모티콘이나 ㅋㅋ, ㅎㅎ를 자연스럽게 사용해서",
@@ -26,6 +55,18 @@ const CHARACTER_GUIDES: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  // Rate Limiting 체크
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip")
+    || "unknown";
+  
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: "요청이 너무 많아요. 잠시 후 다시 시도해주세요." },
+      { status: 429 }
+    );
+  }
+
   try {
     const { message, tone, tones, characterId, characterName } = await request.json();
 

@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_DATA_API_KEY;
+  // 서버 사이드 전용 환경변수 (NEXT_PUBLIC_ 접두사 제거로 클라이언트 노출 방지)
+  const apiKey = process.env.DATA_API_KEY;
   
   if (!apiKey || apiKey === "YOUR_API_KEY_HERE") {
     return NextResponse.json(

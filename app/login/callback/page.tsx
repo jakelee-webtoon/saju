@@ -16,15 +16,42 @@ function CallbackContent() {
 
   useEffect(() => {
     async function processLogin() {
-      const userParam = searchParams.get("user");
-      const tokenParam = searchParams.get("token");
       const provider = searchParams.get("provider") || "kakao";
       const state = searchParams.get("state");
 
-      if (userParam && tokenParam) {
+      // 쿠키에서 사용자 정보와 토큰 읽기 (URL 노출 방지)
+      const getCookie = (name: string): string | null => {
+        if (typeof document === "undefined") return null;
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+          const cookieValue = parts.pop()?.split(";").shift();
+          return cookieValue ? decodeURIComponent(cookieValue) : null;
+        }
+        return null;
+      };
+
+      const userCookie = getCookie("oauth_user");
+      const tokenCookie = getCookie("oauth_token");
+
+      // 쿠키에서 읽기 실패 시 URL 파라미터로 폴백 (하위 호환성)
+      const userParam = searchParams.get("user");
+      const tokenParam = searchParams.get("token");
+
+      const userStr = userCookie || userParam;
+      const token = tokenCookie || (tokenParam ? decodeURIComponent(tokenParam) : null);
+
+      if (userStr && token) {
         try {
-          const user: SocialUser = JSON.parse(decodeURIComponent(userParam));
-          const token = decodeURIComponent(tokenParam);
+          const user: SocialUser = userCookie 
+            ? JSON.parse(userStr) 
+            : JSON.parse(decodeURIComponent(userStr));
+          
+          // 쿠키 삭제 (보안)
+          if (userCookie) {
+            document.cookie = "oauth_user=; path=/; max-age=0";
+            document.cookie = "oauth_token=; path=/; max-age=0";
+          }
           
           // 네이버의 경우 state 검증
           if (provider === "naver" && state) {

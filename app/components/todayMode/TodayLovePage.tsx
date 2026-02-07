@@ -1,7 +1,7 @@
 "use client";
 
 import { type TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   generateDecisionGuide,
@@ -12,8 +12,8 @@ import {
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
 import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
-import { shareAsImage } from "@/app/lib/share/imageShare";
-import { ShareableFortuneCard } from "@/app/components/share";
+import { ShareableFortuneCard, ShareModal } from "@/app/components/share";
+import { useImageShare } from "@/app/hooks/useImageShare";
 
 interface TodayLovePageProps {
   todayMode: TodayModeResult;
@@ -28,12 +28,9 @@ export default function TodayLovePage({
 }: TodayLovePageProps) {
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
   
-  // 공유 카드 ref
-  const shareCardRef = useRef<HTMLDivElement>(null);
+  // 공유 훅
+  const { showShareModal, isSharing, shareMessage, shareCardRef, handleShare, openModal, closeModal } = useImageShare();
   
   // 결정 가이드 상태
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -73,31 +70,11 @@ export default function TodayLovePage({
   const bgGradient = `bg-gradient-to-br ${todayMode.color.bg}`;
 
   // 이미지로 공유하기
-  const handleImageShare = async () => {
-    if (!shareCardRef.current || isSharing) return;
-    
-    setIsSharing(true);
-    setShareMessage("이미지 생성 중...");
-    
-    const result = await shareAsImage(shareCardRef.current, {
-      title: `${todayMode.modeName} - 오늘의 연애 운세`,
-      text: "내 오늘의 연애 운세를 확인해보세요!",
-      filename: `fortune-${todayMode.modeName}.png`,
-    });
-    
-    if (result.success) {
-      setShareMessage(result.method === "download" ? "이미지가 저장됐어요! 📸" : "공유 완료! 🎉");
-      setTimeout(() => {
-        setShowShareModal(false);
-        setShareMessage("");
-      }, 2500);
-    } else {
-      setShareMessage(result.message || "공유에 실패했어요");
-      setTimeout(() => setShareMessage(""), 2000);
-    }
-    
-    setIsSharing(false);
-  };
+  const handleImageShare = () => handleShare({
+    title: `${todayMode.modeName} - 오늘의 연애 운세`,
+    text: "내 오늘의 연애 운세를 확인해보세요!",
+    filename: `fortune-${todayMode.modeName}.png`,
+  });
 
   // 결정 가이드 잠금 해제
   const handleUnlock = async () => {
@@ -349,7 +326,7 @@ export default function TodayLovePage({
         {/* 공유 버튼 */}
         <button
           className={`w-full mb-4 rounded-xl ${todayMode.color.accent} py-4 text-[15px] font-bold text-white transition-all hover:opacity-90 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98]`}
-          onClick={() => setShowShareModal(true)}
+          onClick={openModal}
         >
           <span>📤</span>
           <span>오늘의 연애 운세 공유하기</span>
@@ -362,71 +339,19 @@ export default function TodayLovePage({
       </div>
 
       {/* 공유 모달 */}
-      {showShareModal && (
-        <>
-          {/* 오버레이 */}
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 animate-fadeIn"
-            onClick={() => !isSharing && setShowShareModal(false)}
-          />
-          
-          {/* 모달 */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 animate-slideUp">
-            <div className="mx-auto max-w-md bg-white rounded-t-3xl">
-              {/* 핸들 */}
-              <div className="pt-3 pb-2">
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto" />
-              </div>
-
-              <div className="px-6 pb-8">
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-4">
-                  이미지로 공유하기
-                </h3>
-                
-                {/* 미리보기 카드 */}
-                <div className="flex justify-center mb-4 overflow-hidden rounded-2xl">
-                  <div className="transform scale-[0.85] origin-top">
-                    <ShareableFortuneCard
-                      ref={shareCardRef}
-                      todayMode={todayMode}
-                      characterName={characterName}
-                    />
-                  </div>
-                </div>
-
-                {/* 상태 메시지 */}
-                {shareMessage && (
-                  <p className="text-center text-sm text-purple-600 mb-4 animate-pulse">
-                    {shareMessage}
-                  </p>
-                )}
-
-                {/* 공유 버튼 */}
-                <button
-                  onClick={handleImageShare}
-                  disabled={isSharing}
-                  className={`w-full py-4 rounded-xl font-bold text-white transition-all mb-3 ${
-                    isSharing 
-                      ? "bg-gray-400" 
-                      : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:scale-[0.98]"
-                  }`}
-                >
-                  {isSharing ? "생성 중..." : "📸 이미지 공유하기"}
-                </button>
-
-                {/* 닫기 버튼 */}
-                <button
-                  onClick={() => setShowShareModal(false)}
-                  disabled={isSharing}
-                  className="w-full py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
-                >
-                  닫기
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={closeModal}
+        onShare={handleImageShare}
+        isSharing={isSharing}
+        shareMessage={shareMessage}
+      >
+        <ShareableFortuneCard
+          ref={shareCardRef}
+          todayMode={todayMode}
+          characterName={characterName}
+        />
+      </ShareModal>
     </div>
   );
 }

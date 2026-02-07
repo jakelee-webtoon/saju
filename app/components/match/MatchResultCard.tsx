@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { type MatchTexts } from "@/app/lib/match/texts";
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
 import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
-import { shareAsImage } from "@/app/lib/share/imageShare";
-import { ShareableMatchCard } from "@/app/components/share";
+import { ShareableMatchCard, ShareModal } from "@/app/components/share";
+import { useImageShare } from "@/app/hooks/useImageShare";
 
 interface MatchResultCardProps {
   nickname: string;
@@ -32,15 +32,12 @@ export default function MatchResultCard({
 }: MatchResultCardProps) {
   const router = useRouter();
   const { score, gradeInfo } = result;
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareMessage, setShareMessage] = useState("");
   const [arrowBalance, setArrowBalance] = useState(0);
   const [isDetailUnlocked, setIsDetailUnlocked] = useState(false);
   const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
   
-  // 공유 카드 ref
-  const shareCardRef = useRef<HTMLDivElement>(null);
+  // 공유 훅
+  const { showShareModal, isSharing, shareMessage, shareCardRef, handleShare, openModal, closeModal } = useImageShare();
 
   // 궁합 고유 ID 생성
   const matchId = `mbti_${myMbti}_${theirMbti}`;
@@ -63,31 +60,11 @@ export default function MatchResultCard({
   }, [matchId]);
 
   // 이미지로 공유하기
-  const handleImageShare = async () => {
-    if (!shareCardRef.current || isSharing) return;
-    
-    setIsSharing(true);
-    setShareMessage("이미지 생성 중...");
-    
-    const result2 = await shareAsImage(shareCardRef.current, {
-      title: `${nickname}님과의 MBTI 궁합`,
-      text: `${score}점 (${result.grade})`,
-      filename: `match-mbti-${myMbti}-${theirMbti}.png`,
-    });
-    
-    if (result2.success) {
-      setShareMessage(result2.method === "download" ? "이미지가 저장됐어요! 📸" : "공유 완료! 🎉");
-      setTimeout(() => {
-        setShowShareModal(false);
-        setShareMessage("");
-      }, 2500);
-    } else {
-      setShareMessage(result2.message || "공유에 실패했어요");
-      setTimeout(() => setShareMessage(""), 2000);
-    }
-    
-    setIsSharing(false);
-  };
+  const handleImageShare = () => handleShare({
+    title: `${nickname}님과의 MBTI 궁합`,
+    text: `${score}점 (${result.grade})`,
+    filename: `match-mbti-${myMbti}-${theirMbti}.png`,
+  });
 
   return (
     <div className="space-y-4">
@@ -270,7 +247,7 @@ export default function MatchResultCard({
           다른 사람과 궁합 보기
         </button>
         <button
-          onClick={() => setShowShareModal(true)}
+          onClick={openModal}
           className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
         >
           <span>📤</span>
@@ -288,77 +265,25 @@ export default function MatchResultCard({
       </button>
 
       {/* 공유 모달 */}
-      {showShareModal && (
-        <>
-          {/* 오버레이 */}
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 animate-fadeIn"
-            onClick={() => !isSharing && setShowShareModal(false)}
-          />
-          
-          {/* 모달 */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 animate-slideUp">
-            <div className="mx-auto max-w-md bg-white rounded-t-3xl">
-              {/* 핸들 */}
-              <div className="pt-3 pb-2">
-                <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto" />
-              </div>
-
-              <div className="px-6 pb-8">
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-4">
-                  이미지로 공유하기
-                </h3>
-                
-                {/* 미리보기 카드 */}
-                <div className="flex justify-center mb-4 overflow-hidden rounded-2xl">
-                  <div className="transform scale-[0.85] origin-top">
-                    <ShareableMatchCard
-                      ref={shareCardRef}
-                      type="mbti"
-                      nickname={nickname}
-                      myValue={myMbti}
-                      theirValue={theirMbti}
-                      score={score}
-                      grade={result.grade}
-                      gradeEmoji={gradeInfo.emoji}
-                      headline={texts.declaration}
-                    />
-                  </div>
-                </div>
-
-                {/* 상태 메시지 */}
-                {shareMessage && (
-                  <p className="text-center text-sm text-purple-600 mb-4 animate-pulse">
-                    {shareMessage}
-                  </p>
-                )}
-
-                {/* 공유 버튼 */}
-                <button
-                  onClick={handleImageShare}
-                  disabled={isSharing}
-                  className={`w-full py-4 rounded-xl font-bold text-white transition-all mb-3 ${
-                    isSharing 
-                      ? "bg-gray-400" 
-                      : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:scale-[0.98]"
-                  }`}
-                >
-                  {isSharing ? "생성 중..." : "📸 이미지 공유하기"}
-                </button>
-
-                {/* 닫기 버튼 */}
-                <button
-                  onClick={() => setShowShareModal(false)}
-                  disabled={isSharing}
-                  className="w-full py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
-                >
-                  닫기
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={closeModal}
+        onShare={handleImageShare}
+        isSharing={isSharing}
+        shareMessage={shareMessage}
+      >
+        <ShareableMatchCard
+          ref={shareCardRef}
+          type="mbti"
+          nickname={nickname}
+          myValue={myMbti}
+          theirValue={theirMbti}
+          score={score}
+          grade={result.grade}
+          gradeEmoji={gradeInfo.emoji}
+          headline={texts.declaration}
+        />
+      </ShareModal>
     </div>
   );
 }

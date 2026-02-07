@@ -23,8 +23,11 @@ function getNaverLoginUrl(): string {
   const redirectUri = `${window.location.origin}/api/auth/naver/callback`;
   const state = generateState();
   
-  // state를 sessionStorage에 저장 (CSRF 방지)
+  // state를 sessionStorage에 저장 (클라이언트 검증용)
   sessionStorage.setItem("naver_oauth_state", state);
+  
+  // state를 쿠키에도 저장 (서버 사이드 검증용)
+  document.cookie = `naver_oauth_state=${state}; path=/; max-age=600; SameSite=Lax`;
   
   const params = new URLSearchParams({
     response_type: "code",

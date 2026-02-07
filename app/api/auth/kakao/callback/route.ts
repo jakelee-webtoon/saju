@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY || "";
 const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET || "";
@@ -7,6 +8,14 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
+  
+  // CSRF 보호: Origin 검증
+  const origin = request.headers.get("origin") || request.headers.get("referer");
+  const expectedOrigin = request.nextUrl.origin;
+  if (origin && !origin.startsWith(expectedOrigin)) {
+    console.error("CSRF: Invalid origin", origin);
+    return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+  }
 
   // 에러 처리
   if (error) {
@@ -60,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     const userData = await userResponse.json();
 
-    // 3. 사용자 정보를 쿼리 파라미터로 전달 (클라이언트에서 localStorage에 저장)
+    // 3. 사용자 정보를 쿠키로 전달 (URL 노출 방지)
     const kakaoUser = {
       id: String(userData.id),
       nickname: userData.kakao_account?.profile?.nickname || "사용자",
@@ -68,13 +77,26 @@ export async function GET(request: NextRequest) {
       email: userData.kakao_account?.email || "",
     };
 
-    // URL-safe하게 인코딩
-    const userParam = encodeURIComponent(JSON.stringify(kakaoUser));
-    const tokenParam = encodeURIComponent(accessToken);
-
-    return NextResponse.redirect(
-      new URL(`/login/callback?user=${userParam}&token=${tokenParam}`, request.url)
+    // 쿠키로 전달 (SameSite=Lax로 CSRF 방지, httpOnly=false로 클라이언트에서 읽기 가능)
+    const response = NextResponse.redirect(
+      new URL("/login/callback?provider=kakao", request.url)
     );
+    response.cookies.set("oauth_user", JSON.stringify(kakaoUser), {
+      httpOnly: false, // 클라이언트에서 읽어서 localStorage에 저장해야 함
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60, // 1분 후 자동 삭제
+      path: "/",
+    });
+    response.cookies.set("oauth_token", accessToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60,
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Kakao callback error:", error);
     return NextResponse.redirect(new URL("/login?error=callback_failed", request.url));

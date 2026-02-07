@@ -12,16 +12,13 @@ import type { Element } from "./index";
 export interface CharacterType {
   id: string;
   name: string;
-  declaration: string; // 한 줄 선언문
-  description: string; // 2~3줄 성격 설명
-  empathy: string[]; // 공감 문장 3개
-  strengths: string[]; // 강점 2~3개
+  emoji: string;        // 캐릭터 이모지 (예: 🔥, ⚔️)
+  declaration: string;  // 한 줄 선언문
+  description: string;  // 2~3줄 성격 설명
+  empathy: string[];    // 공감 문장 3개
+  strengths: string[];  // 강점 2~3개
   weaknesses: string[]; // 취약 포인트 1~2개
-  color: string;
-  icon: string;
-  // legacy fields
-  points: string[];
-  summary: string;
+  color: string;        // Tailwind 색상 클래스
 }
 
 // ========================
@@ -42,8 +39,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["추진력 만렙, 시작하면 일단 간다", "분위기를 확 바꾸는 에너지"],
     weaknesses: ["브레이크가 고장난 게 아니라 애초에 없었음"],
-    color: "bg-red-500", icon: "🔥",
-    points: [], summary: "불 붙이는 건 본능, 끄는 건 남의 일"
+    color: "bg-red-500", emoji: "🔥"
   },
   "화_금": {
     id: "fire_metal",
@@ -57,8 +53,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["뜨거운 추진력 + 날카로운 판단력", "싸울 때 포인트 딱 잡아냄"],
     weaknesses: ["가끔 자기 기준이 너무 높아서 스스로도 지침"],
-    color: "bg-orange-600", icon: "⚔️",
-    points: [], summary: "열정과 냉정 사이를 질주 중"
+    color: "bg-orange-600", emoji: "⚔️"
   },
   "화_수": {
     id: "fire_water",
@@ -72,8 +67,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["감정을 에너지로 바꾸는 능력", "깊은 생각 + 강한 실행력"],
     weaknesses: ["내면의 충돌이 잦아서 혼자 지칠 때 있음"],
-    color: "bg-purple-600", icon: "🌋",
-    points: [], summary: "겉은 호수, 속은 용암"
+    color: "bg-purple-600", emoji: "🌋"
   },
   "화_토": {
     id: "fire_earth",
@@ -87,8 +81,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["열정을 지속 가능하게 관리함", "안정감 있는 추진력"],
     weaknesses: ["안전을 추구하다 기회를 놓칠 때가 있음"],
-    color: "bg-rose-500", icon: "🏕️",
-    points: [], summary: "불은 활활, 근데 모닥불 수준으로 컨트롤 중"
+    color: "bg-rose-500", emoji: "🏕️"
   },
   
   // ========== 수 주도 ==========
@@ -104,8 +97,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["필요할 때 폭발하는 집중력", "깊은 내면과 강한 의지"],
     weaknesses: ["속마음 표현이 서툴러서 답답할 때 있음"],
-    color: "bg-indigo-600", icon: "🧊",
-    points: [], summary: "얼음 속에 숨겨둔 불씨"
+    color: "bg-indigo-600", emoji: "🧊"
   },
   "수_목": {
     id: "water_wood",
@@ -119,8 +111,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["꾸준함의 끝판왕", "깊이 있는 성장"],
     weaknesses: ["존재감 어필이 약해서 노력을 못 알아볼 때 있음"],
-    color: "bg-teal-600", icon: "🌿",
-    points: [], summary: "조용히 뿌리 내리고 천천히 하늘로"
+    color: "bg-teal-600", emoji: "🌿"
   },
   "수_금": {
     id: "water_metal",
@@ -134,8 +125,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["냉철한 판단력", "흔들리지 않는 기준"],
     weaknesses: ["너무 냉정해 보여서 벽 느끼는 사람 있음"],
-    color: "bg-slate-600", icon: "🔪",
-    points: [], summary: "감정은 OFF, 이성은 MAX"
+    color: "bg-slate-600", emoji: "🔪"
   },
   "수_토": {
     id: "water_earth",
@@ -149,8 +139,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["깊은 사고력", "흔들리지 않는 안정감"],
     weaknesses: ["변화에 적응하는 데 시간 좀 걸림"],
-    color: "bg-cyan-700", icon: "🏔️",
-    points: [], summary: "고요한 수면 아래 깊은 세계가 있음"
+    color: "bg-cyan-700", emoji: "🏔️"
   },
   
   // ========== 목 주도 ==========
@@ -166,8 +155,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["압도적인 성장 의지", "멈추지 않는 추진력"],
     weaknesses: ["번아웃 주의보, 자기 관리가 약점"],
-    color: "bg-lime-600", icon: "🌳",
-    points: [], summary: "성장 본능이 불처럼 타오르는 중"
+    color: "bg-lime-600", emoji: "🌳"
   },
   "목_수": {
     id: "wood_water",
@@ -181,8 +169,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["전략적인 성장", "배움에 대한 끝없는 갈증"],
     weaknesses: ["생각만 하다가 타이밍 놓칠 때 있음"],
-    color: "bg-emerald-500", icon: "📚",
-    points: [], summary: "물 먹고 지식 먹고 쑥쑥 자라는 중"
+    color: "bg-emerald-500", emoji: "📚"
   },
   "목_금": {
     id: "wood_metal",
@@ -196,8 +183,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["효율적인 성장", "선택과 집중의 달인"],
     weaknesses: ["너무 빨리 쳐내서 아까울 때도 있음"],
-    color: "bg-green-600", icon: "✂️",
-    points: [], summary: "자라면서 동시에 정리 중"
+    color: "bg-green-600", emoji: "✂️"
   },
   "목_토": {
     id: "wood_earth",
@@ -211,8 +197,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["탄탄한 기본기", "흔들리지 않는 성장"],
     weaknesses: ["초반 속도가 느려서 조급할 때 있음"],
-    color: "bg-amber-500", icon: "🌲",
-    points: [], summary: "뿌리부터 제대로 내리는 중"
+    color: "bg-amber-500", emoji: "🌲"
   },
   
   // ========== 토 주도 ==========
@@ -228,8 +213,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["폭발적인 지구력", "참다가 터지면 무서운 힘"],
     weaknesses: ["참다가 터지는 패턴이 반복될 수 있음"],
-    color: "bg-orange-700", icon: "🌋",
-    points: [], summary: "땅 속 마그마 대기 중"
+    color: "bg-orange-700", emoji: "🌋"
   },
   "토_수": {
     id: "earth_water",
@@ -243,8 +227,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["깊은 내면", "묵묵히 해내는 지구력"],
     weaknesses: ["표현 안 해서 답답함을 줄 때 있음"],
-    color: "bg-stone-600", icon: "💎",
-    points: [], summary: "겉은 평범한 땅, 속은 보물 저장소"
+    color: "bg-stone-600", emoji: "💎"
   },
   "토_목": {
     id: "earth_wood",
@@ -258,8 +241,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["돌봄의 능력", "인내심 만렙"],
     weaknesses: ["자기 일은 뒷전일 때가 있음"],
-    color: "bg-lime-700", icon: "🌷",
-    points: [], summary: "내 정원에서 남들 꽃 피우는 중"
+    color: "bg-lime-700", emoji: "🌷"
   },
   "토_금": {
     id: "earth_metal",
@@ -273,8 +255,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["본질을 꿰뚫는 눈", "단단한 기본기"],
     weaknesses: ["융통성이 부족해 보일 때 있음"],
-    color: "bg-gray-600", icon: "🗿",
-    points: [], summary: "단단한 땅 위에서 핵심만 남기는 중"
+    color: "bg-gray-600", emoji: "🗿"
   },
   
   // ========== 금 주도 ==========
@@ -290,8 +271,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["정밀함 + 열정의 조합", "진심일 때 폭발하는 에너지"],
     weaknesses: ["온도차가 커서 종잡기 어려울 수 있음"],
-    color: "bg-red-700", icon: "⚒️",
-    points: [], summary: "불에 달궈지면 더 날카로워지는 중"
+    color: "bg-red-700", emoji: "⚒️"
   },
   "금_수": {
     id: "metal_water",
@@ -305,8 +285,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["철저한 준비성", "결정적 순간의 정확성"],
     weaknesses: ["준비가 너무 길어서 타이밍 놓칠 때 있음"],
-    color: "bg-blue-800", icon: "🗡️",
-    points: [], summary: "조용히 칼 가는 소리만 들림"
+    color: "bg-blue-800", emoji: "🗡️"
   },
   "금_목": {
     id: "metal_wood",
@@ -320,8 +299,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["효율적인 육성 능력", "명확한 피드백"],
     weaknesses: ["너무 날카로운 피드백에 상처받는 사람 있음"],
-    color: "bg-emerald-700", icon: "🌿",
-    points: [], summary: "자르면서 키우는 신기한 재능"
+    color: "bg-emerald-700", emoji: "🌿"
   },
   "금_토": {
     id: "metal_earth",
@@ -335,8 +313,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["단단한 신뢰 구축", "한번 맺은 관계는 확실함"],
     weaknesses: ["첫 진입장벽이 높아서 관계가 좁을 수 있음"],
-    color: "bg-slate-700", icon: "🏰",
-    points: [], summary: "들어오기 어렵지만 들어오면 천국"
+    color: "bg-slate-700", emoji: "🏰"
   },
   
   // ========== 균형형 ==========
@@ -352,8 +329,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["적응력 만렙", "어디서든 1인분 함"],
     weaknesses: ["정체성이 불분명할 때 혼란스러움"],
-    color: "bg-gradient-to-r from-rose-400 to-blue-400", icon: "🎭",
-    points: [], summary: "모든 에너지가 눈치 게임 중"
+    color: "bg-gradient-to-r from-rose-400 to-blue-400", emoji: "🎭"
   },
   
   // ========== 극단적 집중형 ==========
@@ -369,8 +345,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["한계를 모르는 추진력", "태워버리는 강렬함"],
     weaknesses: ["브레이크가 고장남, 번아웃 위험"],
-    color: "bg-red-600", icon: "🚂",
-    points: [], summary: "멈추면 죽는 상어 같은 삶"
+    color: "bg-red-600", emoji: "🚂"
   },
   "수_극단": {
     id: "water_extreme",
@@ -384,8 +359,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["누구도 따라올 수 없는 깊이", "혼자서도 해내는 능력"],
     weaknesses: ["너무 깊어서 소통이 어려울 때 있음"],
-    color: "bg-blue-900", icon: "🐙",
-    points: [], summary: "심해에서 혼자 빛나는 중"
+    color: "bg-blue-900", emoji: "🐙"
   },
   "목_극단": {
     id: "wood_extreme",
@@ -399,8 +373,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["무한 확장 능력", "어디서든 뿌리내림"],
     weaknesses: ["너무 많이 벌려서 관리가 안 될 때 있음"],
-    color: "bg-green-700", icon: "🌴",
-    points: [], summary: "자라다가 숲이 된 케이스"
+    color: "bg-green-700", emoji: "🌴"
   },
   "토_극단": {
     id: "earth_extreme",
@@ -414,8 +387,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["흔들리지 않는 존재감", "끝까지 버티는 지구력"],
     weaknesses: ["변화를 거부해서 고립될 수 있음"],
-    color: "bg-stone-700", icon: "🗻",
-    points: [], summary: "태풍이 와도 여기 있을 예정"
+    color: "bg-stone-700", emoji: "🗻"
   },
   "금_극단": {
     id: "metal_extreme",
@@ -429,8 +401,7 @@ export const CHARACTER_DB: Record<string, CharacterType> = {
     ],
     strengths: ["극한의 효율성", "흔들림 없는 결단력"],
     weaknesses: ["인간미가 없어 보여서 적을 만들 수 있음"],
-    color: "bg-zinc-700", icon: "🔬",
-    points: [], summary: "감정 제거, 본질만 남김"
+    color: "bg-zinc-700", emoji: "🔬"
   }
 };
 
