@@ -11,7 +11,7 @@ import {
   type LoveTendencyFull,
 } from "@/app/lib/love/loveTendency";
 import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
+import { getKakaoUser, isLoggedIn } from "@/app/lib/auth";
 import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 
 interface LoveTendencyCardProps {

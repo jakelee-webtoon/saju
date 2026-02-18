@@ -2,10 +2,10 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { saveKakaoUser, type KakaoUser } from "@/app/lib/kakao";
-import { saveNaverUser, verifyState, type NaverUser } from "@/app/lib/naver";
+import { saveKakaoUser, type KakaoUser, saveNaverUser, verifyState, type NaverUser } from "@/app/lib/auth";
 import { handleUserLogin, incrementLoginCount, updateBirthInfo } from "@/app/lib/firebase/userService";
 import { hasCompletedOnboarding as checkLocalOnboarding } from "@/app/lib/onboarding";
+import { syncPartnersFromFirestore } from "@/app/lib/cupid/partnersStorage";
 
 type SocialUser = KakaoUser | NaverUser;
 
@@ -83,6 +83,11 @@ function CallbackContent() {
             console.log("Firebase user synced:", firebaseUser.oderId);
             // 로그인 횟수 증가
             await incrementLoginCount(firebaseUser.oderId);
+            
+            // Firestore에서 partners 동기화
+            setStatus("상대 정보 불러오는 중...");
+            await syncPartnersFromFirestore();
+            console.log("✅ Partners synced from Firestore");
           }
           
           // 저장된 리다이렉트 URL로 이동 (없으면 홈)

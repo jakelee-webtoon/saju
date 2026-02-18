@@ -6,6 +6,7 @@ import type { CharacterType } from "@/app/lib/saju/characterTypes";
 import type { TodayModeResult } from "@/app/lib/todayMode/computeTodayMode";
 import TodayLoveHeroCard from "@/app/components/home/TodayLoveHeroCard";
 import CompatibilityMiniCard from "@/app/components/home/CompatibilityMiniCard";
+import CurrentPartnerCard from "@/app/components/home/CurrentPartnerCard";
 import type { FormData } from "@/app/types";
 
 interface HomePageProps {
@@ -66,6 +67,9 @@ export default function HomePage({
 
         {/* 메인 카드: 오늘의 연애 */}
         <TodayLoveHeroCard todayMode={todayMode} onClick={onViewLove} />
+
+        {/* 현재 상대 카드 */}
+        <CurrentPartnerCard onClick={() => router.push("/partners")} />
 
         {/* 상대방과의 나의 대화분석 */}
         <div className="mb-4">

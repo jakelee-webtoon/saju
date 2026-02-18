@@ -25,9 +25,16 @@ export default function CharacterSummaryCard({
 }: CharacterSummaryCardProps) {
   const imageUrl = getCharacterImage(characterId);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("CharacterSummaryCard 클릭됨");
+    onClick();
+  };
+
   return (
     <section
-      onClick={onClick}
+      onClick={handleClick}
       className="rounded-3xl bg-[#141B38] p-6 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden"
     >
       {/* 배경 이펙트 */}
@@ -72,12 +79,15 @@ export default function CharacterSummaryCard({
           </div>
         </div>
 
-        {/* 하단 CTA */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/10">
-          <span className="text-sm font-medium text-white/80">
-            이 캐릭터 분석 보기
+        {/* 하단 CTA - 클릭 유도 문구 */}
+        <div 
+          onClick={handleClick}
+          className="flex items-center justify-between pt-4 border-t border-white/10 cursor-pointer hover:opacity-90 transition-opacity group"
+        >
+          <span className="text-sm font-medium text-white/90 group-hover:text-white">
+            더 자세히 보기
           </span>
-          <span className="text-white/40">
+          <span className="text-white/50 group-hover:text-white/80 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { verifyPayment } from "@/app/lib/portone";
+import { verifyPayment } from "@/app/lib/payment";
 import { addArrowSync } from "@/app/lib/cupid/arrowBalance";
 
 function PaymentCompleteContent() {

@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { initKakao, loginWithKakao, isLoggedIn as isKakaoLoggedIn } from "@/app/lib/kakao";
-import { loginWithNaver, isNaverLoggedIn } from "@/app/lib/naver";
-import SwipeBack from "@/app/components/SwipeBack";
+import { initKakao, loginWithKakao, isLoggedIn as isKakaoLoggedIn } from "@/app/lib/auth";
+import { loginWithNaver, isNaverLoggedIn } from "@/app/lib/auth";
+import { SwipeBack } from "@/app/components/common";
 
 function LoginContent() {
   const router = useRouter();

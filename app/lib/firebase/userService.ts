@@ -4,6 +4,7 @@ import {
   getDoc, 
   setDoc, 
   updateDoc, 
+  deleteDoc,
   serverTimestamp,
   Timestamp,
   arrayUnion,
@@ -43,6 +44,7 @@ export interface MatchHistoryRecord {
     birthYear?: number;
     birthMonth?: number;
     birthDay?: number;
+    birthHour?: number; // 출생 시간 추가
   };
   compatibilityScore?: number;
   createdAt: Timestamp | null;
@@ -473,6 +475,400 @@ export async function getMatchHistory(
   } catch (error) {
     console.error("Error getting match history:", error);
     return [];
+  }
+}
+
+// 상대방 정보 저장 (별도 관리)
+export interface PartnerInfo {
+  id?: string;
+  oderId: string;
+  partnerNickname: string;
+  partnerInfo: {
+    mbti?: string;
+    birthYear?: number;
+    birthMonth?: number;
+    birthDay?: number;
+    birthHour?: number;
+  };
+  lastMatchedAt: Timestamp | null;
+  matchCount: number;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// 상대방 정보 저장 또는 업데이트
+export async function savePartnerInfo(
+  oderId: string,
+  partnerNickname: string,
+  partnerInfo: PartnerInfo["partnerInfo"]
+): Promise<string | null> {
+  try {
+    // 같은 별명의 상대방이 이미 있는지 확인
+    const partnersRef = collection(db, "partners");
+    const q = query(
+      partnersRef,
+      where("oderId", "==", oderId),
+      where("partnerNickname", "==", partnerNickname)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    if (!snapshot.empty) {
+      // 기존 상대방 정보 업데이트
+      const existingDoc = snapshot.docs[0];
+      await updateDoc(existingDoc.ref, {
+        partnerInfo,
+        lastMatchedAt: serverTimestamp(),
+        matchCount: (existingDoc.data().matchCount || 0) + 1,
+        updatedAt: serverTimestamp(),
+      });
+      return existingDoc.id;
+    } else {
+      // 새로운 상대방 정보 저장
+      const docRef = await addDoc(partnersRef, {
+        oderId,
+        partnerNickname,
+        partnerInfo,
+        lastMatchedAt: serverTimestamp(),
+        matchCount: 1,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return docRef.id;
+    }
+  } catch (error) {
+    console.error("Error saving partner info:", error);
+    return null;
+  }
+}
+
+// 사용자의 상대방 목록 조회
+export async function getPartners(
+  oderId: string,
+  limitCount: number = 20
+): Promise<PartnerInfo[]> {
+  try {
+    const partnersRef = collection(db, "partners");
+    // 인덱스 없이도 작동하도록 oderId만으로 필터링 후 클라이언트에서 정렬
+    const q = query(
+      partnersRef,
+      where("oderId", "==", oderId)
+    );
+    
+    const snapshot = await getDocs(q);
+    const partners = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PartnerInfo));
+    
+    // 클라이언트에서 날짜순 정렬 (최신순)
+    partners.sort((a, b) => {
+      if (!a.lastMatchedAt || !b.lastMatchedAt) return 0;
+      return b.lastMatchedAt.toMillis() - a.lastMatchedAt.toMillis();
+    });
+    
+    // limitCount만큼만 반환
+    return partners.slice(0, limitCount);
+  } catch (error) {
+    console.error("Error getting partners:", error);
+    return [];
+  }
+}
+
+// ============================================
+// Partner Management (상대 관리) 관련 함수
+// ============================================
+
+import type { Partner, PartnerSaju } from "@/app/lib/cupid/partnerTypes";
+
+// Firestore에 저장할 Partner 데이터 구조
+export interface FirestorePartner {
+  id?: string; // Document ID
+  oderId: string; // User ID
+  name: string;
+  relationStage?: "썸" | "연애" | "소개팅" | "친구" | "기타";
+  mbti?: string;
+  saju?: {
+    calendarType: "양력" | "음력";
+    birthY: number;
+    birthM: number;
+    birthD: number;
+    birthTimeKnown: boolean;
+    birthHour?: number;
+    birthMinute?: number;
+  };
+  memo?: string;
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+// Partner를 Firestore 형식으로 변환 (undefined 필드 제거)
+function partnerToFirestore(partner: Partner, oderId: string): Omit<FirestorePartner, "id"> {
+  const result: any = {
+    oderId,
+    name: partner.name,
+    createdAt: Timestamp.fromMillis(partner.createdAt),
+    updatedAt: Timestamp.fromMillis(partner.updatedAt),
+  };
+  
+  // undefined가 아닌 필드만 추가
+  if (partner.relationStage !== undefined) {
+    result.relationStage = partner.relationStage;
+  }
+  if (partner.mbti !== undefined) {
+    result.mbti = partner.mbti;
+  }
+  if (partner.saju) {
+    const sajuData: any = {
+      calendarType: partner.saju.calendarType,
+      birthY: partner.saju.birthY,
+      birthM: partner.saju.birthM,
+      birthD: partner.saju.birthD,
+      birthTimeKnown: partner.saju.birthTimeKnown,
+    };
+    if (partner.saju.birthHour !== undefined) {
+      sajuData.birthHour = partner.saju.birthHour;
+    }
+    if (partner.saju.birthMinute !== undefined) {
+      sajuData.birthMinute = partner.saju.birthMinute;
+    }
+    result.saju = sajuData;
+  }
+  if (partner.memo !== undefined) {
+    result.memo = partner.memo;
+  }
+  
+  return result;
+}
+
+// Firestore 데이터를 Partner 형식으로 변환
+function firestoreToPartner(doc: any): Partner {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    name: data.name,
+    relationStage: data.relationStage,
+    mbti: data.mbti,
+    saju: data.saju ? {
+      calendarType: data.saju.calendarType,
+      birthY: data.saju.birthY,
+      birthM: data.saju.birthM,
+      birthD: data.saju.birthD,
+      birthTimeKnown: data.saju.birthTimeKnown,
+      birthHour: data.saju.birthHour,
+      birthMinute: data.saju.birthMinute,
+    } : undefined,
+    memo: data.memo,
+    createdAt: data.createdAt?.toMillis() || Date.now(),
+    updatedAt: data.updatedAt?.toMillis() || Date.now(),
+  };
+}
+
+// Firestore에 Partner 저장 (최대 3명 제한)
+export async function savePartnerToFirestore(
+  oderId: string,
+  partner: Partner
+): Promise<string | null> {
+  try {
+    const partnersRef = collection(db, "cupidPartners");
+    
+    if (partner.id && partner.id.startsWith("firestore_")) {
+      // 기존 파트너 업데이트 (firestore_ prefix가 있으면 Firestore에서 온 것)
+      const docId = partner.id.replace("firestore_", "");
+      const docRef = doc(db, "cupidPartners", docId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        await updateDoc(docRef, {
+          ...partnerToFirestore(partner, oderId),
+          updatedAt: serverTimestamp(),
+        });
+        return docId;
+      }
+    }
+    
+    // 새 파트너 추가 전에 3명 제한 체크
+    const existingPartners = await getPartnersFromFirestore(oderId);
+    if (existingPartners.length >= 3) {
+      throw new Error("최대 3명까지만 추가할 수 있어요");
+    }
+    
+    // 새 파트너 추가
+    const firestoreData = partnerToFirestore(partner, oderId);
+    const docRef = await addDoc(partnersRef, firestoreData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error saving partner to Firestore:", error);
+    // 3명 제한 에러는 재throw
+    if (error instanceof Error && error.message.includes("최대 3명")) {
+      throw error;
+    }
+    return null;
+  }
+}
+
+// Firestore에서 사용자의 모든 Partner 불러오기
+export async function getPartnersFromFirestore(oderId: string): Promise<Partner[]> {
+  try {
+    const partnersRef = collection(db, "cupidPartners");
+    const q = query(
+      partnersRef,
+      where("oderId", "==", oderId)
+    );
+    
+    const snapshot = await getDocs(q);
+    const partners = snapshot.docs.map(doc => {
+      const partner = firestoreToPartner(doc);
+      // Firestore에서 온 것임을 표시하기 위해 ID에 prefix 추가
+      return {
+        ...partner,
+        id: `firestore_${partner.id}`,
+      };
+    });
+    
+    // updatedAt 기준 최신순 정렬
+    partners.sort((a, b) => b.updatedAt - a.updatedAt);
+    
+    return partners;
+  } catch (error) {
+    console.error("Error getting partners from Firestore:", error);
+    return [];
+  }
+}
+
+// Firestore에서 Partner 업데이트
+export async function updatePartnerInFirestore(
+  oderId: string,
+  partnerId: string,
+  updates: Partial<Partner>
+): Promise<boolean> {
+  try {
+    // firestore_ prefix 제거
+    const docId = partnerId.replace("firestore_", "");
+    const docRef = doc(db, "cupidPartners", docId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      console.error("Partner not found in Firestore");
+      return false;
+    }
+    
+    const existingData = docSnap.data();
+    if (existingData.oderId !== oderId) {
+      console.error("Unauthorized: Partner does not belong to user");
+      return false;
+    }
+    
+    const updateData: any = {
+      updatedAt: serverTimestamp(),
+    };
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.relationStage !== undefined) updateData.relationStage = updates.relationStage;
+    if (updates.mbti !== undefined) updateData.mbti = updates.mbti;
+    if (updates.saju !== undefined) {
+      if (updates.saju) {
+        const sajuData: any = {
+          calendarType: updates.saju.calendarType,
+          birthY: updates.saju.birthY,
+          birthM: updates.saju.birthM,
+          birthD: updates.saju.birthD,
+          birthTimeKnown: updates.saju.birthTimeKnown,
+        };
+        if (updates.saju.birthHour !== undefined) {
+          sajuData.birthHour = updates.saju.birthHour;
+        }
+        if (updates.saju.birthMinute !== undefined) {
+          sajuData.birthMinute = updates.saju.birthMinute;
+        }
+        updateData.saju = sajuData;
+      } else {
+        // saju를 null로 설정하여 삭제
+        updateData.saju = null;
+      }
+    }
+    if (updates.memo !== undefined) updateData.memo = updates.memo;
+    
+    await updateDoc(docRef, updateData);
+    return true;
+  } catch (error) {
+    console.error("Error updating partner in Firestore:", error);
+    return false;
+  }
+}
+
+// Firestore에서 Partner 삭제
+export async function deletePartnerFromFirestore(
+  oderId: string,
+  partnerId: string
+): Promise<boolean> {
+  try {
+    const docId = partnerId.replace("firestore_", "");
+    const docRef = doc(db, "cupidPartners", docId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+      console.error("Partner not found in Firestore");
+      return false;
+    }
+    
+    const data = docSnap.data();
+    if (data.oderId !== oderId) {
+      console.error("Unauthorized: Partner does not belong to user");
+      return false;
+    }
+    
+    await deleteDoc(docRef);
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting partner from Firestore:", error);
+    return false;
+  }
+}
+
+// Firestore에서 현재 상대 ID 가져오기
+export async function getCurrentPartnerIdFromFirestore(oderId: string): Promise<string | null> {
+  try {
+    const userRef = doc(db, "users", oderId);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      return data.currentPartnerId || null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error getting current partner ID from Firestore:", error);
+    return null;
+  }
+}
+
+// Firestore에 현재 상대 ID 저장
+export async function setCurrentPartnerIdInFirestore(
+  oderId: string,
+  partnerId: string | null
+): Promise<boolean> {
+  try {
+    const userRef = doc(db, "users", oderId);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      await updateDoc(userRef, {
+        currentPartnerId: partnerId,
+      });
+    } else {
+      // 사용자가 없으면 생성 (일반적으로는 이미 존재해야 함)
+      await setDoc(userRef, {
+        currentPartnerId: partnerId,
+      }, { merge: true });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error setting current partner ID in Firestore:", error);
+    return false;
   }
 }
 

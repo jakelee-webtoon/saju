@@ -9,12 +9,11 @@ import {
   CUPID_PACKAGES,
   type CupidPackage,
 } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser } from "@/app/lib/kakao";
-import { getNaverUser } from "@/app/lib/naver";
-import { initPortOne, requestPayment, verifyPayment } from "@/app/lib/portone";
+import { getKakaoUser } from "@/app/lib/auth";
+import { getNaverUser } from "@/app/lib/auth";
+import { initPortOne, requestPayment, verifyPayment } from "@/app/lib/payment";
 import { savePaymentRecord, updateArrowStats, incrementFeatureUsage } from "@/app/lib/firebase/userService";
-import BottomNav, { TabId } from "@/app/components/BottomNav";
-import SwipeBack from "@/app/components/SwipeBack";
+import { BottomNav, type TabId, SwipeBack } from "@/app/components/common";
 
 // 로그인 상태 확인 (카카오 or 네이버)
 function checkLoggedIn() {

@@ -10,8 +10,7 @@ import {
   recordContentUnlock,
   type UserData 
 } from "./userService";
-import { getKakaoUser, logout as logoutKakao } from "../kakao";
-import { getNaverUser, logoutNaver } from "../naver";
+import { getKakaoUser, logout as logoutKakao, getNaverUser, logoutNaver } from "../auth";
 
 interface UseUserReturn {
   user: UserData | null;

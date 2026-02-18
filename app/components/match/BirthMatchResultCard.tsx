@@ -4,9 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type BirthMatchResult } from "@/app/lib/match/birth";
 import { type BirthMatchTexts } from "@/app/lib/match/texts";
-import { getArrowBalanceSync, useArrowSync, canUseArrow } from "@/app/lib/cupid/arrowBalance";
-import { getKakaoUser, isLoggedIn } from "@/app/lib/kakao";
-import { isContentUnlocked, recordContentUnlock } from "@/app/lib/firebase";
 import { ShareableMatchCard, ShareModal } from "@/app/components/share";
 import { useImageShare } from "@/app/hooks/useImageShare";
 
@@ -32,32 +29,9 @@ export default function BirthMatchResultCard({
 }: BirthMatchResultCardProps) {
   const router = useRouter();
   const { score, gradeInfo, comparison } = result;
-  const [arrowBalance, setArrowBalance] = useState(0);
-  const [isDetailUnlocked, setIsDetailUnlocked] = useState(false);
-  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
   
   // 공유 훅
   const { showShareModal, isSharing, shareMessage, shareCardRef, handleShare, openModal, closeModal } = useImageShare();
-
-  // 궁합 고유 ID 생성
-  const matchId = `birth_${theirBirth.replace(/[^0-9]/g, '')}`;
-
-  useEffect(() => {
-    const loadData = async () => {
-      const balance = await getArrowBalanceSync();
-      setArrowBalance(balance);
-      
-      // Firebase에서 언락 상태 확인
-      if (isLoggedIn()) {
-        const kakaoUser = getKakaoUser();
-        if (kakaoUser) {
-          const unlocked = await isContentUnlocked(kakaoUser.id, "matchDetails", matchId);
-          setIsDetailUnlocked(unlocked);
-        }
-      }
-    };
-    loadData();
-  }, [matchId]);
 
   // 이미지로 공유하기
   const handleImageShare = () => handleShare({
@@ -181,65 +155,8 @@ export default function BirthMatchResultCard({
         </p>
       </div>
 
-      {/* 🔒 유료 영역: 상세 분석 */}
-      {!isDetailUnlocked ? (
-        <button
-          onClick={async () => {
-            if (canUseArrow(2)) {
-              setShowUnlockAnimation(true);
-              const result = await useArrowSync(2);
-              if (result.success) {
-                setArrowBalance(result.newBalance);
-                
-                // Firebase에 언락 기록 (영구)
-                if (isLoggedIn()) {
-                  const kakaoUser = getKakaoUser();
-                  if (kakaoUser) {
-                    await recordContentUnlock(kakaoUser.id, "matchDetails", matchId);
-                  }
-                }
-                
-                setTimeout(() => {
-                  setIsDetailUnlocked(true);
-                  setShowUnlockAnimation(false);
-                }, 500);
-              } else {
-                setShowUnlockAnimation(false);
-                router.push("/shop");
-              }
-            } else {
-              router.push("/shop");
-            }
-          }}
-          className={`w-full rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 p-5 text-left transition-all hover:from-gray-700 hover:to-gray-800 active:scale-[0.98] ${
-            showUnlockAnimation ? "scale-95 opacity-50" : ""
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{showUnlockAnimation ? "🔓" : "🔒"}</span>
-              <div>
-                <p className="text-sm font-bold text-white mb-0.5">
-                  왜 잘 맞는지, 어디서 어긋나는지
-                </p>
-                <p className="text-xs text-gray-400">
-                  자세히 보기
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-pink-400 text-sm font-medium">
-              <span>💘</span>
-              <span>화살 2개</span>
-              <span>→</span>
-            </div>
-          </div>
-          <p className="mt-2 text-[10px] text-gray-500 text-right">
-            내 화살 {arrowBalance}개
-          </p>
-        </button>
-      ) : (
-        /* 🔓 언락된 상세 분석 */
-        <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 p-5 space-y-4 animate-fadeIn">
+      {/* 상세 분석 (무료) */}
+      <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 p-5 space-y-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xl">🔓</span>
             <h3 className="text-sm font-bold text-purple-800">상세 궁합 분석</h3>
@@ -283,7 +200,6 @@ export default function BirthMatchResultCard({
             </p>
           </div>
         </div>
-      )}
 
       {/* 버튼 영역 */}
       <div className="flex gap-3 pt-2">

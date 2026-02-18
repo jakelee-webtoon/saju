@@ -6,14 +6,14 @@ import dynamic from "next/dynamic";
 import { calculateManseWithLibrary, type ManseResult, type BirthInput } from "./lib/saju";
 import { generateCharacterType } from "./lib/saju/characterTypes";
 import { computeTodayMode } from "./lib/todayMode/computeTodayMode";
-import BottomNav, { type TabId } from "./components/BottomNav";
+import { BottomNav, type TabId } from "./components/common";
 import {
   hasCompletedOnboarding,
   markOnboardingComplete,
   hasSeenCharacterReveal,
   markCharacterRevealSeen,
 } from "./lib/onboarding";
-import { getKakaoUser, isLoggedIn } from "./lib/kakao";
+import { getKakaoUser, isLoggedIn } from "./lib/auth";
 import { getUserData, updateBirthInfo, type UserData } from "./lib/firebase";
 // 즉시 필요한 컴포넌트만 정적 import
 import HomePage from "./components/home/HomePage";
@@ -160,6 +160,12 @@ function ManseryeokPageContent() {
       setActiveTab(tabParam as TabId);
       setView("home");
       router.replace("/", { scroll: false });
+    }
+    
+    // view 파라미터 처리
+    const viewParam = searchParams.get("view");
+    if (viewParam === "detail") {
+      setView("detail");
     }
   }, [searchParams, router]);
 
@@ -354,7 +360,16 @@ function ManseryeokPageContent() {
   if (activeTab === "chat") {
     return (
       <>
-        <ChatAnalysisPage onBack={() => handleTabChange("home")} />
+        <ChatAnalysisPage 
+          onBack={() => handleTabChange("home")} 
+          character={character}
+          onViewDetail={() => {
+            console.log("onViewDetail 호출됨 - view를 detail로 변경");
+            setView("detail");
+            // activeTab도 home으로 변경하여 InterpretationPage가 제대로 보이도록
+            setActiveTab("home");
+          }}
+        />
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
       </>
     );
@@ -384,6 +399,11 @@ function ManseryeokPageContent() {
           formData={formData}
           onEdit={() => setView("edit")}
           onBack={() => handleTabChange("home")}
+          onViewDetail={() => {
+            console.log("MyPage onViewDetail 호출됨 - view를 detail로 변경");
+            setView("detail");
+            setActiveTab("home");
+          }}
         />
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} chatBadge={showChatBadge} />
       </>

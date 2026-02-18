@@ -9,11 +9,10 @@ import { type MbtiType, calculateScore } from "@/app/lib/match/mbti";
 import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type BirthMatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
-import { saveMatchHistory } from "@/app/lib/firebase/userService";
-import { getKakaoUser } from "@/app/lib/kakao";
-import { getNaverUser } from "@/app/lib/naver";
-import BottomNav, { type TabId } from "@/app/components/BottomNav";
-import SwipeBack from "@/app/components/SwipeBack";
+import { saveMatchHistory, savePartnerInfo, getPartners } from "@/app/lib/firebase/userService";
+import { getKakaoUser, getNaverUser } from "@/app/lib/auth";
+import { BottomNav, type TabId, SwipeBack } from "@/app/components/common";
+import { getCurrentPartner, syncPartnersFromFirestore } from "@/app/lib/cupid/partnersStorage";
 
 // 로그인된 사용자 ID 가져오기
 function getUserId(): string | null {
@@ -80,6 +79,7 @@ export default function MatchPage() {
   const [birthDay, setBirthDay] = useState("");
   const [birthHour, setBirthHour] = useState("");
   const [includeTime, setIncludeTime] = useState(false);
+  const [currentPartner, setCurrentPartner] = useState<{ name: string; mbti?: string; saju?: any } | null>(null);
   
   // 내 사주 기반 MBTI (자동 계산 - 항상 데이터 있음)
   const [myMbti] = useState<MbtiType>(getSajuBasedMbti());
@@ -92,30 +92,38 @@ export default function MatchPage() {
   const [birthResult, setBirthResult] = useState<BirthMatchResult | null>(null);
   const [birthTexts, setBirthTexts] = useState<BirthMatchTexts | null>(null);
 
-  // localStorage에서 데이터 불러오기
+  // 상대 관리에서 저장한 현재 상대 정보 불러오기
   useEffect(() => {
-    // 이전 파트너 정보 불러오기
-    const savedPartner = localStorage.getItem("savedPartner");
-    if (savedPartner) {
-      try {
-        const parsed = JSON.parse(savedPartner);
-        if (parsed.nickname) setNickname(parsed.nickname);
-        if (parsed.type) setInputType(parsed.type);
-        if (parsed.mbti) setTheirMbti(parsed.mbti as MbtiType);
-        if (parsed.birthDate) {
-          const [y, m, d] = parsed.birthDate.split("-");
-          setBirthYear(y);
-          setBirthMonth(m);
-          setBirthDay(d);
-        }
-        if (parsed.birthHour !== undefined && parsed.birthHour !== "") {
-          setBirthHour(parsed.birthHour);
-          setIncludeTime(true);
-        }
-      } catch {
-        // 파싱 오류 무시
+    const loadSavedPartner = async () => {
+      // 1. 상대 관리에서 저장한 현재 상대 확인 (최우선)
+      await syncPartnersFromFirestore(); // Firestore에서 최신 정보 동기화
+      const savedCurrentPartner = getCurrentPartner();
+      
+      if (savedCurrentPartner) {
+        // 현재 상대 정보만 저장 (폼에는 채우지 않음)
+        setCurrentPartner({
+          name: savedCurrentPartner.name,
+          mbti: savedCurrentPartner.mbti,
+          saju: savedCurrentPartner.saju,
+        });
+        return;
       }
-    }
+      
+      // 현재 상대 정보가 없으면 null
+      setCurrentPartner(null);
+    };
+    
+    loadSavedPartner();
+    
+    // 페이지 포커스 시 다시 불러오기 (다른 페이지에서 돌아올 때)
+    const handleFocus = () => {
+      loadSavedPartner();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   // 유효성 검사
@@ -130,6 +138,75 @@ export default function MatchPage() {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  // 저장된 상대 정보로 바로 궁합 계산
+  const handleCalculateWithCurrentPartner = async () => {
+    if (!currentPartner) return;
+    
+    const userId = getUserId();
+    setNickname(currentPartner.name);
+    
+    // MBTI 정보가 있으면 MBTI 궁합 계산
+    if (currentPartner.mbti) {
+      setInputType("mbti");
+      setTheirMbti(currentPartner.mbti as MbtiType);
+      
+      const matchResult = calculateScore(myMbti, currentPartner.mbti as MbtiType);
+      const matchTexts = generateMatchTexts(matchResult, myMbti, currentPartner.mbti as MbtiType);
+      
+      setResult(matchResult);
+      setTexts(matchTexts);
+      setView("result");
+      
+      // Firebase에 궁합 히스토리 저장
+      if (userId) {
+        await saveMatchHistory({
+          oderId: userId,
+          matchType: "mbti",
+          partnerNickname: currentPartner.name,
+          partnerInfo: { mbti: currentPartner.mbti },
+          compatibilityScore: matchResult.score,
+        });
+      }
+    }
+    // 사주 정보가 있으면 생년월일 궁합 계산
+    else if (currentPartner.saju) {
+      setInputType("birth");
+      const theirYear = currentPartner.saju.birthY;
+      const theirMonth = currentPartner.saju.birthM;
+      const theirDay = currentPartner.saju.birthD;
+      const theirHour = currentPartner.saju.birthTimeKnown && currentPartner.saju.birthHour !== undefined
+        ? currentPartner.saju.birthHour
+        : undefined;
+      
+      const matchResult = calculateBirthMatch(
+        DEFAULT_MY_BIRTH.year, DEFAULT_MY_BIRTH.month, DEFAULT_MY_BIRTH.day,
+        theirYear, theirMonth, theirDay,
+        undefined, theirHour
+      );
+      const matchTexts = generateBirthMatchTexts(matchResult);
+      
+      setBirthResult(matchResult);
+      setBirthTexts(matchTexts);
+      setView("result");
+      
+      // Firebase에 궁합 히스토리 저장
+      if (userId) {
+        await saveMatchHistory({
+          oderId: userId,
+          matchType: "birth",
+          partnerNickname: currentPartner.name,
+          partnerInfo: {
+            birthYear: theirYear,
+            birthMonth: theirMonth,
+            birthDay: theirDay,
+            birthHour: theirHour,
+          },
+          compatibilityScore: matchResult.score,
+        });
+      }
+    }
+  };
 
   // 궁합 계산
   const handleCalculate = async () => {
@@ -150,8 +227,12 @@ export default function MatchPage() {
         mbti: theirMbti,
       }));
       
-      // Firebase에 궁합 히스토리 저장
+      // Firebase에 상대방 정보 및 궁합 히스토리 저장
       if (userId) {
+        // 상대방 정보 저장 (별도 관리)
+        await savePartnerInfo(userId, nickname, { mbti: theirMbti });
+        
+        // 궁합 히스토리 저장
         await saveMatchHistory({
           oderId: userId,
           matchType: "mbti",
@@ -186,8 +267,17 @@ export default function MatchPage() {
         birthHour: includeTime ? birthHour : "",
       }));
       
-      // Firebase에 궁합 히스토리 저장
+      // Firebase에 상대방 정보 및 궁합 히스토리 저장
       if (userId) {
+        // 상대방 정보 저장 (별도 관리)
+        await savePartnerInfo(userId, nickname, {
+          birthYear: theirYear,
+          birthMonth: theirMonth,
+          birthDay: theirDay,
+          birthHour: theirHour, // 출생 시간도 저장
+        });
+        
+        // 궁합 히스토리 저장
         await saveMatchHistory({
           oderId: userId,
           matchType: "birth",
@@ -196,6 +286,7 @@ export default function MatchPage() {
             birthYear: theirYear,
             birthMonth: theirMonth,
             birthDay: theirDay,
+            birthHour: theirHour, // 출생 시간도 저장
           },
           compatibilityScore: matchResult.score,
         });
@@ -320,37 +411,87 @@ export default function MatchPage() {
             <div className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-purple-500' : 'bg-gray-200'}`}></div>
           </div>
 
-          {/* Step 1: 별명 입력 */}
+          {/* Step 1: 별명 입력 또는 저장된 상대 확인 */}
           {step === 1 && (
             <section className="space-y-4">
-              <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
-                <h2 className="text-sm font-bold text-purple-900 mb-3">
-                  상대 별명
-                </h2>
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="예: 썸남, 직장동료, 친구"
-                  maxLength={10}
-                  className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
-                />
-                <p className="mt-2 text-xs text-purple-400">
-                  {nickname.length}/10자
-                </p>
-              </div>
+              {/* 저장된 현재 상대 정보가 있을 때 확인 카드 */}
+              {currentPartner ? (
+                <div className="rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white shadow-lg">
+                  <div className="text-center mb-4">
+                    <p className="text-sm font-medium opacity-90 mb-2">
+                      저장된 상대 정보
+                    </p>
+                    <h2 className="text-2xl font-bold mb-1">
+                      {currentPartner.name}님
+                    </h2>
+                    <div className="flex flex-wrap justify-center gap-2 mt-3">
+                      {currentPartner.mbti && (
+                        <span className="px-3 py-1 text-xs font-medium bg-white/20 rounded-full">
+                          MBTI: {currentPartner.mbti}
+                        </span>
+                      )}
+                      {currentPartner.saju && (
+                        <span className="px-3 py-1 text-xs font-medium bg-white/20 rounded-full">
+                          사주 입력됨
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCalculateWithCurrentPartner}
+                    className="w-full py-4 rounded-xl font-bold bg-white text-purple-600 hover:bg-purple-50 transition-all shadow-lg"
+                  >
+                    {currentPartner.name}님과의 궁합 보기 →
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* 현재 상대 정보가 없을 때 안내 */}
+                  <div className="rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 p-5 border border-purple-200">
+                    <p className="text-sm text-purple-700 mb-3">
+                      저장된 상대 정보가 없어요
+                    </p>
+                    <p className="text-xs text-purple-500 mb-4">
+                      상대 정보를 먼저 저장하면 궁합을 더 쉽게 확인할 수 있어요
+                    </p>
+                    <button
+                      onClick={() => router.push("/partners/new?returnTo=match")}
+                      className="w-full py-3 rounded-xl font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-lg transition-all"
+                    >
+                      상대방 정보 입력하러 가기 →
+                    </button>
+                  </div>
 
-              <button
-                onClick={() => setStep(2)}
-                disabled={!isNicknameValid}
-                className={`w-full py-4 rounded-xl font-bold transition-all ${
-                  isNicknameValid
-                    ? "bg-purple-600 text-white hover:bg-purple-700"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                다음 →
-              </button>
+                  <div className="rounded-2xl bg-white/90 backdrop-blur p-5 shadow-lg border border-purple-100">
+                    <h2 className="text-sm font-bold text-purple-900 mb-3">
+                      상대 별명
+                    </h2>
+                    <input
+                      type="text"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                      placeholder="예: 썸남, 직장동료, 친구"
+                      maxLength={10}
+                      className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                    <p className="mt-2 text-xs text-purple-400">
+                      {nickname.length}/10자
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setStep(2)}
+                    disabled={!isNicknameValid}
+                    className={`w-full py-4 rounded-xl font-bold transition-all ${
+                      isNicknameValid
+                        ? "bg-purple-600 text-white hover:bg-purple-700"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    다음 →
+                  </button>
+                </>
+              )}
             </section>
           )}
 
@@ -529,10 +670,6 @@ export default function MatchPage() {
             </section>
           )}
 
-          {/* 안내 문구 */}
-          <p className="mt-8 text-center text-xs text-purple-400">
-            궁합은 재미로 보는 참고 자료예요 😊
-          </p>
         </div>
         
         <BottomNav 

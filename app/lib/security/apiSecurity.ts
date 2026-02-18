@@ -20,33 +20,33 @@ interface RateLimitEntry {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Rate Limit 설정
+// Rate Limit 설정 (비용 절감 강화 버전)
 const RATE_LIMITS = {
-  // 단기 제한 (1분)
+  // 단기 제한 (1분) - 더 엄격하게
   SHORT_WINDOW: 60 * 1000,
   SHORT_MAX: {
-    chatAnalysis: 5,  // 대화 분석: 1분에 5회
-    reply: 10,        // 답장 생성: 1분에 10회
-    ocr: 5,           // OCR: 1분에 5회
+    chatAnalysis: 10,  // 대화 분석: 1분에 10회 (20 → 10으로 감소)
+    reply: 20,          // 답장 생성: 1분에 20회 (30 → 20)
+    ocr: 10,            // OCR: 1분에 10회 (20 → 10)
   },
   
-  // 중기 제한 (1시간)
+  // 중기 제한 (1시간) - 더 엄격하게
   MEDIUM_WINDOW: 60 * 60 * 1000,
   MEDIUM_MAX: {
-    chatAnalysis: 30,  // 대화 분석: 1시간에 30회
-    reply: 50,         // 답장 생성: 1시간에 50회
-    ocr: 30,           // OCR: 1시간에 30회
+    chatAnalysis: 50,  // 대화 분석: 1시간에 50회 (100 → 50으로 감소)
+    reply: 100,         // 답장 생성: 1시간에 100회 (150 → 100)
+    ocr: 50,           // OCR: 1시간에 50회 (100 → 50)
   },
   
-  // 일일 제한
+  // 일일 제한 - 더 엄격하게
   DAILY_MAX: {
-    chatAnalysis: 100,  // 대화 분석: 하루 100회
-    reply: 200,         // 답장 생성: 하루 200회
-    ocr: 100,           // OCR: 하루 100회
+    chatAnalysis: 200,  // 대화 분석: 하루 200회 (500 → 200으로 감소)
+    reply: 500,         // 답장 생성: 하루 500회 (1000 → 500)
+    ocr: 200,           // OCR: 하루 200회 (500 → 200)
   },
   
-  // 최소 요청 간격 (중복 요청 방지)
-  MIN_INTERVAL: 2000, // 2초
+  // 최소 요청 간격 (중복 요청 방지) - 더 엄격하게
+  MIN_INTERVAL: 2000, // 2초 (0.5초 → 2초로 증가)
 };
 
 /**
@@ -306,12 +306,12 @@ export function checkInappropriateContent(text: string): { safe: boolean; reason
 const recentRequests = new Map<string, { hash: string; timestamp: number }>();
 
 /**
- * 중복 요청 체크 (같은 내용 반복 요청 방지)
+ * 중복 요청 체크 (같은 내용 반복 요청 방지) - 완화된 버전
  */
 export function checkDuplicateRequest(
   identifier: string,
   content: string,
-  windowMs: number = 60000 // 기본 1분
+  windowMs: number = 5000 // 기본 5초 (1분 → 5초로 더 완화)
 ): { isDuplicate: boolean } {
   const now = Date.now();
   

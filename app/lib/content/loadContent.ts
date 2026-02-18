@@ -21,7 +21,6 @@ import situationTagsJson from '@/app/content/todayMode/situationTags.json';
 import labelsJson from '@/app/content/todayMode/labels.json';
 import templatesJson from '@/app/content/todayMode/templates.json';
 import rulesJson from '@/app/content/todayMode/rules.json';
-import charactersJson from '@/app/content/characters/index.json';
 import loveModesJson from '@/app/content/todayMode/loveModes.json';
 
 // --- Fallback 데이터 (파일 로드 실패 시) ---
@@ -62,6 +61,8 @@ const FALLBACK_RULES: ModeRulesData = {
   }
 };
 
+// NOTE: characters/index.json 파일이 삭제되어 더 이상 사용하지 않음
+// 필요시 아래 fallback 데이터를 사용하거나 새로운 구조로 재구성
 const FALLBACK_CHARACTERS: CharactersData = {
   characters: [{
     id: 'default',
@@ -123,15 +124,11 @@ export function getRules(): ModeRulesData {
   }
 }
 
+// NOTE: characters/index.json 파일이 삭제되어 더 이상 사용하지 않음
+// 현재 사용되지 않는 함수 - 필요시 재구성
 export function getCharacters(): CharactersData {
-  try {
-    // JSON에서 recoveryBias의 undefined 값을 처리
-    const data = charactersJson as unknown as CharactersData;
-    return data;
-  } catch {
-    console.warn('Failed to load characters/index.json, using fallback');
-    return FALLBACK_CHARACTERS;
-  }
+  console.warn('getCharacters() is deprecated - characters/index.json was removed');
+  return FALLBACK_CHARACTERS;
 }
 
 // --- 편의 함수들 ---
@@ -146,12 +143,16 @@ export function getAllContent(): AllContent {
   };
 }
 
+// NOTE: characters/index.json 파일이 삭제되어 더 이상 사용하지 않음
+// 현재 사용되지 않는 함수들 - 필요시 재구성
 export function getCharacterById(characterId: string): Character | null {
+  console.warn('getCharacterById() is deprecated - characters/index.json was removed');
   const { characters } = getCharacters();
   return characters.find(c => c.id === characterId) || null;
 }
 
 export function getCharacterByElementType(elementType: string): Character | null {
+  console.warn('getCharacterByElementType() is deprecated - characters/index.json was removed');
   const { characters } = getCharacters();
   return characters.find(c => c.elementType === elementType) || null;
 }
@@ -166,8 +167,10 @@ export function getModeLabelById(labelId: string): ModeLabel | null {
   return labels.find(l => l.id === labelId) || null;
 }
 
-// --- 캐릭터 매핑 (기존 시스템과 연동) ---
+// NOTE: characters/index.json 파일이 삭제되어 더 이상 사용하지 않음
+// 현재 사용되지 않는 함수들 - 필요시 재구성
 export function findCharacterForElement(primaryElement: string): Character | null {
+  console.warn('findCharacterForElement() is deprecated - characters/index.json was removed');
   const elementMap: Record<string, string> = {
     'fire': 'fire',
     'water': 'water',
@@ -183,6 +186,7 @@ export function findCharacterForElement(primaryElement: string): Character | nul
 
 // --- SajuProfile 추출 ---
 export function getSajuProfile(characterId: string): SajuProfile | null {
+  console.warn('getSajuProfile() is deprecated - characters/index.json was removed');
   const character = getCharacterById(characterId);
   if (!character) return null;
   

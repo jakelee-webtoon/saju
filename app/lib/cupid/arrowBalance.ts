@@ -3,7 +3,7 @@
  * localStorage + Firebase Firestore 하이브리드 방식
  */
 
-import { getKakaoUser, isLoggedIn } from "../kakao";
+import { getKakaoUser, isLoggedIn } from "../auth";
 import { addArrowsToDB, useArrowsFromDB, getArrowBalanceFromDB } from "../firebase/userService";
 
 const STORAGE_KEY = "cupidArrowBalance";

@@ -18,6 +18,7 @@ interface MyPageProps {
   formData: FormData;
   onEdit: () => void;
   onBack: () => void;
+  onViewDetail?: () => void;
 }
 
 export default function MyPage({
@@ -26,6 +27,7 @@ export default function MyPage({
   formData,
   onEdit,
   onBack,
+  onViewDetail,
 }: MyPageProps) {
   const router = useRouter();
   const [arrowBalance, setArrowBalance] = useState(0);
@@ -106,7 +108,17 @@ export default function MyPage({
 
         {/* 나의 캐릭터 요약 카드 */}
         <div className="mb-4">
-          <div className="rounded-3xl bg-[#141B38] p-6 relative overflow-hidden">
+          <div 
+            onClick={() => {
+              console.log("MyPage 캐릭터 카드 클릭됨", { onViewDetail: !!onViewDetail });
+              if (onViewDetail) {
+                onViewDetail();
+              } else {
+                router.push("/?view=detail");
+              }
+            }}
+            className="rounded-3xl bg-[#141B38] p-6 relative overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+          >
             {/* 배경 이펙트 */}
             <div className="absolute inset-0 opacity-10">
               <div className={`absolute top-4 right-4 w-24 h-24 rounded-full ${character.color} blur-3xl`}></div>
@@ -147,6 +159,18 @@ export default function MyPage({
                     "{character.declaration}"
                   </p>
                 </div>
+              </div>
+
+              {/* 하단 CTA - 클릭 유도 문구 */}
+              <div className="flex items-center justify-between pt-4 border-t border-white/10 group">
+                <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
+                  더 자세히 보기
+                </span>
+                <span className="text-white/50 group-hover:text-white/80 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
               </div>
             </div>
           </div>
