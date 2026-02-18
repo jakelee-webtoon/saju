@@ -6,6 +6,8 @@ import { SwipeBack } from "@/app/components/common";
 import { getArrowBalanceSync, canUseArrowSync, useArrowSync } from "@/app/lib/cupid/arrowBalance";
 import CharacterSummaryCard from "@/app/components/home/CharacterSummaryCard";
 import type { CharacterType } from "@/app/lib/saju/characterTypes";
+import { getCurrentPartner, syncPartnersFromFirestore } from "@/app/lib/cupid/partnersStorage";
+import type { Partner } from "@/app/lib/cupid/partnerTypes";
 
 interface AnalysisResult {
   emotionSummary: string;
@@ -42,6 +44,7 @@ export default function ChatAnalysisPage({
   const [unlockedForecast, setUnlockedForecast] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [currentPartner, setCurrentPartner] = useState<Partner | null>(null);
   const fileInputRef1 = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
   const fileInputRef3 = useRef<HTMLInputElement>(null);
@@ -53,6 +56,29 @@ export default function ChatAnalysisPage({
       setArrowBalance(balance);
     };
     loadBalance();
+  }, []);
+
+  // 현재 상대 정보 로드
+  useEffect(() => {
+    const loadCurrentPartner = async () => {
+      await syncPartnersFromFirestore();
+      const partner = getCurrentPartner();
+      setCurrentPartner(partner);
+    };
+    loadCurrentPartner();
+
+    // storage 이벤트 리스너 (다른 탭/페이지에서 상대 변경 시 업데이트)
+    const handleStorageUpdate = () => {
+      const partner = getCurrentPartner();
+      setCurrentPartner(partner);
+    };
+    window.addEventListener('partnerUpdated', handleStorageUpdate);
+    window.addEventListener('storage', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('partnerUpdated', handleStorageUpdate);
+      window.removeEventListener('storage', handleStorageUpdate);
+    };
   }, []);
 
   const handleAnalyze = async () => {
@@ -893,6 +919,40 @@ export default function ChatAnalysisPage({
           {/* 입력 영역 */}
           {!analysisResult && (
             <div className="mb-6 space-y-4">
+              {/* 분석 대상 정보 카드 */}
+              {currentPartner && (
+                <div className="rounded-2xl bg-white/90 backdrop-blur p-5 border border-gray-200 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">💗</span>
+                        <h3 className="text-sm font-medium text-gray-700">분석 대상</h3>
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base font-bold text-gray-900">{currentPartner.name}</span>
+                        {currentPartner.mbti && (
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-xs font-medium">
+                            {currentPartner.mbti}
+                          </span>
+                        )}
+                        {currentPartner.relationStage && (
+                          <span className="px-2 py-0.5 rounded-md bg-pink-100 text-pink-700 text-xs font-medium">
+                            {currentPartner.relationStage}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">현재 상대입니다</p>
+                    </div>
+                    <button
+                      onClick={() => router.push("/partners")}
+                      className="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
+                      상대 변경
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 이미지 업로드 영역 */}
               <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-3">
