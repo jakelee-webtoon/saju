@@ -22,22 +22,50 @@ export async function GET(request: NextRequest) {
 
   // CSRF 보호: state 검증 (쿠키에서 확인)
   const cookieState = request.cookies.get("naver_oauth_state")?.value;
+  console.log("Naver callback - State verification:", {
+    cookieState,
+    urlState: state,
+    match: cookieState === state,
+    allCookies: request.cookies.getAll().map(c => ({ name: c.name, value: c.value?.substring(0, 20) + "..." }))
+  });
+  
   if (!cookieState || cookieState !== state) {
-    console.error("CSRF: Invalid state", { cookieState, state });
+    console.error("CSRF: Invalid state", { 
+      cookieState, 
+      state,
+      redirectUri: `${request.nextUrl.origin}/api/auth/naver/callback`,
+      clientId: NAVER_CLIENT_ID ? "SET" : "NOT SET"
+    });
     return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
   }
 
-  // CSRF 보호: Origin 검증
+  // CSRF 보호: Origin 검증 (개발 환경에서는 완화)
   const origin = request.headers.get("origin") || request.headers.get("referer");
   const expectedOrigin = request.nextUrl.origin;
+  console.log("Naver callback - Origin verification:", {
+    origin,
+    expectedOrigin,
+    match: origin ? origin.startsWith(expectedOrigin) : "no origin"
+  });
+  
   if (origin && !origin.startsWith(expectedOrigin)) {
-    console.error("CSRF: Invalid origin", origin);
-    return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+    // 개발 환경에서는 localhost 관련 origin은 허용
+    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+    if (!isLocalhost || process.env.NODE_ENV === "production") {
+      console.error("CSRF: Invalid origin", origin);
+      return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+    }
   }
 
   try {
     // 1. 인가 코드로 액세스 토큰 받기
     const redirectUri = `${request.nextUrl.origin}/api/auth/naver/callback`;
+    console.log("Naver callback - Token request:", {
+      redirectUri,
+      hasClientId: !!NAVER_CLIENT_ID,
+      hasClientSecret: !!NAVER_CLIENT_SECRET,
+      code: code?.substring(0, 10) + "..."
+    });
     
     const tokenResponse = await fetch("https://nid.naver.com/oauth2.0/token", {
       method: "POST",

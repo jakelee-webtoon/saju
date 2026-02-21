@@ -649,8 +649,8 @@ export default function ChatAnalysisPage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("이미지 크기는 5MB 이하여야 해요");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("이미지 크기는 10MB 이하여야 해요");
       return;
     }
 
@@ -721,8 +721,8 @@ export default function ChatAnalysisPage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("이미지 크기는 5MB 이하여야 해요");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("이미지 크기는 10MB 이하여야 해요");
       return;
     }
 
@@ -812,8 +812,8 @@ export default function ChatAnalysisPage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("이미지 크기는 5MB 이하여야 해요");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("이미지 크기는 10MB 이하여야 해요");
       return;
     }
 

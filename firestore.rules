@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      
+      // 본인 문서만 생성 가능
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // arrowBalance 클라이언트 수정 금지, 본인 문서만 수정 가능
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && !( "arrowBalance" in request.resource.data.keys() );
+      
+      // 삭제 금지
+      allow delete: if false;
+    }
+
+    match /adminLog/{docId} {
+      allow read, write: if false;
+    }
+  }
+}

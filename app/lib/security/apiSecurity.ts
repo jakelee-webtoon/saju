@@ -137,7 +137,7 @@ const INPUT_LIMITS = {
     max: 1000, // 답장 생성은 짧은 메시지만
   },
   ocr: {
-    maxFileSize: 5 * 1024 * 1024, // 5MB
+    maxFileSize: 10 * 1024 * 1024, // 10MB (5MB → 10MB로 증가)
   },
 };
 

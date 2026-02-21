@@ -103,6 +103,33 @@ export function logoutNaver(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(NAVER_USER_KEY);
   localStorage.removeItem(NAVER_ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem("naver_oauth_state");
+  
+  // 쿠키 삭제
+  document.cookie = "naver_oauth_state=; path=/; max-age=0";
+  document.cookie = "oauth_user=; path=/; max-age=0";
+  document.cookie = "oauth_token=; path=/; max-age=0";
+}
+
+/**
+ * 네이버 로그인 캐시 완전 삭제 (다른 계정으로 로그인하기 위해)
+ */
+export function clearNaverCache(): void {
+  if (typeof window === "undefined") return;
+  
+  // localStorage 삭제
+  localStorage.removeItem(NAVER_USER_KEY);
+  localStorage.removeItem(NAVER_ACCESS_TOKEN_KEY);
+  
+  // sessionStorage 삭제
+  sessionStorage.removeItem("naver_oauth_state");
+  
+  // 쿠키 삭제
+  document.cookie = "naver_oauth_state=; path=/; max-age=0";
+  document.cookie = "oauth_user=; path=/; max-age=0";
+  document.cookie = "oauth_token=; path=/; max-age=0";
+  
+  console.log("✅ 네이버 로그인 캐시가 모두 삭제되었습니다.");
 }
 
 /**

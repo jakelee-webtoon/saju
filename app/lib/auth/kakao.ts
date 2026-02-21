@@ -84,7 +84,10 @@ export interface KakaoUser {
   email?: string;
 }
 
+// 환경 변수는 Next.js가 빌드 타임에 클라이언트 번들에 인라인으로 치환
+// 클라이언트 컴포넌트에서는 직접 접근
 const KAKAO_JS_KEY = process.env.NEXT_PUBLIC_KAKAO_JS_KEY || "";
+
 const REDIRECT_URI = typeof window !== "undefined" 
   ? `${window.location.origin}/api/auth/kakao/callback`
   : "";
@@ -103,6 +106,12 @@ export function initKakao(): Promise<void> {
       return;
     }
 
+    // 환경 변수 확인
+    if (!KAKAO_JS_KEY) {
+      reject(new Error("NEXT_PUBLIC_KAKAO_JS_KEY is not set. Please check your .env.local file and restart the dev server."));
+      return;
+    }
+
     // 이미 초기화되어 있으면 바로 resolve
     if (window.Kakao?.isInitialized()) {
       resolve();
@@ -111,10 +120,6 @@ export function initKakao(): Promise<void> {
 
     // SDK 스크립트가 이미 로드되어 있는지 확인
     if (window.Kakao) {
-      if (!KAKAO_JS_KEY) {
-        reject(new Error("NEXT_PUBLIC_KAKAO_JS_KEY is not set"));
-        return;
-      }
       window.Kakao.init(KAKAO_JS_KEY);
       resolve();
       return;
@@ -125,10 +130,6 @@ export function initKakao(): Promise<void> {
     script.src = "https://t1.kakaocdn.net/kakao_js_sdk/2.6.0/kakao.min.js";
     script.async = true;
     script.onload = () => {
-      if (!KAKAO_JS_KEY) {
-        reject(new Error("NEXT_PUBLIC_KAKAO_JS_KEY is not set"));
-        return;
-      }
       window.Kakao.init(KAKAO_JS_KEY);
       resolve();
     };

@@ -39,3 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+saju-app-a4eb6-firebase-adminsdk-*.json

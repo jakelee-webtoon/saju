@@ -41,6 +41,11 @@ function LoginContent() {
         parse_failed: "로그인 처리 중 문제가 생겼어요. 다시 시도해주세요.",
         missing_params: "로그인 정보가 누락됐어요. 다시 시도해주세요.",
         invalid_state: "보안 검증에 실패했어요. 페이지를 새로고침하고 다시 시도해주세요.",
+        csrf_failed: "보안 검증에 실패했어요. 페이지를 새로고침하고 다시 시도해주세요.",
+        missing_state: "보안 검증에 실패했어요. 페이지를 새로고침하고 다시 시도해주세요.",
+        invalid_user_type: "로그인 처리 중 문제가 생겼어요. 다시 시도해주세요.",
+        network_error: "네트워크 연결에 문제가 있어요. 인터넷 연결을 확인해주세요.",
+        unknown: "알 수 없는 오류가 발생했어요. 다시 시도해주세요.",
       };
       setError(errorMessages[errorParam] || "로그인에 실패했어요. 다시 시도해주세요.");
     }
