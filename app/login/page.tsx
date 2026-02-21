@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { initKakao, loginWithKakao, isLoggedIn as isKakaoLoggedIn } from "@/app/lib/auth";
-import { loginWithNaver, isNaverLoggedIn } from "@/app/lib/auth";
+import { loginWithNaver, isNaverLoggedIn, clearNaverCache } from "@/app/lib/auth";
 import { SwipeBack } from "@/app/components/common";
 
 function LoginContent() {
@@ -71,8 +71,21 @@ function LoginContent() {
     loginWithKakao();
   };
 
-  const handleNaverLogin = () => {
+  const handleNaverLogin = async () => {
+    // 개발 환경에서는 자동으로 캐시 삭제
+    if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+      await clearNaverCache();
+      console.log("✅ 네이버 로그인 캐시 삭제됨 (개발 환경)");
+      // 캐시 삭제 후 잠시 대기 (Firebase Auth 로그아웃 완료 대기)
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     loginWithNaver();
+  };
+
+  const handleClearCache = async () => {
+    await clearNaverCache();
+    setError(null);
+    alert("캐시가 삭제되었습니다. 다시 로그인해주세요.");
   };
 
   if (isLoading) {
@@ -100,8 +113,19 @@ function LoginContent() {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center">
-              {error}
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              <p className="text-center mb-2">{error}</p>
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    setError(null);
+                    router.replace("/login");
+                  }}
+                  className="text-xs text-red-600 hover:text-red-800 underline"
+                >
+                  다시 시도
+                </button>
+              </div>
             </div>
           )}
 
@@ -145,6 +169,16 @@ function LoginContent() {
             로그인하면 내 사주 정보와 큐피드 화살이<br />
             안전하게 저장돼요
           </p>
+
+          {/* 개발 환경: 캐시 삭제 버튼 */}
+          {typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && (
+            <button
+              onClick={handleClearCache}
+              className="mt-4 w-full py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors border border-gray-200 rounded-lg bg-white"
+            >
+              🔄 캐시 삭제 (개발용)
+            </button>
+          )}
 
           {/* 둘러보기 */}
           <button

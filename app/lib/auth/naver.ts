@@ -114,22 +114,65 @@ export function logoutNaver(): void {
 /**
  * 네이버 로그인 캐시 완전 삭제 (다른 계정으로 로그인하기 위해)
  */
-export function clearNaverCache(): void {
+export async function clearNaverCache(): Promise<void> {
   if (typeof window === "undefined") return;
   
-  // localStorage 삭제
-  localStorage.removeItem(NAVER_USER_KEY);
-  localStorage.removeItem(NAVER_ACCESS_TOKEN_KEY);
-  
-  // sessionStorage 삭제
-  sessionStorage.removeItem("naver_oauth_state");
-  
-  // 쿠키 삭제
-  document.cookie = "naver_oauth_state=; path=/; max-age=0";
-  document.cookie = "oauth_user=; path=/; max-age=0";
-  document.cookie = "oauth_token=; path=/; max-age=0";
-  
-  console.log("✅ 네이버 로그인 캐시가 모두 삭제되었습니다.");
+  try {
+    // Firebase Auth 로그아웃 (비동기)
+    try {
+      const { auth } = await import("@/app/lib/firebase/config");
+      const { signOut } = await import("firebase/auth");
+      if (auth.currentUser) {
+        await signOut(auth);
+        console.log("✅ Firebase Auth 로그아웃 완료");
+      }
+    } catch (firebaseError) {
+      console.warn("Firebase Auth 로그아웃 실패 (무시 가능):", firebaseError);
+    }
+    
+    // localStorage 삭제
+    localStorage.removeItem(NAVER_USER_KEY);
+    localStorage.removeItem(NAVER_ACCESS_TOKEN_KEY);
+    localStorage.removeItem("loginRedirect");
+    
+    // sessionStorage 삭제
+    sessionStorage.removeItem("naver_oauth_state");
+    sessionStorage.removeItem("session_id");
+    
+    // 쿠키 삭제 (모든 가능한 경로와 도메인 조합으로 삭제)
+    const cookiesToDelete = [
+      "naver_oauth_state",
+      "oauth_user",
+      "oauth_token",
+    ];
+    
+    cookiesToDelete.forEach(cookieName => {
+      // 현재 경로로 삭제
+      document.cookie = `${cookieName}=; path=/; max-age=0`;
+      document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      // 루트 경로로 삭제
+      document.cookie = `${cookieName}=; path=/; domain=${window.location.hostname}; max-age=0`;
+      document.cookie = `${cookieName}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      // localhost 특별 처리
+      if (window.location.hostname === "localhost") {
+        document.cookie = `${cookieName}=; path=/; domain=localhost; max-age=0`;
+        document.cookie = `${cookieName}=; path=/; domain=.localhost; max-age=0`;
+      }
+    });
+    
+    console.log("✅ 네이버 로그인 캐시가 모두 삭제되었습니다.", {
+      localStorage: {
+        naverUser: localStorage.getItem(NAVER_USER_KEY),
+        naverToken: localStorage.getItem(NAVER_ACCESS_TOKEN_KEY),
+      },
+      sessionStorage: {
+        state: sessionStorage.getItem("naver_oauth_state"),
+      },
+      cookies: document.cookie,
+    });
+  } catch (error) {
+    console.error("캐시 삭제 중 오류:", error);
+  }
 }
 
 /**

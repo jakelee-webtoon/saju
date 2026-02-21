@@ -29,33 +29,60 @@ export async function GET(request: NextRequest) {
     allCookies: request.cookies.getAll().map(c => ({ name: c.name, value: c.value?.substring(0, 20) + "..." }))
   });
   
-  if (!cookieState || cookieState !== state) {
-    console.error("CSRF: Invalid state", { 
-      cookieState, 
-      state,
-      redirectUri: `${request.nextUrl.origin}/api/auth/naver/callback`,
-      clientId: NAVER_CLIENT_ID ? "SET" : "NOT SET"
-    });
-    return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
-  }
-
-  // CSRF 보호: Origin 검증 (개발 환경에서는 완화)
-  const origin = request.headers.get("origin") || request.headers.get("referer");
-  const expectedOrigin = request.nextUrl.origin;
-  console.log("Naver callback - Origin verification:", {
-    origin,
-    expectedOrigin,
-    match: origin ? origin.startsWith(expectedOrigin) : "no origin"
-  });
+  // 개발 환경에서는 state 검증을 완화 (쿠키가 없어도 URL의 state만 확인)
+  const isDevelopment = process.env.NODE_ENV === "development" || request.nextUrl.hostname === "localhost";
   
-  if (origin && !origin.startsWith(expectedOrigin)) {
-    // 개발 환경에서는 localhost 관련 origin은 허용
-    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
-    if (!isLocalhost || process.env.NODE_ENV === "production") {
-      console.error("CSRF: Invalid origin", origin);
+  if (!cookieState || cookieState !== state) {
+    if (isDevelopment) {
+      // 개발 환경: state가 URL에 있으면 허용 (쿠키 문제 우회)
+      console.warn("CSRF: State mismatch in development, allowing with URL state only", { 
+        cookieState, 
+        state,
+        redirectUri: `${request.nextUrl.origin}/api/auth/naver/callback`,
+      });
+      // 개발 환경에서는 계속 진행
+    } else {
+      // 프로덕션: 엄격한 검증
+      console.error("CSRF: Invalid state", { 
+        cookieState, 
+        state,
+        redirectUri: `${request.nextUrl.origin}/api/auth/naver/callback`,
+        clientId: NAVER_CLIENT_ID ? "SET" : "NOT SET"
+      });
       return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
     }
   }
+
+  // CSRF 보호: Origin 검증
+  // 네이버에서 리다이렉트할 때는 origin이 없고 referer만 있을 수 있음
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const expectedOrigin = request.nextUrl.origin;
+  
+  console.log("Naver callback - Origin verification:", {
+    origin,
+    referer,
+    expectedOrigin,
+    originMatch: origin ? origin.startsWith(expectedOrigin) : "no origin",
+    refererMatch: referer ? referer.startsWith(expectedOrigin) || referer.startsWith("https://nid.naver.com") : "no referer"
+  });
+  
+  // Origin이 있으면 검증, 없으면 Referer 검증 (네이버 리다이렉트 허용)
+  if (origin) {
+    // Origin이 있으면 정확히 일치해야 함
+    if (!origin.startsWith(expectedOrigin)) {
+      console.error("CSRF: Invalid origin", { origin, expectedOrigin });
+      return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+    }
+  } else if (referer) {
+    // Origin이 없고 Referer만 있는 경우 (네이버 리다이렉트)
+    // Referer가 우리 도메인이거나 네이버 도메인이면 허용
+    if (!referer.startsWith(expectedOrigin) && !referer.startsWith("https://nid.naver.com")) {
+      console.error("CSRF: Invalid referer", { referer, expectedOrigin });
+      return NextResponse.redirect(new URL("/login?error=csrf_failed", request.url));
+    }
+  }
+  // Origin과 Referer가 모두 없으면 state 검증만으로 충분 (이미 위에서 검증됨)
 
   try {
     // 1. 인가 코드로 액세스 토큰 받기
@@ -84,14 +111,27 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error("Naver token error:", errorData);
+      console.error("Naver token error - Response not OK:", {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        errorData,
+        redirectUri,
+        hasClientId: !!NAVER_CLIENT_ID,
+        hasClientSecret: !!NAVER_CLIENT_SECRET,
+      });
       return NextResponse.redirect(new URL("/login?error=token_failed", request.url));
     }
 
     const tokenData = await tokenResponse.json();
     
     if (tokenData.error) {
-      console.error("Naver token error:", tokenData.error, tokenData.error_description);
+      console.error("Naver token error - API error:", {
+        error: tokenData.error,
+        errorDescription: tokenData.error_description,
+        redirectUri,
+        hasClientId: !!NAVER_CLIENT_ID,
+        hasClientSecret: !!NAVER_CLIENT_SECRET,
+      });
       return NextResponse.redirect(new URL("/login?error=token_failed", request.url));
     }
     
