@@ -9,7 +9,7 @@ import { type MbtiType, calculateScore } from "@/app/lib/match/mbti";
 import { generateMatchTexts, generateBirthMatchTexts, type MatchTexts, type BirthMatchTexts } from "@/app/lib/match/texts";
 import { type MatchResult } from "@/app/lib/match/mbti";
 import { calculateBirthMatch, type BirthMatchResult } from "@/app/lib/match/birth";
-import { saveMatchHistory, savePartnerInfo, getPartners } from "@/app/lib/firebase/userService";
+import { saveMatchHistory, savePartnerInfo, getPartners, getUserData } from "@/app/lib/firebase/userService";
 import { getKakaoUser, getNaverUser } from "@/app/lib/auth";
 import { BottomNav, type TabId, SwipeBack } from "@/app/components/common";
 import { getCurrentPartner, syncPartnersFromFirestore } from "@/app/lib/cupid/partnersStorage";
@@ -38,21 +38,15 @@ interface SavedMatchData {
   savedAt: string;
 }
 
-// 기본 생년월일 (앱의 defaultFormData와 동일: 1990-8-20)
-const DEFAULT_MY_BIRTH = {
-  year: 1990,
-  month: 8,
-  day: 20,
-};
-
 // 사주 기반 MBTI 추정 (사주 원소를 기반으로 가상의 MBTI 생성)
-// 기본값 사용 (앱의 defaultFormData와 동일: 1990-8-20)
-function getSajuBasedMbti(): MbtiType {
-  // 기본 사주 데이터 (항상 존재)
-  const year = 1990;
-  const month = 8;
-  const day = 20;
-  const hour = 9;
+function getSajuBasedMbti(birthInfo?: { year: number; month: number; day: number; hour?: number }): MbtiType | null {
+  if (!birthInfo) return null;
+  
+  // 사용자 생년월일 데이터 사용
+  const year = birthInfo.year;
+  const month = birthInfo.month;
+  const day = birthInfo.day;
+  const hour = birthInfo.hour ?? 9;
   
   // 간단한 규칙 기반 추정 (실제 사주 로직과 연결 가능)
   const seed = year + month * 100 + day * 10 + hour;
@@ -81,8 +75,11 @@ export default function MatchPage() {
   const [includeTime, setIncludeTime] = useState(false);
   const [currentPartner, setCurrentPartner] = useState<{ name: string; mbti?: string; saju?: any } | null>(null);
   
-  // 내 사주 기반 MBTI (자동 계산 - 항상 데이터 있음)
-  const [myMbti] = useState<MbtiType>(getSajuBasedMbti());
+  // 사용자 생년월일 정보
+  const [myBirthInfo, setMyBirthInfo] = useState<{ year: number; month: number; day: number; hour?: number } | null>(null);
+  
+  // 내 사주 기반 MBTI (사용자 생년월일이 있을 때만 계산)
+  const [myMbti, setMyMbti] = useState<MbtiType | null>(null);
   
   // MBTI 결과
   const [result, setResult] = useState<MatchResult | null>(null);
@@ -91,6 +88,29 @@ export default function MatchPage() {
   // 생년월일 결과
   const [birthResult, setBirthResult] = useState<BirthMatchResult | null>(null);
   const [birthTexts, setBirthTexts] = useState<BirthMatchTexts | null>(null);
+
+  // 사용자 생년월일 정보 로드
+  useEffect(() => {
+    const loadUserBirthInfo = async () => {
+      const userId = getUserId();
+      if (!userId) return;
+      
+      const userData = await getUserData(userId);
+      if (userData?.birthInfo) {
+        const birthInfo = {
+          year: userData.birthInfo.year,
+          month: userData.birthInfo.month,
+          day: userData.birthInfo.day,
+          hour: userData.birthInfo.hour,
+        };
+        setMyBirthInfo(birthInfo);
+        const mbti = getSajuBasedMbti(birthInfo);
+        if (mbti) setMyMbti(mbti);
+      }
+    };
+    
+    loadUserBirthInfo();
+  }, []);
 
   // 상대 관리에서 저장한 현재 상대 정보 불러오기
   useEffect(() => {
@@ -151,6 +171,11 @@ export default function MatchPage() {
       setInputType("mbti");
       setTheirMbti(currentPartner.mbti as MbtiType);
       
+      if (!myMbti) {
+        alert("궁합 계산을 위해서는 먼저 생년월일을 입력해주세요.");
+        return;
+      }
+      
       const matchResult = calculateScore(myMbti, currentPartner.mbti as MbtiType);
       const matchTexts = generateMatchTexts(matchResult, myMbti, currentPartner.mbti as MbtiType);
       
@@ -179,10 +204,15 @@ export default function MatchPage() {
         ? currentPartner.saju.birthHour
         : undefined;
       
+      if (!myBirthInfo) {
+        alert("궁합 계산을 위해서는 먼저 생년월일을 입력해주세요.");
+        return;
+      }
+      
       const matchResult = calculateBirthMatch(
-        DEFAULT_MY_BIRTH.year, DEFAULT_MY_BIRTH.month, DEFAULT_MY_BIRTH.day,
+        myBirthInfo.year, myBirthInfo.month, myBirthInfo.day,
         theirYear, theirMonth, theirDay,
-        undefined, theirHour
+        myBirthInfo.hour, theirHour
       );
       const matchTexts = generateBirthMatchTexts(matchResult);
       
@@ -213,6 +243,11 @@ export default function MatchPage() {
     const userId = getUserId();
     
     if (inputType === "mbti" && theirMbti) {
+      if (!myMbti) {
+        alert("궁합 계산을 위해서는 먼저 생년월일을 입력해주세요.");
+        return;
+      }
+      
       const matchResult = calculateScore(myMbti, theirMbti);
       const matchTexts = generateMatchTexts(matchResult, myMbti, theirMbti);
       
@@ -248,10 +283,15 @@ export default function MatchPage() {
       const theirDay = parseInt(birthDay);
       const theirHour = includeTime && birthHour ? parseInt(birthHour) : undefined;
       
+      if (!myBirthInfo) {
+        alert("궁합 계산을 위해서는 먼저 생년월일을 입력해주세요.");
+        return;
+      }
+      
       const matchResult = calculateBirthMatch(
-        DEFAULT_MY_BIRTH.year, DEFAULT_MY_BIRTH.month, DEFAULT_MY_BIRTH.day,
+        myBirthInfo.year, myBirthInfo.month, myBirthInfo.day,
         theirYear, theirMonth, theirDay,
-        undefined, theirHour
+        myBirthInfo.hour, theirHour
       );
       const matchTexts = generateBirthMatchTexts(matchResult);
       
@@ -365,7 +405,7 @@ export default function MatchPage() {
 
             <BirthMatchResultCard
               nickname={nickname}
-              myBirth={`${DEFAULT_MY_BIRTH.year}.${DEFAULT_MY_BIRTH.month}.${DEFAULT_MY_BIRTH.day}`}
+              myBirth={myBirthInfo ? `${myBirthInfo.year}.${myBirthInfo.month}.${myBirthInfo.day}` : "미입력"}
               theirBirth={`${birthYear}.${birthMonth}.${birthDay}${includeTime && birthHour ? ` ${birthHour}시` : ""}`}
               result={birthResult}
               texts={birthTexts}

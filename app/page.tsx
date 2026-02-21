@@ -66,9 +66,9 @@ const CharacterReveal = dynamic(
 const defaultFormData: FormData = {
   name: "",
   calendarType: "양력",
-  year: "1990",
-  month: "8",
-  day: "20",
+  year: "",
+  month: "",
+  day: "",
   hour: "",
   minute: "",
   hasTime: false,
