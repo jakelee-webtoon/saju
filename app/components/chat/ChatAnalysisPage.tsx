@@ -1191,39 +1191,70 @@ export default function ChatAnalysisPage({
 
               {/* ② 호감도 분석 */}
               <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <span>📊</span>
-                    <span>호감도 분석</span>
-                  </h2>
-                  <span className="text-2xl font-black text-indigo-600">
-                    {analysisResult.affectionScore}
-                  </span>
-                </div>
-                <div className="mb-4">
-                  <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                  <span>📊</span>
+                  <span>호감도 분석</span>
+                </h2>
+                
+                {/* 점수 카드 */}
+                <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-5 mb-4 border-2 border-indigo-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-gray-700">현재 호감도</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-indigo-600">
+                        {analysisResult.affectionScore}
+                      </span>
+                      <span className="text-lg text-gray-500 font-medium">점</span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-full h-3 bg-white rounded-full overflow-hidden mb-3 shadow-inner">
                     <div
                       className={`h-full bg-gradient-to-r ${getScoreColor(analysisResult.affectionScore)} transition-all duration-500`}
                       style={{ width: `${analysisResult.affectionScore}%` }}
                     />
                   </div>
-                  <p className="mt-2 text-xs text-gray-600 text-center mb-2">
-                    {getScoreLabel(analysisResult.affectionScore)}
-                  </p>
-                  {analysisResult.affectionScoreReason && (
-                    <p className="text-xs text-gray-600 text-center mb-1 px-2">
+                  
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-indigo-700 mb-1">
+                      {getScoreLabel(analysisResult.affectionScore)}
+                    </p>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {getScoreMetaphor(analysisResult.affectionScore)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 점수 근거 카드 */}
+                {analysisResult.affectionScoreReason && (
+                  <div className="rounded-xl bg-gray-50 p-4 mb-4 border border-gray-200">
+                    <h3 className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                      점수 산정 근거
+                    </h3>
+                    <p className="text-sm text-gray-800 leading-relaxed">
                       {analysisResult.affectionScoreReason}
                     </p>
-                  )}
-                  <p className="text-sm text-gray-700 font-medium text-center">
-                    {getScoreMetaphor(analysisResult.affectionScore)}
-                  </p>
-                </div>
-                <div className="space-y-2">
+                  </div>
+                )}
+
+                {/* 구체적 분석 카드들 */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                    구체적 행동 패턴 분석
+                  </h3>
                   {analysisResult.affectionReasons.map((reason, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5">•</span>
-                      <span>{reason}</span>
+                    <div 
+                      key={index} 
+                      className="rounded-lg bg-white p-4 border-l-4 border-indigo-400 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span className="text-sm font-bold text-indigo-600">{index + 1}</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-0.5">
+                          {reason}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1236,14 +1267,31 @@ export default function ChatAnalysisPage({
                     <span>⏱️</span>
                     <span>답장 패턴 상세</span>
                   </h2>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {getReplyPattern().map((pattern, index) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-gray-700">{pattern.label}</span>
-                          <span className="text-sm font-bold text-indigo-600">{pattern.value}</span>
+                      <div 
+                        key={index} 
+                        className="rounded-xl bg-gradient-to-br from-white to-gray-50 p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                              <span className="text-sm">
+                                {index === 0 && "⚡"}
+                                {index === 1 && "💬"}
+                                {index === 2 && "💫"}
+                                {index === 3 && "🎯"}
+                              </span>
+                            </div>
+                            <span className="text-sm font-semibold text-gray-700">
+                              {pattern.label}
+                            </span>
+                          </div>
+                          <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-xs font-bold">
+                            {pattern.value}
+                          </span>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-sm text-gray-700 leading-relaxed">
                           {pattern.description}
                         </p>
                       </div>
@@ -1261,33 +1309,63 @@ export default function ChatAnalysisPage({
                 <div className="space-y-3">
                   {/* 신호 1: 호감도 근거 중 첫 번째 */}
                   {analysisResult.affectionReasons.length > 0 && (
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{analysisResult.affectionReasons[0]}</span>
+                    <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-400 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">1</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-1">
+                          {analysisResult.affectionReasons[0]}
+                        </p>
+                      </div>
                     </div>
                   )}
                   {/* 신호 2: 호감도 근거 중 두 번째 또는 감정 흐름 요약 */}
                   {analysisResult.affectionReasons.length > 1 ? (
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{analysisResult.affectionReasons[1]}</span>
+                    <div className="rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-l-4 border-purple-400 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">2</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-1">
+                          {analysisResult.affectionReasons[1]}
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{analysisResult.emotionFlow.split('.').slice(0, 2).join('.')}</span>
+                    <div className="rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-l-4 border-purple-400 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">2</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-1">
+                          {analysisResult.emotionFlow.split('.').slice(0, 2).join('.')}
+                        </p>
+                      </div>
                     </div>
                   )}
                   {/* 신호 3: 감정 흐름 또는 호감도 근거 */}
                   {analysisResult.affectionReasons.length > 2 ? (
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{analysisResult.affectionReasons[2]}</span>
+                    <div className="rounded-xl bg-gradient-to-r from-green-50 to-teal-50 p-4 border-l-4 border-green-400 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">3</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-1">
+                          {analysisResult.affectionReasons[2]}
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{analysisResult.emotionFlow.split('.').slice(0, 1).join('.')}</span>
+                    <div className="rounded-xl bg-gradient-to-r from-green-50 to-teal-50 p-4 border-l-4 border-green-400 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-md">
+                          <span className="text-white text-sm font-bold">3</span>
+                        </div>
+                        <p className="flex-1 text-sm text-gray-800 leading-relaxed pt-1">
+                          {analysisResult.emotionFlow.split('.').slice(0, 1).join('.')}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
