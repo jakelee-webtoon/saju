@@ -357,7 +357,7 @@ export default function MatchPage() {
   };
 
   // MBTI 결과 화면
-  if (view === "result" && result && texts && inputType === "mbti") {
+  if (view === "result" && result && texts && inputType === "mbti" && myMbti) {
     return (
       <SwipeBack onBack={() => router.push("/")}>
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-24">
