@@ -12,10 +12,18 @@ import type { Partner } from "@/app/lib/cupid/partnerTypes";
 interface AnalysisResult {
   emotionSummary: string;
   affectionScore: number;
+  affectionScoreReason?: string; // 점수 근거 (새로 추가)
   affectionReasons: string[];
   emotionFlow: string;
   riskSignals: string[];
   recommendedAction: string;
+  actionGuidelines?: string[]; // 행동 지침 (새로 추가)
+  replyPatternDetails?: {
+    averageReplySpeed: { value: string; description: string };
+    questionLead: { value: string; description: string };
+    emotionalDensity: { value: string; description: string };
+    mbtiInterpretation: { value: string; description: string } | null;
+  };
 }
 
 export default function ChatAnalysisPage({ 
@@ -43,7 +51,6 @@ export default function ChatAnalysisPage({
   const [unlockedTips, setUnlockedTips] = useState(false);
   const [unlockedForecast, setUnlockedForecast] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [currentPartner, setCurrentPartner] = useState<Partner | null>(null);
   const fileInputRef1 = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null);
@@ -102,7 +109,10 @@ export default function ChatAnalysisPage({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ chatText: chatText.trim() }),
+        body: JSON.stringify({ 
+          chatText: chatText.trim(),
+          partner_mbti: currentPartner?.mbti || undefined, // 상대방 MBTI 전달
+        }),
       });
 
       const data = await response.json();
@@ -211,149 +221,51 @@ export default function ChatAnalysisPage({
     return hour * 60 + minute;
   };
 
-  // 답장 패턴 분석 (실제 대화 텍스트 기반)
+  // 답장 패턴 분석 (LLM 응답 기반)
   const getReplyPattern = () => {
-    if (!chatText) {
-      return [
-        { label: "평균 답장 속도", value: "분석 불가", description: "대화 내용이 없어 분석할 수 없어요" },
-        { label: "시간대별 반응", value: "분석 불가", description: "대화 내용이 없어 분석할 수 없어요" },
-      ];
-    }
+    // LLM 응답에서 replyPatternDetails가 있으면 사용
+    if (analysisResult?.replyPatternDetails) {
+      const details = analysisResult.replyPatternDetails;
+      const patterns = [];
 
-    const lines = chatText.split("\n").filter(line => line.trim().length > 0);
-    const myMessages: Array<{ index: number; time: number | null; text: string }> = [];
-    const theirMessages: Array<{ index: number; time: number | null; text: string }> = [];
-    
-    // 각 줄을 분석하여 메시지와 시간 정보 추출
-    lines.forEach((line, index) => {
-      const trimmed = line.trim();
-      
-      // 시간 정보 추출 (예: "오전 10:05", "오후 2:30")
-      const timeMatch = trimmed.match(/(오전|오후)?\s*\d{1,2}:\d{2}/);
-      const timeStr = timeMatch ? timeMatch[0] : null;
-      const timeMinutes = timeStr ? parseTimeToMinutes(timeStr) : null;
-      
-      // 메시지 내용에서 시간 제거
-      const messageText = trimmed.replace(/(오전|오후)?\s*\d{1,2}:\d{2}/g, "").trim();
-      
-      if (messageText.startsWith("나:")) {
-        myMessages.push({ index, time: timeMinutes, text: messageText });
-      } else if (messageText.includes(":") && !messageText.startsWith("나:")) {
-        // "이름:" 형식인 경우 상대방 메시지로 인식
-        theirMessages.push({ index, time: timeMinutes, text: messageText });
-      }
-    });
-
-    // 상대방의 답장 속도 분석
-    let replySpeedAnalysis = "분석 불가";
-    let replySpeedDescription = "시간 정보가 없어 정확한 답장 속도를 분석할 수 없어요";
-    
-    if (theirMessages.length > 0 && myMessages.length > 0) {
-      // 시간 정보가 있는 경우: 실제 시간 차이 계산
-      const replyTimes: number[] = []; // 분 단위 답장 시간
-      
-      for (let i = 0; i < myMessages.length; i++) {
-        const myMsg = myMessages[i];
-        if (!myMsg.time) continue;
-        
-        const myMsgTime = myMsg.time; // 타입 가드
-        
-        // 다음 상대방 메시지 찾기
-        const nextTheirMsg = theirMessages.find(msg => 
-          msg.index > myMsg.index && msg.time !== null && msg.time >= myMsgTime
-        );
-        
-        if (nextTheirMsg && nextTheirMsg.time !== null) {
-          let timeDiff = nextTheirMsg.time - myMsgTime;
-          // 자정을 넘어간 경우 처리
-          if (timeDiff < 0) {
-            timeDiff += 24 * 60; // 다음 날로 간주
-          }
-          replyTimes.push(timeDiff);
-        }
+      if (details.averageReplySpeed) {
+        patterns.push({
+          label: "평균 답장 속도",
+          value: details.averageReplySpeed.value,
+          description: details.averageReplySpeed.description
+        });
       }
 
-      if (replyTimes.length > 0) {
-        // 평균 답장 시간 계산
-        const avgMinutes = replyTimes.reduce((a, b) => a + b, 0) / replyTimes.length;
-        
-        if (avgMinutes <= 5) {
-          replySpeedAnalysis = "매우 빠름 (5분 이내)";
-          replySpeedDescription = `상대방이 평균 ${Math.round(avgMinutes)}분 내에 답장하는 경향이 있어 보여요. 대화에 매우 적극적인 모습이 관찰돼요`;
-        } else if (avgMinutes <= 30) {
-          replySpeedAnalysis = "빠른 편 (30분 이내)";
-          replySpeedDescription = `상대방이 평균 ${Math.round(avgMinutes)}분 내에 답장하는 경향이 있어 보여요. 비교적 빠르게 반응하는 편이에요`;
-        } else if (avgMinutes <= 60) {
-          replySpeedAnalysis = "보통 (1시간 이내)";
-          replySpeedDescription = `상대방이 평균 ${Math.round(avgMinutes)}분 내에 답장하는 경향이 있어 보여요. 답장 속도는 보통 수준이에요`;
-        } else if (avgMinutes <= 180) {
-          replySpeedAnalysis = "느린 편 (3시간 이내)";
-          replySpeedDescription = `상대방이 평균 ${Math.round(avgMinutes)}분 내에 답장하는 경향이 있어 보여요. 답장하는 데 시간이 걸리는 편이에요`;
-        } else {
-          replySpeedAnalysis = "매우 느림 (3시간 이상)";
-          replySpeedDescription = `상대방이 평균 ${Math.round(avgMinutes)}분 내에 답장하는 경향이 있어 보여요. 답장이 상당히 늦는 편이에요`;
-        }
-      } else {
-        // 시간 정보가 없는 경우: 메시지 순서로 추정
-        let quickReplies = 0;
-        let slowReplies = 0;
-        
-        for (let i = 0; i < myMessages.length; i++) {
-          const myMsgIndex = myMessages[i].index;
-          const nextTheirMsg = theirMessages.find(msg => msg.index > myMsgIndex);
-          
-          if (nextTheirMsg) {
-            const gap = nextTheirMsg.index - myMsgIndex;
-            if (gap <= 2) {
-              quickReplies++;
-            } else if (gap > 3) {
-              slowReplies++;
-            }
-          }
-        }
-
-        const totalReplies = quickReplies + slowReplies;
-        if (totalReplies > 0) {
-          const quickRatio = quickReplies / totalReplies;
-          
-          if (quickRatio >= 0.7) {
-            replySpeedAnalysis = "빠른 편";
-            replySpeedDescription = "상대방이 보통 빠르게 답장하는 경향이 있어 보여요. 대화에 적극적인 모습이 관찰돼요";
-          } else if (quickRatio >= 0.5) {
-            replySpeedAnalysis = "보통";
-            replySpeedDescription = "상대방이 비교적 빠르게 답장하는 경향이 있어 보여요";
-          } else {
-            replySpeedAnalysis = "느린 편";
-            replySpeedDescription = "상대방이 답장하는 데 시간이 걸리는 경향이 있어 보여요";
-          }
-        }
+      if (details.questionLead) {
+        patterns.push({
+          label: "질문 주도권",
+          value: details.questionLead.value,
+          description: details.questionLead.description
+        });
       }
+
+      if (details.emotionalDensity) {
+        patterns.push({
+          label: "감정 밀도",
+          value: details.emotionalDensity.value,
+          description: details.emotionalDensity.description
+        });
+      }
+
+      if (details.mbtiInterpretation) {
+        patterns.push({
+          label: "답장 패턴 해석",
+          value: details.mbtiInterpretation.value,
+          description: details.mbtiInterpretation.description
+        });
+      }
+
+      return patterns;
     }
 
-    // 시간대별 반응 분석
-    let timePatternAnalysis = "패턴 불명확";
-    let timePatternDescription = "시간대별 반응 패턴을 명확히 파악하기 어려워 보여요";
-    
-    // 상대방 메시지가 많은 경우 활발한 것으로 간주
-    if (theirMessages.length > myMessages.length * 0.8) {
-      timePatternAnalysis = "활발한 반응";
-      timePatternDescription = "상대방이 대화에 적극적으로 반응하는 모습이 관찰돼요";
-    } else if (theirMessages.length < myMessages.length * 0.5) {
-      timePatternAnalysis = "소극적 반응";
-      timePatternDescription = "상대방의 반응이 상대적으로 적은 편으로 보여요";
-    }
-
+    // 기본값 (대화 내용이 없는 경우)
     return [
-      { 
-        label: "평균 답장 속도", 
-        value: replySpeedAnalysis, 
-        description: replySpeedDescription 
-      },
-      { 
-        label: "시간대별 반응", 
-        value: timePatternAnalysis, 
-        description: timePatternDescription 
-      },
+      { label: "평균 답장 속도", value: "분석 불가", description: "대화 내용이 없어 분석할 수 없어요" },
     ];
   };
 
@@ -1257,7 +1169,7 @@ export default function ChatAnalysisPage({
                 ← 다른 대화 분석하기
               </button>
 
-              {/* ① 이 대화의 한 줄 결론 */}
+              {/* ① 이 대화의 핵심 요약 */}
               <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 border border-indigo-400 shadow-xl">
                 <h2 className="text-base font-semibold text-white/90 mb-4">
                   이 대화의 핵심 요약
@@ -1277,7 +1189,70 @@ export default function ChatAnalysisPage({
                 })()}
               </div>
 
-              {/* ② 상대 마음에서 읽히는 3가지 신호 */}
+              {/* ② 호감도 분석 */}
+              <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span>📊</span>
+                    <span>호감도 분석</span>
+                  </h2>
+                  <span className="text-2xl font-black text-indigo-600">
+                    {analysisResult.affectionScore}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-gradient-to-r ${getScoreColor(analysisResult.affectionScore)} transition-all duration-500`}
+                      style={{ width: `${analysisResult.affectionScore}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-600 text-center mb-2">
+                    {getScoreLabel(analysisResult.affectionScore)}
+                  </p>
+                  {analysisResult.affectionScoreReason && (
+                    <p className="text-xs text-gray-600 text-center mb-1 px-2">
+                      {analysisResult.affectionScoreReason}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-700 font-medium text-center">
+                    {getScoreMetaphor(analysisResult.affectionScore)}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {analysisResult.affectionReasons.map((reason, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-indigo-500 mt-0.5">•</span>
+                      <span>{reason}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ③ 답장 패턴 상세 */}
+              {getReplyPattern().length > 0 && (
+                <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <span>⏱️</span>
+                    <span>답장 패턴 상세</span>
+                  </h2>
+                  <div className="space-y-4">
+                    {getReplyPattern().map((pattern, index) => (
+                      <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">{pattern.label}</span>
+                          <span className="text-sm font-bold text-indigo-600">{pattern.value}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {pattern.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ④ 상대 마음에서 읽히는 3가지 신호 */}
               <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <span>🔍</span>
@@ -1303,24 +1278,22 @@ export default function ChatAnalysisPage({
                       <span>{analysisResult.emotionFlow.split('.').slice(0, 2).join('.')}</span>
                     </div>
                   )}
-                  {/* 신호 3: 답장 리듬 또는 감정 흐름 */}
-                  {getReplyPattern().length > 0 ? (
+                  {/* 신호 3: 감정 흐름 또는 호감도 근거 */}
+                  {analysisResult.affectionReasons.length > 2 ? (
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                      <span>{getReplyPattern()[0].description}</span>
+                      <span>{analysisResult.affectionReasons[2]}</span>
                     </div>
                   ) : (
-                    analysisResult.affectionReasons.length > 2 && (
-                      <div className="flex items-start gap-2 text-sm text-gray-700">
-                        <span className="text-indigo-500 mt-0.5 font-bold">•</span>
-                        <span>{analysisResult.affectionReasons[2]}</span>
-                      </div>
-                    )
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-indigo-500 mt-0.5 font-bold">•</span>
+                      <span>{analysisResult.emotionFlow.split('.').slice(0, 1).join('.')}</span>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* ③ 지금 이 타이밍에서 중요한 선택 */}
+              {/* ⑤ 지금 이 타이밍에서 중요한 선택 */}
               <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <span>⚡</span>
@@ -1328,29 +1301,29 @@ export default function ChatAnalysisPage({
                 </h2>
                 
                 <div className="space-y-4">
-                  {/* 좋은 말 */}
+                  {/* 지금은 이게 좋아요 (행동 지침) */}
                   <div>
                     <h3 className="text-sm font-bold text-gray-900 mb-2">지금은 이게 좋아요</h3>
                     <div className="space-y-2">
-                      {getGoodAndBadPhrases().goodPhrases.slice(0, 2).map((phrase, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                          <span className="text-green-600 mt-0.5">✔</span>
-                          <span>{phrase}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 피할 말 */}
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 mb-2">이건 피하는 게 좋아요</h3>
-                    <div className="space-y-2">
-                      {getGoodAndBadPhrases().badPhrases.slice(0, 2).map((phrase, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                          <span className="text-red-600 mt-0.5">✖</span>
-                          <span>{phrase}</span>
-                        </div>
-                      ))}
+                      {analysisResult.actionGuidelines && analysisResult.actionGuidelines.length > 0 ? (
+                        analysisResult.actionGuidelines.map((guideline, index) => (
+                          <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-green-600 mt-0.5">✔</span>
+                            <span>{guideline}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-green-600 mt-0.5">✔</span>
+                            <span>오늘 하루가 어떤지 등 가벼운 질문을 하는 게 좋아요</span>
+                          </div>
+                          <div className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-green-600 mt-0.5">✔</span>
+                            <span>상대방의 대화로부터 기분 좋은 감정을 느낄 수 있다고 말하는 게 좋아요</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1360,57 +1333,70 @@ export default function ChatAnalysisPage({
                       {analysisResult.recommendedAction}
                     </p>
                   </div>
+
+                  {/* 행동 선택 버튼들 */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 mb-4">
+                      각 선택지를 눌러보면 예상 결과를 확인할 수 있어요
+                    </p>
+                    <div className="space-y-3">
+                      {getActionChoices().map((choice) => (
+                        <button
+                          key={choice.id}
+                          onClick={() => setSelectedAction(choice.id)}
+                          className={`w-full p-3 rounded-xl text-left transition-all ${
+                            selectedAction === choice.id
+                              ? "bg-indigo-500 text-white shadow-md"
+                              : "bg-white text-gray-700 hover:bg-indigo-50 border border-gray-200"
+                          }`}
+                        >
+                          <span className="text-sm font-medium">
+                            {choice.id === "casual" && "편하게 이어가기"}
+                            {choice.id === "active" && "조금 더 다가가기"}
+                            {choice.id === "wait" && "기다리기"}
+                            {!["casual", "active", "wait"].includes(choice.id) && choice.text}
+                          </span>
+                          <span className="block text-xs mt-1 opacity-70">
+                            {choice.id === "casual" && "→ 안정 유지"}
+                            {choice.id === "active" && "→ 리스크 있지만 진전 가능"}
+                            {choice.id === "wait" && "→ 상대 주도권 존중"}
+                            {!["casual", "active", "wait"].includes(choice.id) && ""}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {selectedAction && (
+                      <div className="mt-4 p-4 bg-white rounded-lg border border-indigo-200">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {getActionChoices().find(c => c.id === selectedAction)?.result}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* ④ 그래서 오늘 뭐 하면 되는데? */}
-              <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 p-6 border border-indigo-200 shadow-lg">
-                <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span>🎯</span>
-                  <span>그래서 오늘 뭐 하면 되는데?</span>
+              {/* ⑥ 단기 관계 전망 */}
+              <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                  단기 관계 전망
                 </h2>
-                <p className="text-xs text-gray-600 mb-4">
-                  각 선택지를 눌러보면 예상 결과를 확인할 수 있어요
-                </p>
-                
-                <div className="space-y-3 mb-4">
-                  {getActionChoices().map((choice) => (
-                    <button
-                      key={choice.id}
-                      onClick={() => setSelectedAction(choice.id)}
-                      className={`w-full p-3 rounded-xl text-left transition-all ${
-                        selectedAction === choice.id
-                          ? "bg-indigo-500 text-white shadow-md"
-                          : "bg-white text-gray-700 hover:bg-indigo-50 border border-gray-200"
-                      }`}
-                    >
-                      <span className="text-sm font-medium">
-                        {choice.id === "casual" && "편하게 이어가기"}
-                        {choice.id === "active" && "조금 더 다가가기"}
-                        {choice.id === "wait" && "기다리기"}
-                        {!["casual", "active", "wait"].includes(choice.id) && choice.text}
-                      </span>
-                      <span className="block text-xs mt-1 opacity-70">
-                        {choice.id === "casual" && "→ 안정 유지"}
-                        {choice.id === "active" && "→ 리스크 있지만 진전 가능"}
-                        {choice.id === "wait" && "→ 상대 주도권 존중"}
-                        {!["casual", "active", "wait"].includes(choice.id) && ""}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {selectedAction && (
-                  <div className="mt-4 p-4 bg-white rounded-lg border border-indigo-200">
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {getActionChoices().find(c => c.id === selectedAction)?.result}
+                <div>
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                    {getShortTermForecast(analysisResult.affectionScore)}
+                  </p>
+                  <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <p className="text-xs text-gray-600">
+                      💡 1~3일 기준 감정 흐름 예측은 참고용이며, 실제 관계는 더 복잡할 수 있어요
                     </p>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* 답장 만들기 CTA */}
-              <div className="mt-6 mb-6">
+              {/* 하단 안내 */}
+              <div className="mt-6 space-y-3">
+                {/* 이 분석으로 답장 만들기 CTA */}
                 <div
                   onClick={() => router.push("/?tab=reply")}
                   className="rounded-2xl bg-gradient-to-r from-purple-50 to-pink-50 p-5 border-2 border-purple-200 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm"
@@ -1432,192 +1418,8 @@ export default function ChatAnalysisPage({
                     </span>
                   </div>
                 </div>
-              </div>
 
-              {/* 더 보기 버튼 */}
-              <button
-                onClick={() => setShowMoreDetails(!showMoreDetails)}
-                className="w-full py-3 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors border border-indigo-200 rounded-xl hover:bg-indigo-50"
-              >
-                {showMoreDetails ? "▲ 간단히 보기" : "▼ 더 자세히 보기"}
-              </button>
-
-              {/* 더 보기 섹션 */}
-              {showMoreDetails && (
-                <div className="space-y-4">
-                  {/* 호감도 점수 */}
-                  <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span>📊</span>
-                        <span>호감도 분석</span>
-                      </h2>
-                      <span className="text-2xl font-black text-indigo-600">
-                        {analysisResult.affectionScore}
-                      </span>
-                    </div>
-                    <div className="mb-4">
-                      <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full bg-gradient-to-r ${getScoreColor(analysisResult.affectionScore)} transition-all duration-500`}
-                          style={{ width: `${analysisResult.affectionScore}%` }}
-                        />
-                      </div>
-                      <p className="mt-2 text-xs text-gray-600 text-center mb-2">
-                        {getScoreLabel(analysisResult.affectionScore)}
-                      </p>
-                      <p className="text-sm text-gray-700 font-medium text-center">
-                        {getScoreMetaphor(analysisResult.affectionScore)}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {analysisResult.affectionReasons.map((reason, index) => (
-                        <div key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                          <span className="text-indigo-500 mt-0.5">•</span>
-                          <span>{reason}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 상대 감정 온도계 */}
-                  <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-red-50 p-6 border border-orange-200 shadow-lg">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <span>🌡️</span>
-                      <span>상대 감정 온도계</span>
-                    </h2>
-                    <div className="mb-4">
-                      <div className="w-full h-8 bg-gray-200 rounded-full overflow-hidden relative">
-                        <div
-                          className={`h-full bg-gradient-to-r ${getScoreColor(analysisResult.affectionScore)} transition-all duration-500`}
-                          style={{ width: `${analysisResult.affectionScore}%` }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-bold text-gray-700">
-                            {analysisResult.affectionScore}°C
-                          </span>
-                        </div>
-                      </div>
-                      <p className="mt-3 text-sm text-gray-700 font-medium text-center">
-                        {getScoreMetaphor(analysisResult.affectionScore)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 답장 패턴 상세 */}
-                  {getReplyPattern().length > 1 && (
-                    <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                      <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <span>⏱️</span>
-                        <span>답장 패턴 상세</span>
-                      </h2>
-                      <div className="space-y-4">
-                        {getReplyPattern().map((pattern, index) => (
-                          <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-700">{pattern.label}</span>
-                              <span className="text-sm font-bold text-indigo-600">{pattern.value}</span>
-                            </div>
-                            <p className="text-xs text-gray-600 mt-1">{pattern.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 위험 신호 상세 */}
-                  {analysisResult.riskSignals.length > 1 && (
-                    <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                      <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <span>⚠️</span>
-                        <span>위험 신호 상세</span>
-                      </h2>
-                      <div className="space-y-2">
-                        {analysisResult.riskSignals.slice(1).map((signal, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg"
-                          >
-                            <span className="text-red-500 mt-0.5">⚠️</span>
-                            <span className="text-sm text-red-700">{signal}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 피해야 할 말 */}
-                  <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                    <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <span>❌</span>
-                      <span>피해야 할 말</span>
-                    </h2>
-                    <div className="space-y-2">
-                      {getGoodAndBadPhrases().badPhrases.map((phrase, index) => (
-                        <div key={index} className="text-sm text-gray-700 bg-red-50 p-3 rounded-lg border border-red-200">
-                          "{phrase}"
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 단기 관계 전망 */}
-                  <div className="rounded-2xl bg-white/80 backdrop-blur p-6 border border-white/50 shadow-lg">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">
-                      단기 관계 전망
-                    </h2>
-                    <div>
-                      <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                        {getShortTermForecast(analysisResult.affectionScore)}
-                      </p>
-                      <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                        <p className="text-xs text-gray-600">
-                          💡 1~3일 기준 감정 흐름 예측은 참고용이며, 실제 관계는 더 복잡할 수 있어요
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 행동 선택 시뮬레이터 */}
-                  <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 p-6 border border-indigo-200 shadow-lg">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <span>🎮</span>
-                      <span>행동 선택 시뮬레이터</span>
-                    </h2>
-                    <p className="text-xs text-gray-600 mb-4">
-                      각 선택지를 눌러보면 예상 결과를 확인할 수 있어요 (참고용)
-                    </p>
-                    <div className="space-y-3 mb-4">
-                      {getActionChoices().map((choice) => (
-                        <button
-                          key={choice.id}
-                          onClick={() => setSelectedAction(choice.id)}
-                          className={`w-full p-3 rounded-xl text-left transition-all ${
-                            selectedAction === choice.id
-                              ? "bg-indigo-500 text-white shadow-md"
-                              : "bg-white text-gray-700 hover:bg-indigo-50 border border-gray-200"
-                          }`}
-                        >
-                          <span className="text-sm font-medium">{choice.text}</span>
-                        </button>
-                      ))}
-                    </div>
-                    {selectedAction && (
-                      <div className="mt-4 p-4 bg-white rounded-lg border border-indigo-200">
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {getActionChoices().find(c => c.id === selectedAction)?.result}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* 하단 안내 */}
-              <div className="mt-6 space-y-3">
-                <p className="text-center text-xs text-gray-400">
-                  ⚠️ 분석 결과는 참고용이며, 실제 관계는 더 복잡할 수 있어요
-                </p>
+                {/* 프라이버시 보호 */}
                 <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
                   <p className="text-xs text-blue-700 text-center leading-relaxed">
                     🔒 <strong>프라이버시 보호</strong><br/>
