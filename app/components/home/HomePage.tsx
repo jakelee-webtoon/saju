@@ -74,10 +74,23 @@ export default function HomePage({
         {/* 상대방과의 나의 대화분석 */}
         <div className="mb-4">
           <section
-            className="rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 p-5 border border-blue-200 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.99] shadow-sm"
+            className="relative rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 p-5 cursor-pointer transition-all duration-200 hover:shadow-lg active:scale-[0.99] shadow-sm overflow-hidden"
             onClick={handleChatClick}
           >
-            <div className="flex items-center justify-between gap-3">
+            {/* 무지개 테두리 애니메이션 */}
+            <div className="absolute inset-0 rounded-2xl opacity-75 animate-rainbow-border" 
+                 style={{
+                   background: 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000)',
+                   backgroundSize: '200% 200%',
+                   padding: '2px',
+                   WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                   WebkitMaskComposite: 'xor',
+                   maskComposite: 'exclude',
+                 }}
+            />
+            
+            {/* 컨텐츠 */}
+            <div className="relative z-10 flex items-center justify-between gap-3">
               <div className="flex-1">
                 <h3 className="text-base font-bold text-gray-900 mb-2 flex items-center gap-2">
                   <span>💬</span>

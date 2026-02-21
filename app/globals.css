@@ -228,3 +228,20 @@ nav[style*="bottom: 0"] {
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
+
+/* 무지개 테두리 애니메이션 */
+@keyframes rainbow-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-rainbow-border {
+  animation: rainbow-border 3s ease infinite;
+}
