@@ -345,7 +345,9 @@ function calculateEvidence(messages: Message[], slots: string[]): Record<string,
     // 이모지 빈도가 높은 메시지
     const emojiMessages = otherMessages
       .filter(m => {
-        const emojiCount = (m.text.match(/[😀-🙏🌀-🗿]/g) || []).length;
+        // 이모지 유니코드 범위: Emoticons, Symbols, Pictographs 등
+        const emojiPattern = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+        const emojiCount = (m.text.match(emojiPattern) || []).length;
         return emojiCount >= 2;
       })
       .slice(0, 1)
