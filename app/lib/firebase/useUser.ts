@@ -11,6 +11,8 @@ import {
   type UserData 
 } from "./userService";
 import { getKakaoUser, logout as logoutKakao, getNaverUser, logoutNaver } from "../auth";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "./config";
 
 interface UseUserReturn {
   user: UserData | null;
@@ -96,6 +98,23 @@ export function useUser(): UseUserReturn {
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  // 실시간 리스너 설정 (Firestore 변경 감지)
+  useEffect(() => {
+    if (!user?.oderId) return;
+
+    const userRef = doc(db, "users", user.oderId);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const userData = snapshot.data() as UserData;
+        setUser(userData);
+      }
+    }, (error) => {
+      console.error("Error listening to user updates:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user?.oderId]);
 
   // 로그인 (리다이렉트 방식이므로 여기선 로드만)
   const login = useCallback(async () => {
