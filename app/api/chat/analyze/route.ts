@@ -163,7 +163,7 @@ JSON만 응답하세요. 다른 설명은 필요 없습니다.`;
         },
         {
           maxRetries: 1,
-          baseDelayMs: 2000,
+          delay: 2000,
         }
       );
     } catch (retryError) {
