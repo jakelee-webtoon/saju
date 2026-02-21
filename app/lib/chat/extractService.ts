@@ -2,14 +2,13 @@
  * 서버 사이드 Extract 서비스
  */
 
-import { File } from "buffer";
 import type { ExtractResponse } from "./extractClient";
 
 /**
  * 이미지에서 대화 내용 추출
  */
 export async function extractFromImages(
-  images: File[],
+  images: globalThis.File[],
   locale: string,
   sessionId: string,
   identifier?: string
