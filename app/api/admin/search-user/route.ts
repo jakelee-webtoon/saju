@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb, adminAuth } from "@/app/lib/firebase/admin";
 import { isAdminOderId } from "@/app/lib/authz/admin";
+import type { Query } from "firebase-admin/firestore";
 
 /**
  * Admin용 사용자 검색 API
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const usersRef = adminDb.collection("users");
-    let query = usersRef;
+    let query: Query = usersRef;
 
     // 이메일로 검색
     if (email) {
