@@ -196,7 +196,10 @@ export function getKakaoUser(): KakaoUser | null {
 }
 
 /**
- * 로그인 여부 확인
+ * 로그인 여부 확인 (카카오 전용)
+ * 
+ * @deprecated 이 함수는 카카오만 체크합니다. 
+ * 카카오/네이버 모두 체크하려면 isAnyLoggedIn()을 사용하세요.
  */
 export function isLoggedIn(): boolean {
   return getKakaoUser() !== null;

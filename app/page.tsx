@@ -13,7 +13,7 @@ import {
   hasSeenCharacterReveal,
   markCharacterRevealSeen,
 } from "./lib/onboarding";
-import { getKakaoUser, getNaverUser, isLoggedIn } from "./lib/auth";
+import { getKakaoUser, getNaverUser, isAnyLoggedIn, getCurrentUserId } from "./lib/auth";
 import { getUserData, updateBirthInfo, type UserData } from "./lib/firebase";
 // 즉시 필요한 컴포넌트만 정적 import
 import HomePage from "./components/home/HomePage";
@@ -124,15 +124,10 @@ function ManseryeokPageContent() {
   // Firebase 사용자 데이터 로드 (카카오 + 네이버 모두 지원)
   const loadFirebaseUser = useCallback(async () => {
     console.log("🔍 loadFirebaseUser 시작");
-    if (isLoggedIn()) {
+    if (isAnyLoggedIn()) {
       console.log("✅ 로그인 상태 확인됨");
-      // 카카오 또는 네이버 사용자 ID 가져오기
-      const kakaoUser = getKakaoUser();
-      const naverUser = getNaverUser();
-      console.log("kakaoUser:", kakaoUser ? `있음 (${kakaoUser.id})` : "없음");
-      console.log("naverUser:", naverUser ? `있음 (${naverUser.id})` : "없음");
       
-      const userId = kakaoUser?.id || naverUser?.id;
+      const userId = getCurrentUserId();
       console.log("userId:", userId);
       
       if (userId) {
@@ -269,15 +264,10 @@ function ManseryeokPageContent() {
     
     setFormData(data);
     
-    if (isLoggedIn()) {
+    if (isAnyLoggedIn()) {
       console.log("✅ 로그인 상태 확인");
-      // 카카오 또는 네이버 사용자 ID 가져오기
-      const kakaoUser = getKakaoUser();
-      const naverUser = getNaverUser();
-      console.log("kakaoUser:", kakaoUser);
-      console.log("naverUser:", naverUser);
       
-      const userId = kakaoUser?.id || naverUser?.id;
+      const userId = getCurrentUserId();
       console.log("userId:", userId);
       
       if (userId) {
@@ -307,17 +297,24 @@ function ManseryeokPageContent() {
               hasCompletedOnboarding: true 
             } : null);
             console.log("✅ firebaseUser 상태 업데이트 완료");
+            
+            // 저장 성공 알림
+            alert("사주 정보가 저장되었습니다! ✅");
           } else {
             console.error("❌ updateBirthInfo가 false를 반환했습니다");
+            alert("저장에 실패했습니다. 다시 시도해주세요.");
           }
         } catch (error) {
           console.error("❌ updateBirthInfo 중 오류 발생:", error);
+          alert("저장 중 오류가 발생했습니다: " + (error as Error).message);
         }
       } else {
         console.error("❌ userId가 없습니다");
+        alert("사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
       }
     } else {
       console.log("⚠️ 로그인 상태가 아닙니다");
+      alert("로그인이 필요합니다.");
     }
     
     if (isFirstVisit && !hasSeenCharacterReveal()) {
