@@ -92,7 +92,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { imp_uid, merchant_uid, expected_amount } = body;
 
+    console.log("=== Payment Verification Request ===");
+    console.log("imp_uid:", imp_uid);
+    console.log("merchant_uid:", merchant_uid);
+    console.log("expected_amount:", expected_amount);
+    console.log("PORTONE_API_KEY set:", !!PORTONE_API_KEY);
+    console.log("PORTONE_API_SECRET set:", !!PORTONE_API_SECRET);
+
     if (!imp_uid || !merchant_uid || !expected_amount) {
+      console.log("Missing required parameters");
       return NextResponse.json(
         { success: false, message: "필수 파라미터가 누락되었습니다." },
         { status: 400 }
@@ -100,8 +108,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 테스트 모드 체크 (환경변수 없으면 테스트로 간주)
-    if (!PORTONE_API_KEY || !PORTONE_API_SECRET) {
-      console.log("PortOne API keys not set - running in test mode");
+    // 또는 imp_uid가 테스트 결제인 경우 (imp_로 시작하지만 test_ 포함)
+    const isTestMode = !PORTONE_API_KEY || !PORTONE_API_SECRET;
+    const isTestPayment = imp_uid.includes("test_") || merchant_uid.includes("test_");
+    
+    if (isTestMode || isTestPayment) {
+      console.log("Running in test mode - skipping verification");
+      console.log("isTestMode:", isTestMode, "isTestPayment:", isTestPayment);
       // 테스트 모드에서는 검증 스킵하고 성공 처리
       return NextResponse.json({
         success: true,
@@ -116,48 +129,58 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. 액세스 토큰 발급
+    console.log("Requesting PortOne access token...");
     const accessToken = await getPortOneToken();
     if (!accessToken) {
+      console.error("Failed to get PortOne access token");
       return NextResponse.json(
         { success: false, message: "PortOne 인증에 실패했습니다." },
         { status: 500 }
       );
     }
+    console.log("Access token obtained successfully");
 
     // 2. 결제 정보 조회
+    console.log("Fetching payment info for imp_uid:", imp_uid);
     const paymentInfo = await getPaymentInfo(accessToken, imp_uid);
     if (!paymentInfo) {
+      console.error("Failed to get payment info");
       return NextResponse.json(
         { success: false, message: "결제 정보를 조회할 수 없습니다." },
         { status: 404 }
       );
     }
+    console.log("Payment info:", JSON.stringify(paymentInfo, null, 2));
 
     // 3. 결제 검증
     // - 주문번호 일치 확인
     if (paymentInfo.merchant_uid !== merchant_uid) {
+      console.error("Merchant UID mismatch:", paymentInfo.merchant_uid, "vs", merchant_uid);
       return NextResponse.json(
-        { success: false, message: "주문번호가 일치하지 않습니다." },
+        { success: false, message: `주문번호가 일치하지 않습니다. (expected: ${merchant_uid}, got: ${paymentInfo.merchant_uid})` },
         { status: 400 }
       );
     }
 
     // - 결제 금액 일치 확인
     if (paymentInfo.amount !== expected_amount) {
+      console.error("Amount mismatch:", paymentInfo.amount, "vs", expected_amount);
       return NextResponse.json(
-        { success: false, message: "결제 금액이 일치하지 않습니다." },
+        { success: false, message: `결제 금액이 일치하지 않습니다. (expected: ${expected_amount}, got: ${paymentInfo.amount})` },
         { status: 400 }
       );
     }
 
     // - 결제 상태 확인
     if (paymentInfo.status !== "paid") {
+      console.error("Payment status not paid:", paymentInfo.status);
       return NextResponse.json(
         { success: false, message: `결제가 완료되지 않았습니다. (상태: ${paymentInfo.status})` },
         { status: 400 }
       );
     }
 
+    console.log("Payment verification successful!");
     // 4. 검증 성공
     return NextResponse.json({
       success: true,

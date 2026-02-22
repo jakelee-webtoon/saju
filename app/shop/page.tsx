@@ -138,8 +138,11 @@ export default function ShopPage() {
           setToast(`💘 화살 ${totalArrows}개가 충전됐어요!`);
           setTimeout(() => setToast(null), 2500);
         } else {
-          setToast(verification.message || "결제 검증에 실패했어요 😢");
-          setTimeout(() => setToast(null), 2500);
+          console.error("Payment verification failed:", verification);
+          // 더 자세한 에러 메시지 표시
+          const errorMessage = verification.message || "결제 검증에 실패했어요";
+          setToast(`${errorMessage} 😢`);
+          setTimeout(() => setToast(null), 4000); // 더 오래 표시
         }
       } else {
         // 결제 취소 or 실패
