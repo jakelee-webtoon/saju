@@ -33,10 +33,17 @@ export default function BirthInfoForm({
   const [minute, setMinute] = useState(initialData?.minute || "");
   const [hasTime, setHasTime] = useState(initialData?.hasTime ?? false);
 
+  console.log("📝 BirthInfoForm 현재 상태:", { year, month, day, isDisabled: !year || !month || !day });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!year || !month || !day) return;
+    console.log("🔍 폼 제출 시도", { year, month, day, name, calendarType, hasTime });
+    if (!year || !month || !day) {
+      console.warn("⚠️ 필수 필드 누락:", { year, month, day });
+      return;
+    }
     
+    console.log("✅ 폼 제출 성공");
     onSubmit({ name, calendarType, year, month, day, hour, minute, hasTime });
   };
 
@@ -152,7 +159,7 @@ export default function BirthInfoForm({
             disabled={!year || !month || !day}
             className="w-full rounded-xl bg-[#1a1a2e] py-4 text-[15px] font-medium text-white transition-colors hover:bg-[#2d2d44] disabled:bg-[#d1d5db] disabled:cursor-not-allowed"
           >
-            {isFirstVisit ? "내 캐릭터 확인하기 ✨" : "저장하기"}
+            저장하기
           </button>
         </form>
       </div>
