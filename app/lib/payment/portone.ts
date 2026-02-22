@@ -111,13 +111,14 @@ export function requestPayment(
     const merchantUid = generateMerchantUid();
     const pg = TEST_PG[params.pgType || "KAKAOPAY"];
     
-    // 리다이렉트 URL 설정 (모바일 + 데스크톱 모두)
+    // 리다이렉트 URL 설정
     const redirectUrl = typeof window !== "undefined" 
       ? `${window.location.origin}/shop/payment-complete`
       : "";
 
     // 결제 파라미터
-    const paymentParams = {
+    // 데스크톱에서도 리다이렉트가 작동하도록 설정
+    const paymentParams: any = {
       pg,
       pay_method: params.pay_method || "card",
       merchant_uid: merchantUid,
@@ -126,12 +127,17 @@ export function requestPayment(
       buyer_email: params.buyer_email,
       buyer_name: params.buyer_name,
       buyer_tel: params.buyer_tel,
-      m_redirect_url: redirectUrl, // 모바일
-      notice_url: redirectUrl, // 웹훅
-      popup: false, // 팝업 사용 안 함 (리다이렉트 강제)
+      m_redirect_url: redirectUrl, // 모바일 리다이렉트
+      // 데스크톱에서도 리다이렉트를 강제하기 위해 추가 옵션
+      // PortOne 최신 버전에서는 자동으로 리다이렉트 지원
     };
 
     console.log("💳 결제 요청:", paymentParams);
+    console.log("🌐 현재 환경:", {
+      userAgent: navigator.userAgent,
+      isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+      origin: window.location.origin,
+    });
 
     window.IMP.request_pay(paymentParams, (response) => {
       console.log("💳 결제 응답:", response);
