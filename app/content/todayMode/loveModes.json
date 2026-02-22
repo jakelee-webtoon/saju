@@ -1673,6 +1673,116 @@
         ],
         "one_line_guide": "끌림을 따라가되, 나침반도 확인해"
       }
+    },
+    {
+      "id": "confused",
+      "love_mode": "혼란모드",
+      "emoji": "🌀",
+      "color": {
+        "bg": "from-indigo-100 to-violet-100",
+        "accent": "bg-indigo-500",
+        "text": "text-indigo-700"
+      },
+      "home_summary": "감정이 복잡하게 얽힌 날이에요",
+      "detail": {
+        "mode_label": "🌀 혼란모드",
+        "main_sentence": "오늘은 내 감정이 뭔지 헷갈리는 날이야",
+        "reason": "여러 감정이 동시에 올라와서 정리가 안 돼",
+        "triggers": [
+          "상대에게 혼란스러운 신호를 보낼 수 있어",
+          "결정을 내리기 어려울 수 있어",
+          "말을 꼬일 수 있어"
+        ],
+        "one_line_guide": "혼란스러운 날은 무리하지 말고, 내일 다시 생각해봐"
+      }
+    },
+    {
+      "id": "certain",
+      "love_mode": "확신모드",
+      "emoji": "💫",
+      "color": {
+        "bg": "from-amber-100 to-yellow-100",
+        "accent": "bg-amber-500",
+        "text": "text-amber-700"
+      },
+      "home_summary": "확신이 서는 날이에요",
+      "detail": {
+        "mode_label": "💫 확신모드",
+        "main_sentence": "오늘은 이게 맞다는 확신이 드는 날이야",
+        "reason": "명확한 판단력이 생겨서 확신이 서",
+        "triggers": [
+          "확신이 너무 커서 상대 속도를 무시할 수 있어",
+          "고집스러워 보일 수 있어",
+          "다른 가능성을 배제할 수 있어"
+        ],
+        "one_line_guide": "확신은 좋지만, 상대의 의견도 들어보자"
+      }
+    },
+    {
+      "id": "growing",
+      "love_mode": "성장모드",
+      "emoji": "🌱",
+      "color": {
+        "bg": "from-green-100 to-emerald-100",
+        "accent": "bg-green-500",
+        "text": "text-green-700"
+      },
+      "home_summary": "관계를 발전시키고 싶은 날이에요",
+      "detail": {
+        "mode_label": "🌱 성장모드",
+        "main_sentence": "오늘은 우리 관계를 한 단계 올리고 싶은 날이야",
+        "reason": "발전 에너지가 높아서 더 깊은 연결을 원해",
+        "triggers": [
+          "너무 밀어붙이면 상대가 부담스러워할 수 있어",
+          "성급하게 결정할 수 있어",
+          "현재를 소중히 여기지 못할 수 있어"
+        ],
+        "one_line_guide": "성장은 좋지만, 자연스러운 흐름도 중요해"
+      }
+    },
+    {
+      "id": "rediscovery",
+      "love_mode": "재발견모드",
+      "emoji": "🔍",
+      "color": {
+        "bg": "from-blue-100 to-cyan-100",
+        "accent": "bg-blue-500",
+        "text": "text-blue-700"
+      },
+      "home_summary": "관계를 새롭게 바라보는 날이에요",
+      "detail": {
+        "mode_label": "🔍 재발견모드",
+        "main_sentence": "오늘은 상대를 다시 보게 되는 날이야",
+        "reason": "새로운 시각이 생겨서 다른 면을 발견하게 돼",
+        "triggers": [
+          "과거와 비교하면서 실망할 수 있어",
+          "새로운 기대를 하게 될 수 있어",
+          "변화를 강요할 수 있어"
+        ],
+        "one_line_guide": "재발견은 좋지만, 있는 그대로도 소중해"
+      }
+    },
+    {
+      "id": "closure",
+      "love_mode": "정리모드",
+      "emoji": "📋",
+      "color": {
+        "bg": "from-slate-100 to-gray-100",
+        "accent": "bg-slate-500",
+        "text": "text-slate-700"
+      },
+      "home_summary": "관계를 정리하고 싶은 날이에요",
+      "detail": {
+        "mode_label": "📋 정리모드",
+        "main_sentence": "오늘은 뭔가 확실하게 정리하고 싶은 날이야",
+        "reason": "명확함을 원하는 에너지가 높아서 애매함이 싫어",
+        "triggers": [
+          "너무 성급하게 정리할 수 있어",
+          "상대가 준비되지 않았을 수 있어",
+          "후회할 결정을 할 수 있어"
+        ],
+        "one_line_guide": "정리는 필요하지만, 중요한 건 한 번 더 생각해봐"
+      }
     }
   ]
 }

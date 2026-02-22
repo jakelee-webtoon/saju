@@ -99,23 +99,23 @@ function getElementFromCharacterId(characterId: string): string {
  */
 const elementModeWeights: Record<string, Record<string, number>> = {
   화: {
-    rush: 3, intense: 3, direct: 3, impulsive: 2, passionate: 2,
+    rush: 3, intense: 3, direct: 3, impulsive: 2, passionate: 2, rediscovery: 2,
     cooldown: 0.5, patient: 0.5, slow: 0.5, detached: 0.5
   },
   수: {
-    cooldown: 3, observe: 3, mysterious: 2, overthink: 2, sensitive: 2,
+    cooldown: 3, observe: 3, mysterious: 2, overthink: 2, sensitive: 2, confused: 2,
     rush: 0.5, direct: 0.5, impulsive: 0.5
   },
   목: {
-    hopeful: 3, adventurous: 2, curious: 2, supportive: 2, optimistic: 2,
+    hopeful: 3, adventurous: 2, curious: 2, supportive: 2, optimistic: 2, growing: 2,
     cooldown: 0.5, pessimistic: 0.5, detached: 0.5
   },
   토: {
-    stable: 3, patient: 3, realistic: 2, careful: 2, balanced: 2,
+    stable: 3, patient: 3, realistic: 2, careful: 2, balanced: 2, closure: 2,
     rush: 0.5, impulsive: 0.5, adventurous: 0.5
   },
   금: {
-    realistic: 3, selective: 3, decisive: 2, boundary: 2, honest: 2,
+    realistic: 3, selective: 3, decisive: 2, boundary: 2, honest: 2, certain: 2,
     dreamy: 0.5, romantic: 0.5, clinging: 0.5
   }
 };
