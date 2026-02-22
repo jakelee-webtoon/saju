@@ -144,7 +144,11 @@ export async function verifyPayment(
   expectedAmount: number
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const response = await fetch("/api/payment/verify", {
+    console.log("💳 verifyPayment 호출:", { impUid, merchantUid, expectedAmount });
+    const url = "/api/payment/verify";
+    console.log("API URL:", url);
+    
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -156,10 +160,21 @@ export async function verifyPayment(
       }),
     });
 
+    console.log("Response status:", response.status);
+    console.log("Response ok:", response.ok);
+    
+    if (!response.ok) {
+      console.error("❌ Response not ok:", response.status, response.statusText);
+      const text = await response.text();
+      console.error("Response body:", text);
+      return { success: false, message: `결제 검증 요청 실패 (${response.status})` };
+    }
+
     const result = await response.json();
+    console.log("✅ verifyPayment 결과:", result);
     return result;
   } catch (error) {
-    console.error("Payment verification error:", error);
+    console.error("❌ Payment verification error:", error);
     return { success: false, message: "결제 검증에 실패했습니다." };
   }
 }

@@ -88,34 +88,31 @@ async function getPaymentInfo(
 }
 
 export async function POST(request: NextRequest) {
+  console.log("🔍 === Payment Verification API 시작 ===");
+  
   try {
     const body = await request.json();
     const { imp_uid, merchant_uid, expected_amount } = body;
 
-    console.log("=== Payment Verification Request ===");
-    console.log("imp_uid:", imp_uid);
-    console.log("merchant_uid:", merchant_uid);
-    console.log("expected_amount:", expected_amount);
-    console.log("PORTONE_API_KEY set:", !!PORTONE_API_KEY);
-    console.log("PORTONE_API_SECRET set:", !!PORTONE_API_SECRET);
+    console.log("📦 요청 데이터:", { imp_uid, merchant_uid, expected_amount });
+    console.log("🔑 환경변수 체크:");
+    console.log("  - PORTONE_API_KEY:", PORTONE_API_KEY ? "✅ 설정됨" : "❌ 없음");
+    console.log("  - PORTONE_API_SECRET:", PORTONE_API_SECRET ? "✅ 설정됨" : "❌ 없음");
 
     if (!imp_uid || !merchant_uid || !expected_amount) {
-      console.log("Missing required parameters");
+      console.log("❌ 필수 파라미터 누락");
       return NextResponse.json(
         { success: false, message: "필수 파라미터가 누락되었습니다." },
         { status: 400 }
       );
     }
 
-    // 테스트 모드 체크 (환경변수 없으면 테스트로 간주)
-    // 또는 imp_uid가 테스트 결제인 경우 (imp_로 시작하지만 test_ 포함)
-    const isTestMode = !PORTONE_API_KEY || !PORTONE_API_SECRET;
-    const isTestPayment = imp_uid.includes("test_") || merchant_uid.includes("test_");
+    // 테스트 결제 자동 감지 (imp_uid 또는 merchant_uid에 "test_"가 포함된 경우)
+    const isTestPayment = imp_uid.startsWith("test_") || merchant_uid.startsWith("test_");
+    const isApiKeysNotSet = !PORTONE_API_KEY || !PORTONE_API_SECRET;
     
-    if (isTestMode || isTestPayment) {
-      console.log("Running in test mode - skipping verification");
-      console.log("isTestMode:", isTestMode, "isTestPayment:", isTestPayment);
-      // 테스트 모드에서는 검증 스킵하고 성공 처리
+    if (isTestPayment || isApiKeysNotSet) {
+      console.log(`⚠️ 테스트 모드 또는 API 키 미설정: isTestPayment=${isTestPayment}, isApiKeysNotSet=${isApiKeysNotSet}`);
       return NextResponse.json({
         success: true,
         message: "테스트 모드 - 결제 검증 스킵",
@@ -129,28 +126,28 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. 액세스 토큰 발급
-    console.log("Requesting PortOne access token...");
+    console.log("🔐 PortOne 액세스 토큰 요청 중...");
     const accessToken = await getPortOneToken();
     if (!accessToken) {
-      console.error("Failed to get PortOne access token");
+      console.error("❌ PortOne 액세스 토큰 발급 실패");
       return NextResponse.json(
         { success: false, message: "PortOne 인증에 실패했습니다." },
         { status: 500 }
       );
     }
-    console.log("Access token obtained successfully");
+    console.log("✅ 액세스 토큰 발급 성공");
 
     // 2. 결제 정보 조회
-    console.log("Fetching payment info for imp_uid:", imp_uid);
+    console.log("📋 결제 정보 조회 중... (imp_uid:", imp_uid, ")");
     const paymentInfo = await getPaymentInfo(accessToken, imp_uid);
     if (!paymentInfo) {
-      console.error("Failed to get payment info");
+      console.error("❌ 결제 정보 조회 실패");
       return NextResponse.json(
         { success: false, message: "결제 정보를 조회할 수 없습니다." },
         { status: 404 }
       );
     }
-    console.log("Payment info:", JSON.stringify(paymentInfo, null, 2));
+    console.log("✅ 결제 정보 조회 성공:", paymentInfo);
 
     // 3. 결제 검증
     // - 주문번호 일치 확인
