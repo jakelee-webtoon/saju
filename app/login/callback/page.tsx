@@ -12,7 +12,6 @@ import {
 import {
   handleUserLogin,
   incrementLoginCount,
-  updateBirthInfo, // TODO: onboarding 전용 함수로 분리 권장
 } from "@/app/lib/firebase/userService";
 import { hasCompletedOnboarding as checkLocalOnboarding } from "@/app/lib/onboarding";
 import { syncPartnersFromFirestore } from "@/app/lib/cupid/partnersStorage";
@@ -177,12 +176,9 @@ function CallbackContent() {
         const localOnboardingDone = checkLocalOnboarding();
         const firebaseOnboardingDone = firebaseUser?.hasCompletedOnboarding ?? false;
 
-        if (localOnboardingDone && !firebaseOnboardingDone && firebaseUser) {
-          // TODO: updateBirthInfo(firebaseUser.oderId, null) 대신 onboarding 플래그만 sync하는 함수로 분리 권장
-          await updateBirthInfo(firebaseUser.oderId, null);
-        }
-
-        if (!localOnboardingDone && !firebaseOnboardingDone) {
+        // Firebase에 사주 정보가 있으면 온보딩 완료로 간주
+        // 로컬 온보딩 상태와 Firebase 상태가 불일치하는 경우, Firebase 우선
+        if (!firebaseOnboardingDone) {
           router.replace("/?newUser=true");
         } else {
           router.replace(savedRedirect || "/");
