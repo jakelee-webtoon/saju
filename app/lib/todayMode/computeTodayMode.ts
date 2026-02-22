@@ -149,8 +149,11 @@ export function computeTodayMode(
   // 모든 모드 목록
   const allModes = loveModesData.modes as LoveMode[];
   
-  // 1. 각 모드의 가중치 계산
-  const modeWeights = allModes.map(mode => {
+  // 1. 각 모드의 가중치 계산 (결정론적 - 모드 ID로 정렬하여 순서 고정)
+  // 모드 ID로 정렬하여 같은 입력에 대해 항상 같은 순서 보장
+  const sortedModes = [...allModes].sort((a, b) => a.id.localeCompare(b.id));
+  
+  const modeWeights = sortedModes.map(mode => {
     let weight = 1;
     
     // 오행 가중치 적용
@@ -166,21 +169,36 @@ export function computeTodayMode(
     }
     
     // 날짜 기반 변동 (같은 날 같은 결과를 위한 pseudo-random)
-    const dateVariation = seededRandom(dateSeed + mode.id.charCodeAt(0)) * 0.5 + 0.75;
+    // 모드 ID의 해시를 시드에 더해서 결정론적으로 생성
+    const modeHash = mode.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const dateVariation = seededRandom(dateSeed + modeHash) * 0.5 + 0.75;
     weight *= dateVariation;
     
     return { mode, weight };
   });
   
-  // 2. 가중치 기반 모드 선택
-  const totalWeight = modeWeights.reduce((sum, m) => sum + m.weight, 0);
-  const combinedSeed = dateSeed + characterId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  let random = seededRandom(combinedSeed) * totalWeight;
+  // 2. 가중치 기반 모드 선택 (결정론적 - 같은 날 같은 결과 보장)
+  // modeWeights는 이미 모드 ID로 정렬되어 있음
   
-  let selectedMode: LoveMode = allModes[0];
+  // 가중치 누적 배열 생성 (결정론적 선택을 위해)
+  const cumulativeWeights: Array<{ mode: LoveMode; cumulative: number }> = [];
+  let cumulative = 0;
   for (const { mode, weight } of modeWeights) {
-    random -= weight;
-    if (random <= 0) {
+    cumulative += weight;
+    cumulativeWeights.push({ mode, cumulative });
+  }
+  
+  const totalWeight = cumulative;
+  const combinedSeed = dateSeed + characterId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  
+  // 시드 기반 결정론적 선택 (0~1 사이 값)
+  const seedValue = seededRandom(combinedSeed);
+  const targetWeight = seedValue * totalWeight;
+  
+  // 누적 가중치에서 선택 (이진 탐색 대신 선형 탐색 - 모드 수가 많지 않으므로)
+  let selectedMode: LoveMode = cumulativeWeights[0].mode;
+  for (const { mode, cumulative } of cumulativeWeights) {
+    if (targetWeight <= cumulative) {
       selectedMode = mode;
       break;
     }
