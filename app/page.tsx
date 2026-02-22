@@ -271,16 +271,22 @@ function ManseryeokPageContent() {
       console.log("userId:", userId);
       
       if (userId) {
-        const birthInfoForDB = {
+        const birthInfoForDB: any = {
           name: data.name,
           year: parseInt(data.year),
           month: parseInt(data.month),
           day: parseInt(data.day),
-          hour: data.hasTime && data.hour ? parseInt(data.hour) : undefined,
-          minute: data.hasTime && data.minute ? parseInt(data.minute) : undefined,
           calendarType: data.calendarType,
           hasTime: data.hasTime,
         };
+        
+        // 시간 정보가 있을 때만 hour, minute 필드 추가 (undefined 방지)
+        if (data.hasTime && data.hour) {
+          birthInfoForDB.hour = parseInt(data.hour);
+        }
+        if (data.hasTime && data.minute) {
+          birthInfoForDB.minute = parseInt(data.minute);
+        }
         
         console.log("💾 Firestore에 저장할 데이터:", birthInfoForDB);
         
