@@ -98,9 +98,27 @@ function ManseryeokPageContent() {
     () => manseResult ? generateCharacterType(manseResult.elements) : null,
     [manseResult]
   );
+  
+  // 한국 시간 기준 오늘 날짜 (매일 고정, 같은 날은 같은 결과)
+  const todayKST = useMemo(() => {
+    const now = new Date();
+    // UTC 시간을 한국 시간(KST, UTC+9)으로 변환
+    const kstOffset = 9 * 60; // 한국은 UTC+9
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const kst = new Date(utc + (kstOffset * 60000));
+    // 시간을 제거하고 날짜만 반환 (00:00:00)
+    return new Date(kst.getFullYear(), kst.getMonth(), kst.getDate());
+  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 계산 (같은 날은 같은 결과 보장)
+  
+  // 오늘 날짜 문자열 (의존성으로 사용)
+  const todayDateString = useMemo(
+    () => todayKST.toISOString().split('T')[0], // YYYY-MM-DD 형식
+    [todayKST]
+  );
+  
   const todayMode = useMemo(
-    () => character ? computeTodayMode(character.id) : null,
-    [character]
+    () => character ? computeTodayMode(character.id, todayKST) : null,
+    [character, todayDateString] // 날짜 문자열을 의존성으로 사용 (같은 날은 같은 결과)
   );
 
   // Firebase 사용자 데이터 로드
