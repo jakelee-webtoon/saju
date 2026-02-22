@@ -65,12 +65,6 @@ const ShareableFortuneCard = forwardRef<HTMLDivElement, ShareableFortuneCardProp
           </div>
         </div>
 
-        {/* 캐릭터 이름 */}
-        <div className="text-center mb-4">
-          <p className="text-gray-500 text-xs mb-1">오늘의</p>
-          <h2 className="text-xl font-bold text-gray-800">{characterName}</h2>
-        </div>
-
         {/* 메인 메시지 */}
         <div className="bg-white/80 rounded-2xl p-4 mb-4 shadow-sm">
           <p className="text-gray-700 text-center text-sm leading-relaxed">
