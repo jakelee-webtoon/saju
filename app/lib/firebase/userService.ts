@@ -238,14 +238,23 @@ export async function updateBirthInfo(
   birthInfo: UserData["birthInfo"]
 ): Promise<boolean> {
   try {
+    console.log("📝 updateBirthInfo 시작");
+    console.log("oderId:", oderId);
+    console.log("birthInfo:", birthInfo);
+    
     const userRef = doc(db, "users", oderId);
+    console.log("userRef 경로:", `users/${oderId}`);
+    
     await updateDoc(userRef, {
       birthInfo,
       hasCompletedOnboarding: true,
     });
+    
+    console.log("✅ Firestore updateDoc 완료");
     return true;
   } catch (error) {
-    console.error("Error updating birth info:", error);
+    console.error("❌ Error updating birth info:", error);
+    console.error("에러 상세:", JSON.stringify(error, null, 2));
     return false;
   }
 }

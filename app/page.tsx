@@ -123,19 +123,30 @@ function ManseryeokPageContent() {
 
   // Firebase 사용자 데이터 로드 (카카오 + 네이버 모두 지원)
   const loadFirebaseUser = useCallback(async () => {
+    console.log("🔍 loadFirebaseUser 시작");
     if (isLoggedIn()) {
+      console.log("✅ 로그인 상태 확인됨");
       // 카카오 또는 네이버 사용자 ID 가져오기
       const kakaoUser = getKakaoUser();
       const naverUser = getNaverUser();
+      console.log("kakaoUser:", kakaoUser ? `있음 (${kakaoUser.id})` : "없음");
+      console.log("naverUser:", naverUser ? `있음 (${naverUser.id})` : "없음");
+      
       const userId = kakaoUser?.id || naverUser?.id;
+      console.log("userId:", userId);
       
       if (userId) {
+        console.log("🔄 Firestore에서 사용자 데이터 조회 중...");
         const userData = await getUserData(userId);
+        console.log("userData:", userData);
+        
         if (userData) {
           setFirebaseUser(userData);
+          console.log("✅ firebaseUser 설정됨");
           
           // Firestore에 저장된 사주 정보가 있으면 불러오기
           if (userData.birthInfo) {
+            console.log("🎂 birthInfo 발견:", userData.birthInfo);
             setFormData({
               name: userData.birthInfo.name,
               calendarType: userData.birthInfo.calendarType,
@@ -146,13 +157,23 @@ function ManseryeokPageContent() {
               minute: userData.birthInfo.minute !== undefined ? String(userData.birthInfo.minute) : "",
               hasTime: userData.birthInfo.hasTime,
             });
+            console.log("✅ formData 업데이트 완료");
+          } else {
+            console.log("⚠️ birthInfo가 null입니다");
           }
           
           if (userData.hasCompletedOnboarding) {
             markOnboardingComplete();
+            console.log("✅ 온보딩 완료 마크");
           }
+        } else {
+          console.log("⚠️ Firestore에서 사용자 데이터를 찾을 수 없습니다");
         }
+      } else {
+        console.log("⚠️ userId가 없습니다");
       }
+    } else {
+      console.log("⚠️ 로그인 상태가 아닙니다");
     }
   }, []);
 
@@ -243,13 +264,21 @@ function ManseryeokPageContent() {
 
   // 폼 제출 핸들러 (캐릭터 리빌 포함 + Firebase 저장)
   const handleFormSubmitWithReveal = async (data: FormData) => {
+    console.log("🔥 handleFormSubmitWithReveal 시작");
+    console.log("입력된 데이터:", data);
+    
     setFormData(data);
     
     if (isLoggedIn()) {
+      console.log("✅ 로그인 상태 확인");
       // 카카오 또는 네이버 사용자 ID 가져오기
       const kakaoUser = getKakaoUser();
       const naverUser = getNaverUser();
+      console.log("kakaoUser:", kakaoUser);
+      console.log("naverUser:", naverUser);
+      
       const userId = kakaoUser?.id || naverUser?.id;
+      console.log("userId:", userId);
       
       if (userId) {
         const birthInfoForDB = {
@@ -263,15 +292,32 @@ function ManseryeokPageContent() {
           hasTime: data.hasTime,
         };
         
-        await updateBirthInfo(userId, birthInfoForDB);
-        console.log("✅ birthInfo saved to Firestore");
+        console.log("💾 Firestore에 저장할 데이터:", birthInfoForDB);
         
-        setFirebaseUser(prev => prev ? { 
-          ...prev, 
-          birthInfo: birthInfoForDB,
-          hasCompletedOnboarding: true 
-        } : null);
+        try {
+          const result = await updateBirthInfo(userId, birthInfoForDB);
+          console.log("✅ updateBirthInfo 결과:", result);
+          
+          if (result) {
+            console.log("✅ birthInfo saved to Firestore");
+            
+            setFirebaseUser(prev => prev ? { 
+              ...prev, 
+              birthInfo: birthInfoForDB,
+              hasCompletedOnboarding: true 
+            } : null);
+            console.log("✅ firebaseUser 상태 업데이트 완료");
+          } else {
+            console.error("❌ updateBirthInfo가 false를 반환했습니다");
+          }
+        } catch (error) {
+          console.error("❌ updateBirthInfo 중 오류 발생:", error);
+        }
+      } else {
+        console.error("❌ userId가 없습니다");
       }
+    } else {
+      console.log("⚠️ 로그인 상태가 아닙니다");
     }
     
     if (isFirstVisit && !hasSeenCharacterReveal()) {
