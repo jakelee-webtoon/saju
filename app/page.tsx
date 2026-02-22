@@ -13,7 +13,7 @@ import {
   hasSeenCharacterReveal,
   markCharacterRevealSeen,
 } from "./lib/onboarding";
-import { getKakaoUser, isLoggedIn } from "./lib/auth";
+import { getKakaoUser, getNaverUser, isLoggedIn } from "./lib/auth";
 import { getUserData, updateBirthInfo, type UserData } from "./lib/firebase";
 // 즉시 필요한 컴포넌트만 정적 import
 import HomePage from "./components/home/HomePage";
@@ -121,15 +121,20 @@ function ManseryeokPageContent() {
     [character, todayDateString] // 날짜 문자열을 의존성으로 사용 (같은 날은 같은 결과)
   );
 
-  // Firebase 사용자 데이터 로드
+  // Firebase 사용자 데이터 로드 (카카오 + 네이버 모두 지원)
   const loadFirebaseUser = useCallback(async () => {
     if (isLoggedIn()) {
+      // 카카오 또는 네이버 사용자 ID 가져오기
       const kakaoUser = getKakaoUser();
-      if (kakaoUser) {
-        const userData = await getUserData(kakaoUser.id);
+      const naverUser = getNaverUser();
+      const userId = kakaoUser?.id || naverUser?.id;
+      
+      if (userId) {
+        const userData = await getUserData(userId);
         if (userData) {
           setFirebaseUser(userData);
           
+          // Firestore에 저장된 사주 정보가 있으면 불러오기
           if (userData.birthInfo) {
             setFormData({
               name: userData.birthInfo.name,
@@ -241,8 +246,12 @@ function ManseryeokPageContent() {
     setFormData(data);
     
     if (isLoggedIn()) {
+      // 카카오 또는 네이버 사용자 ID 가져오기
       const kakaoUser = getKakaoUser();
-      if (kakaoUser) {
+      const naverUser = getNaverUser();
+      const userId = kakaoUser?.id || naverUser?.id;
+      
+      if (userId) {
         const birthInfoForDB = {
           name: data.name,
           year: parseInt(data.year),
@@ -254,7 +263,7 @@ function ManseryeokPageContent() {
           hasTime: data.hasTime,
         };
         
-        await updateBirthInfo(kakaoUser.id, birthInfoForDB);
+        await updateBirthInfo(userId, birthInfoForDB);
         console.log("✅ birthInfo saved to Firestore");
         
         setFirebaseUser(prev => prev ? { 
