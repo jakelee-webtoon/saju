@@ -220,14 +220,14 @@ function ManseryeokPageContent() {
       return;
     }
     
-    if (isLoggedIn() && firebaseUser?.birthInfo) {
+    if (isAnyLoggedIn() && firebaseUser?.birthInfo) {
       markOnboardingComplete();
       setShowOnboarding(false);
       setIsFirstVisit(false);
       return;
     }
     
-    if (isLoggedIn() && firebaseUser && !firebaseUser.birthInfo) {
+    if (isAnyLoggedIn() && firebaseUser && !firebaseUser.birthInfo) {
       markOnboardingComplete();
       setShowOnboarding(false);
       setIsFirstVisit(true);
